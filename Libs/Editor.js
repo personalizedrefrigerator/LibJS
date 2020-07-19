@@ -14,7 +14,8 @@ const EDITOR_SOURCE = "<!DOCTYPE " + "html>\n"
                      + 
                      document.documentElement.outerHTML;
 
-const VERSION_CODE = "1.09 (Main)";
+
+const VERSION_CODE = "1.10 (Main)";
 let noteError = self.noteError || console.error; // Error logging...
 
 function EditControl(ctx)
@@ -1417,7 +1418,7 @@ Path: ${ me.saveDir }
 
         clickLoop();
     });
-    
+
     JSHelper.Events.registerPointerEvent("move", me.keyCanvas, function(e)
     {
         if (pointerDown)
@@ -1917,7 +1918,10 @@ Path: ${ me.saveDir }
         var checkSyntax = me.editControl.appendLine("Check Syntax");
         checkSyntax.editable = false;
         
-        var wrapTextInput = me.editControl.appendLine("Wrap Text");
+        var wrapLongLines    = me.editControl.appendLine("Wrap Long Lines (Method A)");
+        wrapLongLines.editable = false;
+
+        var wrapTextInput = me.editControl.appendLine("Wrap Long Lines (Method B)");
         wrapTextInput.editable = false;
 
         var exitLine = me.editControl.appendLine("Hide Advanced Options");
@@ -1943,11 +1947,11 @@ Path: ${ me.saveDir }
             me.saveDir = undefined;
 
             me.editControl.clear();
-            me.editControl.setDefaultHighlightScheme("html");
 
             me.editControl.displayContent(EDITOR_SOURCE);
-
             me.editControl.focusFirstLine();
+
+            me.editControl.setDefaultHighlightScheme("html");
         };
 
         selectHighlightScheme.onentercommand = function()
@@ -2005,6 +2009,13 @@ Path: ${ me.saveDir }
             exitAdvancedOptions();
             
             me.toggleSyntaxCheck();
+        };
+        
+        wrapLongLines.onentercommand = function()
+        {
+            exitAdvancedOptions();
+            
+            me.wrapLongLines();
         };
         
         wrapTextInput.onentercommand = function()
@@ -2113,6 +2124,186 @@ Path: ${ me.saveDir }
         checkingSyntax = !checkingSyntax;
     };
     
+    me.wrappingLongLines = false;
+    this.wrapLongLines = function() // A method added, lost, and re-added.
+    {
+        if (me.wrappingLongLines)
+        {
+            me.editControl.restoreState();
+            me.wrappingLongLines = false;
+            
+            return;
+        }
+        
+        me.wrappingLongLines = true;
+        
+        let toWrap = me.editControl.getText();
+        
+        me.editControl.saveStateAndClear();
+
+        let quoteOptionText = "Quote ('\") Option: ";
+        let maximumLengthText = "Maximum length: ";
+        let maximumLength = 78;
+        let quoteOptions = ["BREAK", "BREAK_AND_CONCAT", "DO_NOT_BREAK"];
+        let autoIndent  = true;
+        let quoteOptionIndex = 0;
+        
+        let quoteActions =
+        {
+            "BREAK": (line, index) =>
+            {
+                return "\n";
+            },
+            "BREAK_AND_CONCAT": (line, index, quoteChar, indentLevel) =>
+            {
+                return quoteChar + " + \n" + indentLevel + quoteChar;
+            },
+            "DO_NOT_BREAK": (line, index) =>
+            {
+                return "";
+            }
+        };
+        
+        const wrapText = (initialText) =>
+        {
+            let result = "";
+            let currentWord = "";
+            let inQuoteType = undefined; // The type of quote currently in.
+            let lineLength = 0;
+            let currentChar;
+            let indentCount = 0;
+            let indent = "";
+            
+            for (let i = 0; i < initialText.length; i++)
+            {
+                currentChar = initialText.charAt(i);
+                lineLength++;
+                
+                if (currentChar == " " && lineLength === indentCount + 1
+                        && autoIndent)
+                {
+                    indentCount ++;
+                    indent += " ";
+                }
+                
+                if (inQuoteType === currentChar)
+                {
+                    inQuoteType = undefined;
+                    result += currentWord + currentChar;
+                    currentWord = "";
+                    
+                    continue;
+                }
+                else if ((currentChar == "'" || currentChar == '"') && inQuoteType === undefined)
+                {
+                    inQuoteType = currentChar;
+                }
+                else if (currentChar == "\n")
+                {
+                    lineLength = 0;
+                    inQuoteType = undefined; // Out of any quotes we were in.
+                }
+                else if (currentChar == " " || currentChar == '\t')
+                {
+                    result += currentWord;
+                    currentWord = "";
+                }
+                
+                currentWord += currentChar;
+                
+                if (lineLength + currentWord.length > maximumLength)
+                {
+                    let newLineLength = 0, newPart;
+                    
+                    if (inQuoteType === undefined)
+                    {
+                        newPart = indent + currentWord;
+                        result += "\n" + newPart;
+                        newLineLength += newPart.length;
+                    }
+                    else
+                    {
+                        newPart = quoteActions[quoteOptions[quoteOptionIndex]](result, i, 
+                                        inQuoteType, indent) + currentWord;
+                        result += newPart;
+                        
+                        let breakIndex = newPart.indexOf("\n");
+                        
+                        if (breakIndex >= 0)
+                        {
+                            newLineLength = newPart.length - breakIndex;
+                        }
+                        else
+                        {
+                            newLineLength = lineLength + newPart.length;
+                        }
+                    }
+                    
+                    currentWord = "";
+                    lineLength  = newLineLength;
+                }
+            }
+            
+            return result + currentWord;
+        };
+
+        let maximumLengthLine = me.editControl.appendLine(maximumLengthText + maximumLength);
+        let quoteOption       = me.editControl.appendLine(quoteOptionText + "BREAK");
+        let indentOption      = me.editControl.appendLine("Auto-indent: ON");
+        let cancelLine        = me.editControl.appendLine("   CANCEL   ");
+        let submitLine        = me.editControl.appendLine("   SUBMIT   ");
+        
+        submitLine.editable = false;
+        cancelLine.editable = false;
+        indentOption.editable = false;
+        quoteOption.editable = false;
+        
+        maximumLengthLine.onentercommand = function()
+        {
+            const newLengthPart = maximumLengthLine.text.substring(maximumLengthText.length);
+            maximumLength = MathHelper.forceParseInt(newLengthPart);
+        };
+        
+        quoteOption.onentercommand = function()
+        {
+            quoteOptionIndex++;
+            quoteOptionIndex %= quoteOptions.length;
+            
+            quoteOption.text = quoteOptionText + quoteOptions[quoteOptionIndex];
+        };
+        
+        indentOption.onentercommand = function()
+        {
+            autoIndent = !autoIndent;
+            indentOption.text = "Auto-indent: " + (autoIndent ? "ON" : "OFF");
+        };
+        
+        submitLine.onentercommand = function()
+        {
+            me.wrappingLongLines = false;
+            
+            me.editControl.restoreState();
+            me.editControl.clear(true);
+            
+            let wrapped = wrapText(toWrap);
+            
+            me.editControl.displayContent(wrapped);
+        };
+
+        cancelLine.onentercommand = function()
+        {
+            me.wrappingLongLines = false;
+            
+            me.editControl.restoreState();
+        };
+
+        requestAnimationFrame(function()
+        {
+            maximumLengthLine.focus();
+        });
+    };
+
+
     var showingWrapDialog = false;
     this.wrapTextWithLineBreaks = function()
     {
@@ -2974,8 +3165,8 @@ Path: ${ me.saveDir }
 
     me.clear = me.editControl.clear;
     me.displayContent = me.editControl.displayContent;
-    me.getText = me.editControl.getText;
     me.render = me.editControl.render;
+    me.getText = me.editControl.getText;
     me.scrollToFocus = () =>
     {
         me.editControl.shiftViewIfNecessary(me.editControl.getSelEnd().y);
@@ -3006,6 +3197,7 @@ Path: ${ me.saveDir }
 
     textViewerParentElement.appendChild(me.editCanvas);
     keyboardParentElement.appendChild(me.keyCanvas);
+    textExportParentElement.appendChild(me.copyPasteControl);
     runFrameParentElement.appendChild(me.runFrame);
 }
 
@@ -3021,10 +3213,10 @@ EditorHelper.openWindowedEditor = (initialText, onComplete, options) =>
 {
     options = options || {};
 
-    let runWindow = SubWindowHelper.create({ title: "Run", minWidth: 30, minHeight: 100 });
+    let runWindow = SubWindowHelper.create({ title: "Run", minWidth: 100, minHeight: 100 });
     let importExportWindow = SubWindowHelper.create({ title: "Import or Export", noResize: true });
     let keyboardWindow = SubWindowHelper.create({ title: "Keyboard", alwaysOnTop: true, noResize: true });
-    let viewerWindow = SubWindowHelper.create({ title: options.title || "View and Edit", minWidth: 50, minHeight: 50 });
+    let viewerWindow = SubWindowHelper.create({ title: options.title || "View and Edit", minWidth: 350, minHeight: 350 });
 
     viewerWindow.content.style.backgroundColor = "rgba(0, 0, 0, 0.7)";
     viewerWindow.enableFlex();
