@@ -23,7 +23,7 @@ window.SubWindowHelper = SubWindowHelper;
 
 ```
 
-If willing to export everything, remove the `(function() {` ... `})();` wrapping the library.
+If willing to export everything, remove the `(function() {` ... `})();` wrapping the library. This is done in the included `FullLibJS.js` file.
 
 # Notes
  * Pull requests are welcome!
