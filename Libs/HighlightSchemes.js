@@ -1083,5 +1083,3 @@ function PythonHighlightScheme(originalHighlighter)
         }
     }
 }
-
-
