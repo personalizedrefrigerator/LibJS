@@ -29,6 +29,7 @@ const styleSheets = `
 .windowContainerContent
 {
     overflow-y: auto;
+    overflow-x: hidden;
 }
 
 .windowContainerTitleBar
@@ -106,7 +107,7 @@ const styleSheets = `
     
     border-color: #dddddd;
     border-style: ridge;
-
+    
     cursor: pointer;
     
     filter: blur(1px);
@@ -170,6 +171,8 @@ const styleSheets = `
     background-image: radial-gradient(rgba(100, 100, 100, 0.3), rgba(150, 10, 150, 0.4), rgba(150, 10, 150, 0.6));
     background-size: 3px 3px;
     
+    overflow-y: hidden;
+    
     height: 25px;
 }
 
@@ -185,6 +188,15 @@ const styleSheets = `
     background-image: linear-gradient(10deg, rgba(100, 255, 255, 0.8), rgba(0, 255, 200, 0.5), rgba(100, 255, 255, 0.8));
     
     transition: 0.5s ease width;
+}
+
+.passwordConcocter
+{
+    border: 1px solid gray;
+    border-top-left-radius: 5px;
+    
+    padding: 6px;
+    margin: 3px;
 }
 
 .smallInput
@@ -297,9 +309,9 @@ span.tabContentShown > input, span.tabContentShown > button
     cursor: cross;
 }
 
-.tabLabelUnselected:hover
+.tabLabelUnselected:hover, .tabLabelUnselected:focus
 {
-    transform: rotate(2deg) scale(0.9, 1);
+    transform: rotate(2deg) scale(1, 1.1);
     margin-right: 0px;
 }
 
@@ -314,6 +326,11 @@ span.tabContentShown > input, span.tabContentShown > button
     width: 100%;
 }
 
+input::placeholder
+{
+    color: #333333;
+    opacity: 0.6;
+}
 
 .codeEditor
 {
@@ -342,6 +359,7 @@ code
     background-size: 3px 3px;
 }
 
+
 input, button
 {
     background-color: rgba(155, 100, 255, 0.6);
@@ -368,6 +386,12 @@ input:hover, button:hover, input:active, button:active
     transform: matrix(1.0, 0, 0.05, 0.9, 0, 0);
     
     background-color: rgba(155, 100, 200, 0.7);
+}
+
+button:focus
+{
+    background-color: rgba(100, 100, 100, 0.8);
+    transform: matrix(1.0, 0, 0, 1.1, 0, 0);
 }
 
 canvas

@@ -145,4 +145,3 @@ function Vector3(x, y, z)
         return "<" + me.x + ", " + me.y + ", " + me.z + ">";
     };
 }
-

@@ -1,6 +1,5 @@
 "use strict";
 
-
 function Transition(updateFunction, duration, doneFunction, beforeStart)
 {
     var me = this;
@@ -104,4 +103,3 @@ function Transition(updateFunction, duration, doneFunction, beforeStart)
         endProgress = 1 - endProgress;
     };
 }
-

@@ -1427,4 +1427,3 @@ function SyntaxTracker(currentLine, previousLine, nextLine, syntaxSelector)
         return false;
     };
 }
-

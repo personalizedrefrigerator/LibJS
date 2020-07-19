@@ -384,4 +384,3 @@ ThreadHelper.test = function()
     
     return true;
 };
-
