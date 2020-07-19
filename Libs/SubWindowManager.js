@@ -1002,7 +1002,10 @@ function SubWindow(globals, options)
         }
         
         // Select the container's title.
-        me.titleContent.focus();
+        if (me.container.style.position !== "absolute")
+        {
+            me.titleContent.focus();
+        }
         
         // Allow the window to scale, then
         //change its dimensions, if necessary.
