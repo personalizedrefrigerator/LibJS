@@ -1,6 +1,4 @@
 "use strict";
-(function()
-{
 
 // Inserted file IntroScreen.js encoding='utf-8'
 "use strict";
@@ -20201,5 +20199,3 @@ SubWindowHelper.setDisplayNavabar = function(displayNavBar)
         SubWindowHelper.navBar = document.createElement("div");
     }
 };
-
-})();
