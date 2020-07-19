@@ -1585,6 +1585,8 @@ Path: ${ me.saveDir }
     {
         if (!event.shiftKey)
         {
+            event.preventDefault();
+            
             if (event.key === "ArrowDown" || event.key === "ArrowUp" || event.key === "ArrowLeft"
                     || event.key === "ArrowRight" || event.key === "Backspace" || event.key === "Tab"
                     || event.key === "Escape")
