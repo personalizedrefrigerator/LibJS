@@ -3410,4 +3410,12 @@ EditorHelper.replaceWithEditor = (elem, options) =>
     };
 
     handleTabSwitching();
+
+    editor.canvas.addEventListener("blur", () =>
+    {
+        // Update the text-view.
+        elem.value = editor.getText();
+    });
+
+    return editor;
 };
