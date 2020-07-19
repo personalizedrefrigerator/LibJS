@@ -504,6 +504,7 @@ function Line(ctx, parentEditor, x, y, h, myIndex)
                 me.cursorPosition += toInsert.length;
                 me.maxCursorPosition = 0;
 
+                // Was an undo function created for some other action?
                 let oldUndo = undoResult;
                 
                 undoResult = () =>
@@ -513,6 +514,7 @@ function Line(ctx, parentEditor, x, y, h, myIndex)
 
                     let redoOther = () => {};
 
+                    // If so, call it as a part pf tjos imdp/
                     if (oldUndo)
                     {
                         redoOther = oldUndo();
