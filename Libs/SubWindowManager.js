@@ -232,30 +232,66 @@ function SubWindowTab(label, options)
 
 function SubWindow(globals, options)
 {
+        // Several significant options:
+    //  minWidth    Minimum width (px)                              int
+    //  minHeight   Minimum height (px)                             int
+    //  maxWidth    Maximum width (px)                              int
+    //  maxHeight   Maximum height (px)                             int
+    //  title       Title content                                   str
+    //  className   Additional style sheets for the window, all     str
+    //              prepended with className.
+    //fixWindowSize Whether to set the window's dimensions to a     bool
+    //              size in pixels after load or to allow its size
+    //              to be determined by its contents until resize.
+    //  noResize    Disable window resizing.                        bool
+    // unsnappable  Prohibits a "snapping" behavior from occurring  bool
+    //              when a window is brought near an edge of the screen.
+    // fixed        Whether the user can drag the window.           bool
+    //noCloseButton Whether to include the "X" button.              bool
+    //titleHTML     HTML-based content for the title. If used,      str
+    //              please also specify title, for accessibility.
+    //contentHTML   HTML-based content for the window.              str
+    //title         Text-based title content.                       str
+    //content       Text-based window content.                      str
+
     options = options || {};
     var parent = globals.parent;
     
     var me = this;
     var styleClassName = options.className || "windowContainer";
+
+    // Get a string representing a component's style classes
+    //for a given suffix.
+    const getStyleClass = (suffix) =>
+    {
+        let result;
+        
+        result = styleClassName + suffix;
+        
+        return result;
+    };
     
     this.zIndex = globals.minZIndex;
     
     this.container = document.createElement("div");
-    this.container.setAttribute("class", styleClassName);
+    this.container.setAttribute("class", getStyleClass(styleClassName));
     
     this.container.style.display = "flex";
     this.container.style.flexDirection = "column";
     this.container.style.position = options.withPage ? "absolute" : "fixed";
     
     this.titleBar = document.createElement("div");
-    this.titleBar.setAttribute("class", styleClassName + "TitleBar");
+    this.titleBar.setAttribute("class", getStyleClass("TitleBar"));
+    this.titleBar.setAttribute("title", "In-page window. Title bar.");
+    this.titleBar.setAttribute("tabIndex", 2);
     
     this.titleBar.style.display = "flex";
     this.titleBar.style.flexDirection = "row";
     
     this.titleContent = document.createElement("div");
-    this.titleContent.setAttribute("class", styleClassName + "TitleContent");
+    this.titleContent.setAttribute("class", getStyleClass(styleClassName));
     this.titleContent.style.flexGrow = "1";
+    this.titleContent.setAttribute("tabIndex", 2);
 
     this.alwaysOnTop = options.alwaysOnTop || false;
     this.unsnappable = options.unsnappable === undefined ? (options.noResize || false) : options.unsnappable;
@@ -610,16 +646,19 @@ function SubWindow(globals, options)
         me.closeButton = document.createElement("div");
         me.closeButton.innerHTML = "X";
         
+        me.closeButton.setAttribute("title", "Push button: Close");
+        me.closeButton.setAttribute("tabIndex", 2);
+        
         me.closeButton.setAttribute("class", styleClassName + "CloseButton");
         
         me.titleBar.appendChild(me.closeButton);
         
-        me.closeButton.onclick = function(event)
+        me.closeButton.addEventListener("click", function(event)
         {
             event.preventDefault();
             
             me.destroy();
-        };
+        });
     };
     
     this.createMinimizeMaximizeButton = function()
@@ -1011,9 +1050,8 @@ SubWindowHelper.alert = function(title, message, onClose)
     });
 };
 
-// Prompt a user for input.
-//This method bo
-SubWindowHelper.prompt = function(title, message, inputs, 
+// Prompt a user for input. Contains a single input 
+SubWindowHelper.prompt = function(title, message, defaultText, inputType, 
         onClose)
 {
     var promptDialog = SubWindowHelper.create
@@ -1028,17 +1066,11 @@ SubWindowHelper.prompt = function(title, message, inputs,
     
     messageZone.innerText = message;
     
-    var inputElements = {};
-    
-    var handleInput = (label) =>
+
+    return new Promise((resolve, reject) =>
     {
-        let newInputContainer = document.createElement("span");
-        
-        let inputType = HTMLHelper.getSuitableInputType(inputs[label]);
-        
-        
-        let newInput = HTMLHelper.addInput(label, inputs[label], inputType, newInputContainer);
-    };
+
+    });
 };
 
 // Creates a dialog... Returns an object with

@@ -12,6 +12,13 @@ HTMLHelper.inputTypeToElementNSDictionary =
     "richtext": "div"
 };
 
+HTMLHelper.dataTypeToInputTypeDictionary =
+{
+    "string": "text",
+    "number": "number",
+    "boolean": "checkbox"
+};
+
 // Get the content of an input. This is necessary for inputs
 //like those with type=checkbox.
 HTMLHelper.getInputContent = function(inputElement, inputType)
@@ -58,9 +65,21 @@ HTMLHelper.setInputContent = function(inputElement, inputType, setTo)
     }
 };
 
-HTMLHelper.getSuitableInputType = function(inputs)
+HTMLHelper.getSuitableInputType = function(defaultContent)
 {
-    
+    const defaultContentType = typeof (defaultContent);
+
+    // Multi-line strings should be given a textarea.
+    if (defaultContentType === "string" && defaultContent.indexOf('\n') !== -1)
+    {
+        return "textarea";
+    }
+    else if (defaultContentType in HTMLHelper.dataTypeToInputTypeDictionary)
+    {
+        return HTMLHelper.dataTypeToInputTypeDictionary[defaultContentType];
+    }
+
+    return "text";
 };
 
 // Adds an element containing HTML text to parent, with NS of elementName.

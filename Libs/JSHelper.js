@@ -608,3 +608,109 @@ JSHelper.UniqueNotifier =
 JSHelper.Notifier = new JSHelper.UniqueNotifier(); // Publicly-accessible, singleton 
                                                    // instance of the notifier.
 
+// A method that throws.
+JSHelper.NotImplemented = (signature, message) => 
+{
+    signature = signature || "";
+    message = message || "";
+
+    return () => 
+    {
+        throw "Not implemented: " + signature + " " + message;
+    };
+};
+
+// Count the number of characters in charset in the given text.
+JSHelper.getCharCount = (text, charset) =>
+{
+    let charCount = 0;
+    
+    for (let i = 0; i < text.length; i++)
+    {
+        if (charset.indexOf(text.charAt(i)) !== -1)
+        {
+            charCount++;
+        }
+    }
+    
+    return charCount;
+};
+
+// Unite two maps. Key/value pairs in
+// the first map take precedence.
+JSHelper.mapUnite = (map1, map2) =>
+{
+    let result = {};
+
+    for (let key in map2)
+    {
+        result[key] = map2[key];
+    }
+
+    for (let key in map1)
+    {
+        result[key] = map1[key];
+    }
+
+    return result;
+};
+
+// Get the next animation frame in a promise.
+JSHelper.nextAnimationFrame = () =>
+{
+    // A promise should push to the next frame,
+    //but in case the browser doesn't render between
+    //promises as it does for animation frames, pass it to an
+    //animation frame.
+    let result = new Promise((resolve, reject) =>
+    {
+        requestAnimationFrame(() => { resolve(true); });
+    });
+    
+    return result;
+};
+
+// Wait for waitTime milliseconds. Returns a promise.
+JSHelper.waitFor = (waitTime) =>
+{
+    let result = new Promise((resolve, reject) =>
+    {
+        setTimeout(() => { resolve(true); }, waitTime);
+    });
+    
+    return result;
+};
+
+// Override some default behavior! Much of this is for
+//accessibility! Note: JSHelper_replacedMethods contains
+//refrences to browser-based functions. SerializationHelper
+//can't serialize these, so put them in a different object.
+const JSHelper_replacedMethods = {};
+JSHelper_replacedMethods.addEventListener = HTMLElement.prototype.addEventListener;
+
+// Define a new event, push, that awaits both clicks and
+//the press of the enter key.
+HTMLElement.prototype.addEventListener = 
+function (eventType, onEnact, ...allOthers)
+{
+    if (eventType === "click")
+    {
+        eventType = "keyup";
+        JSHelper_replacedMethods.addEventListener.apply(this, [eventType, 
+        function(event)
+        {
+            if (event.keyCode === 13) // Enter key.
+            {
+                // Make it look somewhat like a mouse event.
+                event.button = 0;
+                
+                onEnact.apply(this, arguments);
+            }
+        }].concat(allOthers));
+        
+        // Now, on click!
+        eventType = "click";
+    }
+    
+    return JSHelper_replacedMethods.addEventListener.apply(this, arguments);
+};
