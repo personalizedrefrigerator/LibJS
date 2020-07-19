@@ -120,5 +120,3 @@ function ProgressEstimator(runFunction)
         loop();
     };
 }
-
-
