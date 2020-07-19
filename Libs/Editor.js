@@ -3197,7 +3197,6 @@ Path: ${ me.saveDir }
 
     textViewerParentElement.appendChild(me.editCanvas);
     keyboardParentElement.appendChild(me.keyCanvas);
-    textExportParentElement.appendChild(me.copyPasteControl);
     runFrameParentElement.appendChild(me.runFrame);
 }
 
