@@ -611,7 +611,7 @@ JSHelper.UniqueNotifier =
                 }
                 else
                 {
-                    resolve.call(this, { data: content, eventName: eventName });
+                    resolve.call(this, { data: content, event: eventName });
                 }
                 // Remove our listener.
                 delete listeners[eventName][listenerId];
@@ -631,6 +631,13 @@ JSHelper.UniqueNotifier =
         });
         
         return result;
+    };
+
+    // Used by older code. Wait for any of eventNames to 
+    //complete and get a detailed result = { data: eventData, event: eventName }.
+    this.waitForAny = (...eventNames) =>
+    { 
+        return this.waitFor([eventNames]);
     };
     
     // Notify all listeners on eventName.

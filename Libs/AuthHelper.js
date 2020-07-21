@@ -66,10 +66,10 @@ async (parent) =>
     // Show/hide relevant commands when the user authenticates/deauthenticates.
     while (true)
     {
-        await JSHelper.Notifier.waitFor(AuthHelper.SIGN_IN_EVENT);
+        await JSHelper.Notifier.waitFor([AuthHelper.SIGN_IN_EVENT]);
         showRelevantCommands();
         
-        await JSHelper.Notifier.waitFor(AuthHelper.SIGN_OUT_EVENT);
+        await JSHelper.Notifier.waitFor([AuthHelper.SIGN_OUT_EVENT]);
         showRelevantCommands();
     }
 };
@@ -756,7 +756,7 @@ AuthHelper.isSignedIn = () =>
 requestAnimationFrame(
 async () =>
 {
-    await JSHelper.Notifier.waitFor(JSHelper.PAGE_SETUP_COMPLETE, true);
+    await JSHelper.Notifier.waitFor([JSHelper.PAGE_SETUP_COMPLETE], true);
     
     // Only attempt to manage authentication if firebase is defined.
     if (window.firebase)
