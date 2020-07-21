@@ -8103,12 +8103,61 @@ Path: ${ me.saveDir }
             {
                 me.editControl.restoreState();
                 me.editControl.saveStateAndClear();
+
+                // View as JS.
+                me.editControl.setDefaultHighlightScheme("js");
+
+                const printResult = (result) =>
+                {
+                    const lines = result.split('\n');
+
+                    for (const line of lines)
+                    {
+                        let newLine = me.editControl.appendLine(line);
+                        newLine.editable = false;
+
+                        newLine.setColorFunction = (index) =>
+                        {
+                            return "#ffaf70";
+                        };
+                    }
+                };
                 
                 // Show output...
                 const result = await EditorHelper.__runOutOfContext(contentToRun);
-                me.editControl.displayContent("Output: \n" + result);
+                printResult(result);
                     
                 const doneLine = me.editControl.appendLine("DONE");
+
+                let scriptLine;
+                
+                const createScriptLine = () =>
+                {
+                    if (scriptLine)
+                    {
+                        scriptLine.editable = false;
+                        scriptLine.onentercommand = () => {};
+                    }
+
+                    scriptLine = me.editControl.appendLine("> ");
+
+                    scriptLine.onentercommand = async () =>
+                    {
+                        let newCommand = scriptLine.text;
+                        scriptLine.text = "> " + newCommand;
+
+                        const result = await EditorHelper.__runOutOfContext(newCommand);
+                        printResult(result);
+
+                        createScriptLine();
+
+                        me.editControl.render();
+                    };
+
+                    return scriptLine;
+                };
+
+                createScriptLine();
                 
                 requestAnimationFrame(() =>
                 {
