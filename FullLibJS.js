@@ -9706,6 +9706,25 @@ EditorHelper.replaceWithEditor = (elem, options) =>
     showKeyboardButton.style.backgroundColor = "rgba(0, 0, 0, 0.9)";
     showKeyboardButton.style.width = "min-content";
 
+    let priorElemValue = elem.value;
+
+    const updateEditorText = () =>
+    {
+        if (elem.value !== priorElemValue)
+        {
+            editor.clear();
+            editor.displayContent(elem.value);
+
+            priorElemValue = elem.value;
+        }
+    };
+
+    const updateElemText = () =>
+    {
+        priorElemValue = elem.value;
+        elem.value = editor.getText();
+    };
+
     // Handle tab switching.
     const handleTabSwitching = async () =>
     {
@@ -9715,13 +9734,12 @@ EditorHelper.replaceWithEditor = (elem, options) =>
 
             if (newTabName === "Textbox" && currentTabName === "Editor")
             {
-                elem.value = editor.getText();
+                updateElemText();
             }
             else if ((newTabName === "Editor" || newTabName === "Preview") 
                     && currentTabName === "Textbox")
             {
-                editor.clear();
-                editor.displayContent(elem.value);
+                updateEditorText();
             }
 
             // Adjust the editor to the canvas' size and render
@@ -9736,15 +9754,11 @@ EditorHelper.replaceWithEditor = (elem, options) =>
             {
                 if (currentTabName === "Editor")
                 {
-                    elem.value = editor.getText();
+                    updateElemText();
                 }
                 else if (currentTabName === "Textbox")
                 {
-                    if (elem.value !== editor.getText())
-                    {
-                        editor.clear();
-                        editor.displayContent(elem.value);
-                    }
+                    updateEditorText();
                 }
                 
                 editor.updateRunFrame();
@@ -9758,8 +9772,12 @@ EditorHelper.replaceWithEditor = (elem, options) =>
 
     editor.editCanvas.addEventListener("blur", () =>
     {
-        // Update the text-view.
-        elem.value = editor.getText();
+        updateElemText();
+    });
+
+    editor.editCanvas.addEventListener("focus", () =>
+    {
+        updateEditorText();
     });
 
     return editor;
