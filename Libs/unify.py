@@ -81,7 +81,7 @@ if __name__ == "__main__":
             if args['exports']:
                 for line in sys.stdin:
                     exportName = line.rstrip()
-                    print("self.%s = %s;", exportName, exportName)
+                    print("self.%s = %s;" % (exportName, exportName))
 
             print("})();")
     
