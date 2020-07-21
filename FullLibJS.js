@@ -1,4 +1,6 @@
 "use strict";
+(function()
+{
 
 // Inserted file IntroScreen.js encoding='utf-8'
 "use strict";
@@ -7871,6 +7873,7 @@ Path: ${ me.saveDir }
     {
         if (!event.shiftKey)
         {
+            
             if (event.key === "ArrowDown" || event.key === "ArrowUp" || event.key === "ArrowLeft"
                     || event.key === "ArrowRight" || event.key === "Backspace" || event.key === "Tab"
                     || event.key === "Escape")
@@ -7898,6 +7901,7 @@ Path: ${ me.saveDir }
                 });
 
                 event.preventDefault();
+                event.stopPropagation();
 
                 return true;
             }
@@ -8049,6 +8053,9 @@ Path: ${ me.saveDir }
         }
 
         updateRestoreString();
+
+        // Take ownership. We may handle it in onkeypress.
+        event.stopPropagation();
 
         return true;
     }, true);
@@ -9483,7 +9490,6 @@ Path: ${ me.saveDir }
 
     textViewerParentElement.appendChild(me.editCanvas);
     keyboardParentElement.appendChild(me.keyCanvas);
-    textExportParentElement.appendChild(me.copyPasteControl);
     runFrameParentElement.appendChild(me.runFrame);
 }
 
@@ -9693,6 +9699,14 @@ EditorHelper.replaceWithEditor = (elem, options) =>
     };
 
     handleTabSwitching();
+
+    editor.editCanvas.addEventListener("blur", () =>
+    {
+        // Update the text-view.
+        elem.value = editor.getText();
+    });
+
+    return editor;
 };
 
 // Inserted file ProgressEstimator.js encoding='utf-8'
@@ -19877,7 +19891,10 @@ function SubWindow(globals, options)
         }
         
         // Select the container's title.
-        me.titleContent.focus();
+        if (me.container.style.position !== "absolute")
+        {
+            me.titleContent.focus();
+        }
         
         // Allow the window to scale, then
         //change its dimensions, if necessary.
@@ -20199,3 +20216,5 @@ SubWindowHelper.setDisplayNavabar = function(displayNavBar)
         SubWindowHelper.navBar = document.createElement("div");
     }
 };
+
+})();
