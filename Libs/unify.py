@@ -2,6 +2,9 @@
 
 import os, os.path, sys
 
+from Includes.printUtil import *
+from Includes.argsUtil import *
+
 ENCODING = "utf-8"
 
 # Merge all .js files in sourceDirectory.
