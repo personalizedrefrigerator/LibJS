@@ -1813,6 +1813,8 @@ Path: ${ me.saveDir }
             
             yesLine.onentercommand = async () =>
             {
+                const PROMPT_TEXT = "> ";
+
                 me.editControl.restoreState();
                 me.editControl.saveStateAndClear();
 
@@ -1840,6 +1842,7 @@ Path: ${ me.saveDir }
                 printResult(result);
                     
                 const doneLine = me.editControl.appendLine("DONE");
+                me.editControl.appendLine("");
 
                 let scriptLine;
                 
@@ -1851,19 +1854,21 @@ Path: ${ me.saveDir }
                         scriptLine.onentercommand = () => {};
                     }
 
-                    scriptLine = me.editControl.appendLine("> ");
+                    scriptLine = me.editControl.appendLine(PROMPT_TEXT);
 
                     scriptLine.onentercommand = async () =>
                     {
-                        let newCommand = scriptLine.text;
-                        scriptLine.text = "> " + newCommand;
+                        let newCommand = scriptLine.text.substring(PROMPT_TEXT.length);
+                        scriptLine.text = PROMPT_TEXT + newCommand;
 
                         const result = await EditorHelper.__runOutOfContext(newCommand);
                         printResult(result);
 
-                        createScriptLine();
+                        createScriptLine().focus();
+                        scriptLine.cursorPosition = scriptLine.text.length;
 
-                        me.editControl.render();
+                        me.scrollToFocus();
+                        requestAnimationFrame(() => me.editControl.render());
                     };
 
                     return scriptLine;
