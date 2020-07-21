@@ -20217,4 +20217,6 @@ SubWindowHelper.setDisplayNavabar = function(displayNavBar)
     }
 };
 
+window.EditorHelper = EditorHelper;
+window.SubWindowHelper = SubWindowHelper;
 })();
