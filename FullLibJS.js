@@ -8207,6 +8207,7 @@ Path: ${ me.saveDir }
         me.runFrame = document.createElement("iframe");
         me.runFrame.style.backgroundColor = "white";
         me.runFrame.style.display = "block";
+        me.runFrame.src = "about:blank";
 
         runFrameParentElement.appendChild(me.runFrame);
 
@@ -8223,9 +8224,18 @@ Path: ${ me.saveDir }
 
         if (!onRun(contentToRun, me.runFrame))
         {
-            me.runFrame.contentWindow.document.open();
-            me.runFrame.contentWindow.document.write(contentToRun);
-            me.runFrame.contentWindow.document.close();
+            try
+            {
+                me.runFrame.contentWindow.document.open();
+                me.runFrame.contentWindow.document.write(contentToRun);
+                me.runFrame.contentWindow.document.close();
+            }
+            catch(e)
+            {
+                console.error(e);
+
+                me.runFrame.src = "data:text/html;base64," + btoa(contentToRun);
+            }
         }
     };
 
