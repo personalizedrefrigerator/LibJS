@@ -518,149 +518,119 @@ JSHelper.GlobalEvents =
 // An implementation of the observer pattern.
 // For global communication, use JSHelper.Notifier.
 // For internal communication, construct JSHelper.UniqueNotifier
-// using "new". Store the previous event if storeDispatched is
-// given allowing a subset of listeners to opt to be notified
-// if the event has *ever* been triggered.
+// using "new".
 JSHelper.UniqueNotifier = 
-(function(storeDispatched)
+(function()
 {
     let listeners = {};
     let listenerIdCounter = 0; // The id for the next listener.
-    let dispatchedEvents = {}; // Data concerning previously dispatched events.
+    let firedEvents = {}; 
+    
+    
     
     // Wait for eventName to be distributed by notify.
     //A message is included with the distributed event.
-    //If fireForFirst is true, if the event has ever been
-    //triggered, the listener is fired. Listens for ANY
-    //of the given events to occur (an array, or, for a
-    //single event, a string). If multiple listeners
-    //are given, the result is an object with data and
-    //event fields (unlesss returnResult). 
-    // Data is the value pushed by the event
-    //and event is the event's string ID. If returnResult is true,
-    //return the result, rather than an object with additional
-    //information.
-    this.waitFor = (eventNames, fireForFirst, returnResult) =>
+    //If more than one argument is given, each additional argument
+    //is interpreted as a possible additional event to continue if 
+    //encountered.
+    this.waitFor = (...eventNames) =>
     {
-        // For compatibility with older versions of JSHelper...
-        // If given a list of strings, return waitForAny.
-        if (fireForFirst !== undefined && typeof (fireForFirst) !== "boolean")
-        {
-            return this.waitFor(arguments, false, true);
-        }
+        // If given an object (e.g. an array) as the first argument,
+        //for compatability, return a more-detailed information object
+        //with data and eventName fields.
+        let returnInfoObject = (typeof eventNames[0] === "object");
 
-        // If not an array...
-        if (typeof eventNames !== "object" || eventNames.length == 0)
-        {
-            // Make it one!
-            eventNames = [eventNames];
-        }
+        let registered = false, registeredContent, resolvedEvent;
+        let listenerId = "l" + (listenerIdCounter++); // Each listener has an ID. This is ours.
         
-        let resolved = false,
-            resolver = undefined;
-        let eventData = undefined;
-        let resolve = (data, eventName) => 
-        { 
-            resolved = true; 
-            eventData = data;
-            resolver = eventName; // Note who resolved it.
+        let resolveWait = (content, eventName) => // A default listener, should the notification be
+        {                                         //received before the promise sets resolveWait.
+            registered = true;
+            registeredContent = content;
+            resolvedEvent = eventName;
+                
+            // Remove our listener.
+            delete listeners[eventName][listenerId];
         };
-        
-        // Create the result.
-        let result = new Promise((doResolve, doReject) =>
-        {
-            // Full data to be given to 
-            //the result when the event is ambiguous.
-            let resolveFullData = 
-            {
-                data: eventData,
-                event: resolver
-            };
-        
-            // Only give the full data when there is more
-            //than one listener specified.
-            if (resolved && (returnResult || eventNames.length == 1))
-            {
-                doResolve(eventData);
-            }
-            else if (resolved)
-            {
-                doResolve(resolveFullData);
-            }
-            else if (eventNames.length == 1 || returnResult)
-            {
-                resolve = (data, resolver) =>
-                {
-                    resolved = true;
 
-                    doResolve(data);
-                };
-            }
-            else
-            {
-                resolve = (data, resolver) =>
-                {
-                    resolved = true;
-                    
-                    resolveFullData.data = data;
-                    resolveFullData.event = resolver;
-                    
-                    doResolve(resolveFullData);
-                };
-            }
-        });
-    
-        // Registers a single requested event.
-        const registerEvent = (eventName) =>
+        // For compatability, if the user called waitFor(something, true),
+        //note that we should treat the first argument as the list of events.
+        // Additionally, if the event has ever been fired, note that we
+        // should return to the user.
+        if (eventNames.length > 1 && eventNames[1] === true)
         {
-            // Has the event already fired?
-            if (fireForFirst && dispatchedEvents[eventName] && dispatchedEvents[eventName].count > 0)
+            eventNames = eventNames[0];
+
+            if (typeof eventnames[0] === "string") 
             {
-                if (!resolved)
+                eventNames = [eventNames]; // It must be an array.
+            }
+
+            // If the event has already been fired, 
+            // we can resolve early.
+            for (const eventName of eventNames)
+            {
+                if (eventName in firedEvents)
                 {
-                    resolve.call(this, dispatchedEvents[eventName].data, eventName);
+                    resolveWait(firedEvents[eventName], eventName);
+                }
+            }
+        }
+        
+        // For every given event...
+        for (const name of eventNames)
+        {
+            ((eventName) =>
+            {
+                if (listeners[eventName] === undefined)
+                {
+                    listeners[eventName] = {};
                 }
                 
-                return;
-            }
-            
-            // Create a set of listeners for the event.
-            if (listeners[eventName] === undefined)
-            {
-                listeners[eventName] = {};
-            }
-            
-            let registered = false, registeredContent;
-            let listenerId = "l" + (listenerIdCounter++); // Each listener has an ID. This is ours.
-            
-            // Listen!
-            listeners[eventName][listenerId] = (content) =>
-            {
-                if (!resolved)
+                // Put a default method in place, in case a notification comes before the next browser
+                //frame.
+                listeners[eventName][listenerId] = (content) =>
                 {
-                    resolve.call(this, content, eventName);
+                    resolveWait(content, eventName);
+                };
+            })(name);      // Create a scope. This might be paranoid -- in older JavaScript,
+                           // loop variables defined with var's values were lost after the 
+                           // current iteration, and so something like this was required.
+                           // This may no longer be the case.
+        }
+        
+        let result = new Promise((resolve, reject) =>
+        {
+            // Update the resolve function.
+            resolveWait = (content, eventName) =>
+            {
+                // What level of detail should we return?
+                if (!returnInfoObject)
+                {
+                    resolve.call(this, content);
                 }
-                
+                else
+                {
+                    resolve.call(this, { data: content, eventName: eventName });
+                }
                 // Remove our listener.
                 delete listeners[eventName][listenerId];
+                
+                // After this, only resolve by removing the listener
+                // from the event.
+                resolveWait = (content, eventName) => 
+                {
+                    delete listeners[eventName][listenerId];
+                };
             };
             
-        };
+            if (registered) // We already received the event!
+            {    // Notify now.
+                resolveWait(registeredContent, resolvedEvent);
+            }
+        });
         
-        // Register all events.
-        for (let i = 0; i < eventNames.length; i++)
-        {
-            registerEvent(eventNames[i]);
-        }
-        
-        // Return a promise!
         return result;
-    };
-    
-    // Wait for any of the given events to occur.
-    this.waitForAny = (...events) =>
-    {
-        return this.waitFor.call(this, events);
     };
     
     // Notify all listeners on eventName.
@@ -677,22 +647,12 @@ JSHelper.UniqueNotifier =
                 }
             }
         }
-        
-        // If data might be large, we might not want to storeDispatched.
-        if (storeDispatched)
-        {
-            if (!dispatchedEvents[eventName])
-            {
-                dispatchedEvents[eventName] = { count: 0, data: undefined };
-            }
 
-            dispatchedEvents[eventName].count++;
-            dispatchedEvents[eventName].data = content;
-        }
+        firedEvents[eventName] = content;
     };
 });
 
-JSHelper.Notifier = new JSHelper.UniqueNotifier(true); // Publicly-accessible, singleton 
+JSHelper.Notifier = new JSHelper.UniqueNotifier(); // Publicly-accessible, singleton 
                                                        // instance of the notifier.
 
 // A method that throws.
