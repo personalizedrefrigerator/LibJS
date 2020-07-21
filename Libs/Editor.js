@@ -3319,6 +3319,8 @@ EditorHelper.replaceWithEditor = (elem, options) =>
         editor.runFrame.style.display = "block";
         editor.runFrame.height = options.height;
         editor.runFrame.style.height = options.height + "px";
+
+        return false;
     });
 
     if (options.font)
