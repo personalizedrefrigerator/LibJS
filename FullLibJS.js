@@ -8234,6 +8234,7 @@ Path: ${ me.saveDir }
             {
                 console.error(e);
 
+                // Failure: Try opening as a data url.
                 me.runFrame.src = "data:text/html;base64," + btoa(contentToRun);
             }
         }
@@ -9731,8 +9732,8 @@ EditorHelper.replaceWithEditor = (elem, options) =>
 
     const updateElemText = () =>
     {
-        priorElemValue = elem.value;
         elem.value = editor.getText();
+        priorElemValue = elem.value;
     };
 
     // Handle tab switching.
