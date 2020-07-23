@@ -3444,8 +3444,8 @@ EditorHelper.replaceWithEditor = (elem, options) =>
 
     const updateElemText = () =>
     {
-        priorElemValue = elem.value;
         elem.value = editor.getText();
+        priorElemValue = elem.value;
     };
 
     // Handle tab switching.
