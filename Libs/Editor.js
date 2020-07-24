@@ -1870,7 +1870,9 @@ Path: ${ me.saveDir }
                     if (scriptLine)
                     {
                         scriptLine.editable = false;
-                        scriptLine.onentercommand = () => {};
+                        
+                        const oldScriptLine = scriptLine;
+                        scriptLine.onentercommand = () => { scriptLine.text = oldScriptLine.text; };
                     }
 
                     scriptLine = me.editControl.appendLine(PROMPT_TEXT);
