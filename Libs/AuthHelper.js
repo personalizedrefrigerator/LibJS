@@ -3,7 +3,7 @@
 /**
  *  A simple authentication manager.
  */
-const AuthHelper = {};
+var AuthHelper = {};
 
 AuthHelper.SIGN_IN_EVENT  = "AUTH_SIGN_IN";
 AuthHelper.SIGN_OUT_EVENT = "AUTH_SIGN_OUT";

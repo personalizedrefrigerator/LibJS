@@ -2002,7 +2002,7 @@ Path: ${ me.saveDir }
         var shareAsHTMLTextLine = window.app ? me.editControl.appendLine("Share as HTML Text") : null;
 
         var setPathToSpellingDictionary = window.app ? me.editControl.appendLine("Set Path to Spellcheck Dictionary") : null;
-        var runSpellCheck = window.app ? me.editControl.appendLine("Check Spelling") : null;
+        var runSpellCheck = me.editControl.appendLine("Check Spelling");
         
         var checkSyntax = me.editControl.appendLine("Check Syntax");
         checkSyntax.editable = false;
@@ -2618,6 +2618,16 @@ Path: ${ me.saveDir }
         me.editControl.saveStateAndClear();
 
         var spellingDictionaryKey = self.app ? self.app.getInternalStorageDirectory() + "/spellcheck.txt" : "SPELLCHECK_DICTIONARY";
+        var haveStorageHelper = true;
+
+        try
+        {
+            StorageHelper.get;
+        }
+        catch(e)
+        {
+            haveStorageHelper = false;
+        }
 
         var writeOutDictionary = (newContent) =>
         {
@@ -2627,12 +2637,14 @@ Path: ${ me.saveDir }
             }
             else
             {
-                if (self.StorageHelper)
+                if (haveStorageHelper)
                 {
-                    StorageHelper.put(spellingDictionaryKey, newContent, 365);
+                    StorageHelper.put(spellingDictionaryKey, newContent);
 
                     return "SUCCESS";
                 }
+
+                return "StorageHelper is not present! Cannot access words!";
             }
         };
 
@@ -2643,12 +2655,12 @@ Path: ${ me.saveDir }
                 return app.getFileContent(spellingDictionaryPath) || DEFAULT_SPELLCHECK_WORDS;
             }
 
-            if (self.StorageHelper && StorageHelper.has(spellingDictionaryKey))
+            if (haveStorageHelper && StorageHelper.has(spellingDictionaryKey))
             {
                 return StorageHelper.get(spellingDictionaryKey) + "";
             }
 
-            return self.DEFAULT_SPELLCHECK_WORDS || DEFAULT_SPELLCHECK_WORDS;
+            return DEFAULT_SPELLCHECK_WORDS;
         }
 
         var wordsJoined = readInDictionary();
