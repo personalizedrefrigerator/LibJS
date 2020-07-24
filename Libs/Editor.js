@@ -14,8 +14,27 @@ const EDITOR_SOURCE = "<!DOCTYPE " + "html>\n"
                      + 
                      document.documentElement.outerHTML;
 
+var DEFAULT_SPELLCHECK_WORDS = // Define some default words for the spellchecker.
+self.DEFAULT_SPELLCHECK_WORDS || // If the DefaultSpellcheckWords.js file wasn't included, use the following:
+`hardly
+any
+default
+words
+in
+this
+dictionary
+you
+should
+probably
+consider
+including
+the
+spell
+help
+script
+file`;
 
-const VERSION_CODE = "1.10 (Main)";
+const VERSION_CODE = "1.11 (Main)";
 let noteError = self.noteError || console.error; // Error logging...
 
 function EditControl(ctx)
@@ -2598,9 +2617,41 @@ Path: ${ me.saveDir }
 
         me.editControl.saveStateAndClear();
 
-        var spellingDictionaryPath = app.getInternalStorageDirectory() + "/spellcheck.txt";
+        var spellingDictionaryKey = self.app ? self.app.getInternalStorageDirectory() + "/spellcheck.txt" : "SPELLCHECK_DICTIONARY";
 
-        var wordsJoined = app.getFileContent(spellingDictionaryPath) || "if";
+        var writeOutDictionary = (newContent) =>
+        {
+            if (self.app)
+            {
+                return app.writeToFile(spellingDictionaryKey, newContent);
+            }
+            else
+            {
+                if (self.StorageHelper)
+                {
+                    StorageHelper.put(spellingDictionaryKey, newContent, 365);
+
+                    return "SUCCESS";
+                }
+            }
+        };
+
+        var readInDictionary = () =>
+        {
+            if (self.app)
+            {
+                return app.getFileContent(spellingDictionaryPath) || DEFAULT_SPELLCHECK_WORDS;
+            }
+
+            if (self.StorageHelper && StorageHelper.has(spellingDictionaryKey))
+            {
+                return StorageHelper.get(spellingDictionaryKey) + "";
+            }
+
+            return self.DEFAULT_SPELLCHECK_WORDS || DEFAULT_SPELLCHECK_WORDS;
+        }
+
+        var wordsJoined = readInDictionary();
         var checkAgainstWords = wordsJoined.split(/[ \t\n.?!;?=0-9\<\>\-_\=\+\'\"\`\[\]\(\)\\\/\{\}\:\|]/g);
 
         var filteredWords = [];
@@ -2752,7 +2803,7 @@ Path: ${ me.saveDir }
                     wordsJoined = writeText;
                     delete errors[errorIndex];
 
-                    var result = app.writeToFile(spellingDictionaryPath, writeText);
+                    var result = writeOutDictionary(writeText);
 
                     if (result !== "SUCCESS")
                     {
@@ -2842,7 +2893,7 @@ Path: ${ me.saveDir }
 
                     var writeText = wordsJoined + appendText;
 
-                    var result = app.writeToFile(spellingDictionaryPath, writeText);
+                    var result = writeOutDictionary(writeText);
 
                     if (result !== "SUCCESS")
                     {
