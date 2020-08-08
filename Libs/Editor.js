@@ -3474,5 +3474,11 @@ EditorHelper.replaceWithEditor = (elem, options) =>
         elem.value = editor.getText();
     });
 
+    // Focus the first line, if there are lines!
+    if (editor.editControl.lines.length > 0)
+    {
+        editor.editControl.lines[0].hasFocus = true;
+    }
+
     return editor;
 };
