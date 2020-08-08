@@ -1772,7 +1772,7 @@ Path: ${ me.saveDir }
         return true;
     }, true);
 
-    this.editCanvas.setAttribute('tabindex', 1);
+    this.editCanvas.setAttribute('tabindex', 0);
 
     this.toggleRun = function(inCurrentPage)
     {

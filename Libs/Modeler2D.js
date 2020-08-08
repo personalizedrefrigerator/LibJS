@@ -1094,7 +1094,7 @@ function Modeler2D(onSubmit, initialPoints, undoBuffer, redoBuffer)
     
     // Make the canvas focusable (so it can recieve
     //key press input).
-    canvas.setAttribute("tabindex", 1);
+    canvas.setAttribute("tabindex", 0);
     
     // Listen for keys used to execute commands.
     canvas.addEventListener("keydown", function(event)

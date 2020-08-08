@@ -582,7 +582,7 @@ HTMLHelper.addTabGroup = function(tabDescriptors, parent, defaultTab, reRunTabAc
         tabLabel.setAttribute("class", "tabLabel tabLabelUnselected"); // Styling.
         tabLabel.textContent = tabName;
         
-        tabLabel.setAttribute("tabIndex", 2);
+        tabLabel.setAttribute("tabIndex", 0);
         
         // Click.
         tabLabel.addEventListener("click", (event) =>
