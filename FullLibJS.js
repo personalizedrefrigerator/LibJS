@@ -8060,7 +8060,7 @@ Path: ${ me.saveDir }
         return true;
     }, true);
 
-    this.editCanvas.setAttribute('tabindex', 1);
+    this.editCanvas.setAttribute('tabindex', 0);
 
     this.toggleRun = function(inCurrentPage)
     {
@@ -9761,6 +9761,12 @@ EditorHelper.replaceWithEditor = (elem, options) =>
         // Update the text-view.
         elem.value = editor.getText();
     });
+
+    // Focus the first line, if there are lines!
+    if (editor.editControl.lines.length > 0)
+    {
+        editor.editControl.lines[0].hasFocus = true;
+    }
 
     return editor;
 };
@@ -13247,7 +13253,7 @@ HTMLHelper.addTabGroup = function(tabDescriptors, parent, defaultTab, reRunTabAc
         tabLabel.setAttribute("class", "tabLabel tabLabelUnselected"); // Styling.
         tabLabel.textContent = tabName;
         
-        tabLabel.setAttribute("tabIndex", 2);
+        tabLabel.setAttribute("tabIndex", 0);
         
         // Click.
         tabLabel.addEventListener("click", (event) =>
@@ -18763,7 +18769,7 @@ function Modeler2D(onSubmit, initialPoints, undoBuffer, redoBuffer)
     
     // Make the canvas focusable (so it can recieve
     //key press input).
-    canvas.setAttribute("tabindex", 1);
+    canvas.setAttribute("tabindex", 0);
     
     // Listen for keys used to execute commands.
     canvas.addEventListener("keydown", function(event)
