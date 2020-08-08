@@ -5,6 +5,18 @@
 
 function Drawer2D(onSubmit, options)
 {
+    //options:
+    //  initialHeight,
+    //  initialWidth -- The initial size of the window and image, 
+    //                  if imageWidth,imageHeight/image not given
+    //  initialImage -- An initial entity with width and ehight properties
+    //                  that can be drawn onto a Context2D via context.drawImage.
+    //  imageHeight,
+    //  imageWidth   -- Override initialImage.width, initialImage.height, or use these
+    //                  as the dimensions of the new, blank image should no initialImage
+    //                  be given.
+    //  windowOptions -- Additional options to be given to the SubWindowHelper on window creation.
+    //  background   -- CSS background property value for the drawing view. E.g. radial-gradient(red, white).
     options = options || {};    
     
     var me = this;
@@ -27,10 +39,16 @@ function Drawer2D(onSubmit, options)
     
     let lastUndoTime = (new Date()).getTime();
     let actionsSinceUndo = 0;
+
+    // Join any provided window options with a set of defaults.
+    const windowOptions = JSHelper.mapUnite(options.windowOptions || {}, 
+    {
+        title: "Drawer 2D", content: "",
+        minWidth: INITIAL_WIDTH, 
+        minHeight: INITIAL_HEIGHT 
+    });
     
-    this.mainSubWindow = SubWindowHelper.create({ title: "Drawer 2D", content: "",
-                                              minWidth: INITIAL_WIDTH, 
-                                              minHeight: INITIAL_HEIGHT });
+    this.mainSubWindow = SubWindowHelper.create(windowOptions);
     this.mainSubWindow.enableFlex(); // Stretches elements vertically, especially the canvas.
     
     const canvas = document.createElement("canvas");
@@ -42,7 +60,8 @@ function Drawer2D(onSubmit, options)
     canvas.style.height = "auto";
     
     // Give the canvas a background, to permit visualization of the alpha channel.
-    canvas.style.backgroundImage = "radial-gradient(white, black)";
+    canvas.style.background = options.background 
+            || "radial-gradient(rgba(255, 255, 255, 0.8), rgba(200, 200, 200, 0.6))";
     canvas.style.backgroundSize = "5px 5px";
     
     const imageCanvas = document.createElement("canvas");

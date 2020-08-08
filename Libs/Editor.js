@@ -14,8 +14,27 @@ const EDITOR_SOURCE = "<!DOCTYPE " + "html>\n"
                      + 
                      document.documentElement.outerHTML;
 
+var DEFAULT_SPELLCHECK_WORDS = // Define some default words for the spellchecker.
+self.DEFAULT_SPELLCHECK_WORDS || // If the DefaultSpellcheckWords.js file wasn't included, use the following:
+`hardly
+any
+default
+words
+in
+this
+dictionary
+you
+should
+probably
+consider
+including
+the
+spell
+help
+script
+file`;
 
-const VERSION_CODE = "1.10 (Main)";
+const VERSION_CODE = "1.11 (Main)";
 let noteError = self.noteError || console.error; // Error logging...
 
 function EditControl(ctx)
@@ -1851,7 +1870,9 @@ Path: ${ me.saveDir }
                     if (scriptLine)
                     {
                         scriptLine.editable = false;
-                        scriptLine.onentercommand = () => {};
+                        
+                        const oldScriptLine = scriptLine;
+                        scriptLine.onentercommand = () => { scriptLine.text = oldScriptLine.text; };
                     }
 
                     scriptLine = me.editControl.appendLine(PROMPT_TEXT);
@@ -1919,6 +1940,7 @@ Path: ${ me.saveDir }
         me.runFrame = document.createElement("iframe");
         me.runFrame.style.backgroundColor = "white";
         me.runFrame.style.display = "block";
+        me.runFrame.src = "about:blank";
 
         runFrameParentElement.appendChild(me.runFrame);
 
@@ -1935,9 +1957,19 @@ Path: ${ me.saveDir }
 
         if (!onRun(contentToRun, me.runFrame))
         {
-            me.runFrame.contentWindow.document.open();
-            me.runFrame.contentWindow.document.write(contentToRun);
-            me.runFrame.contentWindow.document.close();
+            try
+            {
+                me.runFrame.contentWindow.document.open();
+                me.runFrame.contentWindow.document.write(contentToRun);
+                me.runFrame.contentWindow.document.close();
+            }
+            catch(e)
+            {
+                console.error(e);
+
+                // Failure: Try opening as a data url.
+                me.runFrame.src = "data:text/html;base64," + btoa(contentToRun);
+            }
         }
     };
 
@@ -1972,7 +2004,7 @@ Path: ${ me.saveDir }
         var shareAsHTMLTextLine = window.app ? me.editControl.appendLine("Share as HTML Text") : null;
 
         var setPathToSpellingDictionary = window.app ? me.editControl.appendLine("Set Path to Spellcheck Dictionary") : null;
-        var runSpellCheck = window.app ? me.editControl.appendLine("Check Spelling") : null;
+        var runSpellCheck = me.editControl.appendLine("Check Spelling");
         
         var checkSyntax = me.editControl.appendLine("Check Syntax");
         checkSyntax.editable = false;
@@ -2587,9 +2619,53 @@ Path: ${ me.saveDir }
 
         me.editControl.saveStateAndClear();
 
-        var spellingDictionaryPath = app.getInternalStorageDirectory() + "/spellcheck.txt";
+        var spellingDictionaryKey = self.app ? self.app.getInternalStorageDirectory() + "/spellcheck.txt" : "SPELLCHECK_DICTIONARY";
+        var haveStorageHelper = true;
 
-        var wordsJoined = app.getFileContent(spellingDictionaryPath) || "if";
+        try
+        {
+            StorageHelper.get;
+        }
+        catch(e)
+        {
+            haveStorageHelper = false;
+        }
+
+        var writeOutDictionary = (newContent) =>
+        {
+            if (self.app)
+            {
+                return app.writeToFile(spellingDictionaryKey, newContent);
+            }
+            else
+            {
+                if (haveStorageHelper)
+                {
+                    StorageHelper.put(spellingDictionaryKey, newContent);
+
+                    return "SUCCESS";
+                }
+
+                return "StorageHelper is not present! Cannot access words!";
+            }
+        };
+
+        var readInDictionary = () =>
+        {
+            if (self.app)
+            {
+                return app.getFileContent(spellingDictionaryPath) || DEFAULT_SPELLCHECK_WORDS;
+            }
+
+            if (haveStorageHelper && StorageHelper.has(spellingDictionaryKey))
+            {
+                return StorageHelper.get(spellingDictionaryKey) + "";
+            }
+
+            return DEFAULT_SPELLCHECK_WORDS;
+        }
+
+        var wordsJoined = readInDictionary();
         var checkAgainstWords = wordsJoined.split(/[ \t\n.?!;?=0-9\<\>\-_\=\+\'\"\`\[\]\(\)\\\/\{\}\:\|]/g);
 
         var filteredWords = [];
@@ -2741,7 +2817,7 @@ Path: ${ me.saveDir }
                     wordsJoined = writeText;
                     delete errors[errorIndex];
 
-                    var result = app.writeToFile(spellingDictionaryPath, writeText);
+                    var result = writeOutDictionary(writeText);
 
                     if (result !== "SUCCESS")
                     {
@@ -2831,7 +2907,7 @@ Path: ${ me.saveDir }
 
                     var writeText = wordsJoined + appendText;
 
-                    var result = app.writeToFile(spellingDictionaryPath, writeText);
+                    var result = writeOutDictionary(writeText);
 
                     if (result !== "SUCCESS")
                     {
@@ -3418,6 +3494,25 @@ EditorHelper.replaceWithEditor = (elem, options) =>
     showKeyboardButton.style.backgroundColor = "rgba(0, 0, 0, 0.9)";
     showKeyboardButton.style.width = "min-content";
 
+    let priorElemValue = elem.value;
+
+    const updateEditorText = () =>
+    {
+        if (elem.value !== priorElemValue)
+        {
+            editor.clear();
+            editor.displayContent(elem.value);
+
+            priorElemValue = elem.value;
+        }
+    };
+
+    const updateElemText = () =>
+    {
+        elem.value = editor.getText();
+        priorElemValue = elem.value;
+    };
+
     // Handle tab switching.
     const handleTabSwitching = async () =>
     {
@@ -3427,13 +3522,12 @@ EditorHelper.replaceWithEditor = (elem, options) =>
 
             if (newTabName === "Textbox" && currentTabName === "Editor")
             {
-                elem.value = editor.getText();
+                updateElemText();
             }
             else if ((newTabName === "Editor" || newTabName === "Preview") 
                     && currentTabName === "Textbox")
             {
-                editor.clear();
-                editor.displayContent(elem.value);
+                updateEditorText();
             }
 
             // Adjust the editor to the canvas' size and render
@@ -3448,15 +3542,11 @@ EditorHelper.replaceWithEditor = (elem, options) =>
             {
                 if (currentTabName === "Editor")
                 {
-                    elem.value = editor.getText();
+                    updateElemText();
                 }
                 else if (currentTabName === "Textbox")
                 {
-                    if (elem.value !== editor.getText())
-                    {
-                        editor.clear();
-                        editor.displayContent(elem.value);
-                    }
+                    updateEditorText();
                 }
                 
                 editor.updateRunFrame();
@@ -3470,8 +3560,12 @@ EditorHelper.replaceWithEditor = (elem, options) =>
 
     editor.editCanvas.addEventListener("blur", () =>
     {
-        // Update the text-view.
-        elem.value = editor.getText();
+        updateElemText();
+    });
+
+    editor.editCanvas.addEventListener("focus", () =>
+    {
+        updateEditorText();
     });
 
     // Focus the first line, if there are lines!

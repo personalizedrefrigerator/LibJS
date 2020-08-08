@@ -4,7 +4,7 @@
  *  A simple storage manager, permitting storage and automatic deletion of
  * data. It is intended to use window.localStorage.
  */
-const StorageHelper = {};
+var StorageHelper = {};
 
 StorageHelper.DEFAULT_STORE_DURATION = 12; // Default to this number of days until expiration.
 StorageHelper.STORAGE_PREFIX         = "_S"; // A string with which to prefix all items belonging to
@@ -26,6 +26,7 @@ StorageHelper.put = (key, data, expiration) =>
     // Only proceed if the data won't immediately expire.
     if (expiration < nowTime)
     {
+        console.warn("Data for " + key + " will expire immediately!");
         return;
     }
     
