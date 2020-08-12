@@ -32,7 +32,20 @@ the
 spell
 help
 script
-file`;
+file
+but
+i
+think
+these
+may
+do
+for
+applications
+that
+aren't
+using
+this
+feature`;
 
 const VERSION_CODE = "1.11 (Main)";
 let noteError = self.noteError || console.error; // Error logging...
