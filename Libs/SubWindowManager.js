@@ -959,11 +959,11 @@ function SubWindow(globals, options)
         };
     };
     
-    this.destroy = function()
+    this.destroy = async function()
     {
         if (!me.closed)
         {
-            me.destroyTransition.start();
+            await me.destroyTransition.start();
         }
     };
     
