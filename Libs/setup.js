@@ -347,7 +347,7 @@ input::placeholder
     min-width: 0;
 }
 
-code
+code, pre
 {
     background-color: #dddddd;
     color: black;
