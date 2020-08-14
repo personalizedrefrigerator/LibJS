@@ -397,7 +397,7 @@ function JavaScriptHighlightScheme(originalHighlighter)
         "true": "#abab00",
         "null": "#00ff66",
         "undefined": "#bbbbdd",
-        "=>": "#ea00ea",
+        "=>": "#eac0fa",
         "this": "#00ffff",
         "let": "#ffaacc",
         "var": "#ffaadd",
