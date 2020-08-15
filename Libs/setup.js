@@ -359,6 +359,10 @@ code, pre
     background-size: 3px 3px;
 }
 
+pre
+{
+    overflow-x: auto;
+}
 
 input, button
 {
