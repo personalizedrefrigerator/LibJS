@@ -561,7 +561,7 @@ JSHelper.UniqueNotifier =
         {
             eventNames = eventNames[0];
 
-            if (typeof eventnames[0] === "string") 
+            if (typeof eventNames[0] === "string") 
             {
                 eventNames = [eventNames]; // It must be an array.
             }

@@ -6203,7 +6203,7 @@ input::placeholder
     min-width: 0;
 }
 
-code
+code, pre
 {
     background-color: #dddddd;
     color: black;
@@ -6215,6 +6215,10 @@ code
     background-size: 3px 3px;
 }
 
+pre
+{
+    overflow-x: auto;
+}
 
 input, button
 {
@@ -6339,7 +6343,20 @@ the
 spell
 help
 script
-file`;
+file
+but
+i
+think
+these
+may
+do
+for
+applications
+that
+aren't
+using
+this
+feature`;
 
 const VERSION_CODE = "1.11 (Main)";
 let noteError = self.noteError || console.error; // Error logging...
@@ -10755,7 +10772,7 @@ function JavaScriptHighlightScheme(originalHighlighter)
         "true": "#abab00",
         "null": "#00ff66",
         "undefined": "#bbbbdd",
-        "=>": "#ea00ea",
+        "=>": "#eac0fa",
         "this": "#00ffff",
         "let": "#ffaacc",
         "var": "#ffaadd",
@@ -12278,7 +12295,7 @@ JSHelper.UniqueNotifier =
         {
             eventNames = eventNames[0];
 
-            if (typeof eventnames[0] === "string") 
+            if (typeof eventNames[0] === "string") 
             {
                 eventNames = [eventNames]; // It must be an array.
             }
@@ -21541,11 +21558,11 @@ function SubWindow(globals, options)
         };
     };
     
-    this.destroy = function()
+    this.destroy = async function()
     {
         if (!me.closed)
         {
-            me.destroyTransition.start();
+            await me.destroyTransition.start();
         }
     };
     
@@ -21912,4 +21929,5 @@ SubWindowHelper.setDisplayNavabar = function(displayNavBar)
 
 self.SubWindowHelper = SubWindowHelper;
 self.EditorHelper = EditorHelper;
+self.AuthHelper.js = AuthHelper.js;
 })();
