@@ -249,6 +249,8 @@ function SubWindow(globals, options)
     //              size in pixels after load or to allow its size
     //              to be determined by its contents until resize.
     //  noResize    Disable window resizing.                        bool
+    // initialPosIsAbsolute Whether a with-page window should be given 
+    //              initial position without consideration of scrollX/scrollY.
     // unsnappable  Prohibits a "snapping" behavior from occurring  bool
     //              when a window is brought near an edge of the screen.
     // fixed        Whether the user can drag the window.           bool
@@ -1014,7 +1016,7 @@ function SubWindow(globals, options)
             var initialX = options.x !== undefined ? options.x : Math.max(0, window.innerWidth - me.container.clientWidth) / 2;
             var initialY = options.y !== undefined ? options.y : Math.max(5, window.innerHeight / 4 - me.container.clientHeight) / 2;
             
-            if (me.container.style.position === "absolute")
+            if (me.container.style.position === "absolute" && !options.initialPosIsAbsolute)
             {
                 initialX += window.scrollX;
                 initialY += window.scrollY;
@@ -1197,6 +1199,7 @@ SubWindowHelper.prompt = function(title, message, inputs,
     promptDialog.appendChild(contentArea);
     
     messageZone.innerText = message;
+    messageZone.style.flexGrow = 0.8;
     
     var addedInputs = [];
     var inputMap = {};
@@ -1257,7 +1260,7 @@ SubWindowHelper.prompt = function(title, message, inputs,
         submit();
     });
     
-    submitButton.style.flexGrow = 1;
+    submitButton.style.flexGrow = 0.4;
     
     return new Promise((resolve, reject) =>
     {
