@@ -8,6 +8,7 @@
  * to Github.
  */
  
+var PageDataHelper = {};
 var ContentManager = {};
 
 ContentManager.URL_PAGE_SPECIFIER_START = "?="; // Use this string to requestF a specific page.
