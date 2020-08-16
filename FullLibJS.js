@@ -20818,6 +20818,22 @@ function SubWindow(globals, options)
         }
     };
 
+    this.getXY = function()
+    {
+        var bbox = me.container.getBoundingClientRect();
+        
+        var left = bbox.left;
+        var top = bbox.top;
+
+        if (me.container.style.position === "absolute")
+        {
+            left += window.scrollX;
+            top += window.scrollY;
+        }
+
+        return { x: left, y: top };
+    };
+
     var widthPreSnap = undefined, heightPreSnap = undefined;
 
     this.unsnap = function()
