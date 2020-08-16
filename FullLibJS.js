@@ -4343,7 +4343,7 @@ ContentManager.init = () =>
 requestAnimationFrame(
 async () =>
 {
-    await JSHelper.Notifier.waitFor(JSHelper.PAGE_SETUP_COMPLETE, true);
+    await JSHelper.Notifier.waitFor(JSHelper.GlobalEvents.PAGE_SETUP_COMPLETE, true);
     
     // Enable backstack navigation.
     window.addEventListener("popstate", ContentManager.onBackstackTransit);
@@ -5443,7 +5443,7 @@ AuthHelper.isSignedIn = () =>
 requestAnimationFrame(
 async () =>
 {
-    await JSHelper.Notifier.waitFor([JSHelper.PAGE_SETUP_COMPLETE], true);
+    await JSHelper.Notifier.waitFor([JSHelper.GlobalEvents.PAGE_SETUP_COMPLETE], true);
     
     // Only attempt to manage authentication if firebase is defined.
     if (window.firebase)
@@ -5462,6 +5462,10 @@ async () =>
             // Store the user.
             AuthHelper.user = user;
         });
+    }
+    else
+    {
+        console.warn("Unable to use Firebase for authentication... Not loading AuthHelper...");
     }
 });
 
@@ -12284,7 +12288,7 @@ JSHelper.UniqueNotifier =
             resolvedEvent = eventName;
                 
             // Remove our listener.
-            delete listeners[eventName][listenerId];
+            // delete listeners[eventName][listenerId];
         };
 
         // For compatability, if the user called waitFor(something, true),
@@ -12295,7 +12299,7 @@ JSHelper.UniqueNotifier =
         {
             eventNames = eventNames[0];
 
-            if (typeof eventNames[0] === "string") 
+            if (typeof eventNames === "string") 
             {
                 eventNames = [eventNames]; // It must be an array.
             }
@@ -21929,5 +21933,6 @@ SubWindowHelper.setDisplayNavabar = function(displayNavBar)
 
 self.SubWindowHelper = SubWindowHelper;
 self.EditorHelper = EditorHelper;
-self.AuthHelper.js = AuthHelper.js;
+self.AuthHelper = AuthHelper;
+self.JSHelper = JSHelper;
 })();

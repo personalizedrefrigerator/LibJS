@@ -550,7 +550,7 @@ JSHelper.UniqueNotifier =
             resolvedEvent = eventName;
                 
             // Remove our listener.
-            delete listeners[eventName][listenerId];
+            // delete listeners[eventName][listenerId];
         };
 
         // For compatability, if the user called waitFor(something, true),
@@ -561,7 +561,7 @@ JSHelper.UniqueNotifier =
         {
             eventNames = eventNames[0];
 
-            if (typeof eventNames[0] === "string") 
+            if (typeof eventNames === "string") 
             {
                 eventNames = [eventNames]; // It must be an array.
             }

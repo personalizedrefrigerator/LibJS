@@ -574,7 +574,7 @@ ContentManager.init = () =>
 requestAnimationFrame(
 async () =>
 {
-    await JSHelper.Notifier.waitFor(JSHelper.PAGE_SETUP_COMPLETE, true);
+    await JSHelper.Notifier.waitFor(JSHelper.GlobalEvents.PAGE_SETUP_COMPLETE, true);
     
     // Enable backstack navigation.
     window.addEventListener("popstate", ContentManager.onBackstackTransit);

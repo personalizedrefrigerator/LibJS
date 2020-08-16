@@ -756,7 +756,7 @@ AuthHelper.isSignedIn = () =>
 requestAnimationFrame(
 async () =>
 {
-    await JSHelper.Notifier.waitFor([JSHelper.PAGE_SETUP_COMPLETE], true);
+    await JSHelper.Notifier.waitFor([JSHelper.GlobalEvents.PAGE_SETUP_COMPLETE], true);
     
     // Only attempt to manage authentication if firebase is defined.
     if (window.firebase)
@@ -775,5 +775,9 @@ async () =>
             // Store the user.
             AuthHelper.user = user;
         });
+    }
+    else
+    {
+        console.warn("Unable to use Firebase for authentication... Not loading AuthHelper...");
     }
 });
