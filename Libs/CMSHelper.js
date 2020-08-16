@@ -1,6 +1,9 @@
 "use strict";
 
 /**
+ * Note: This probably shouldn't be packaged with LibJS... TODO
+ * Consider removing it.
+ * 
  *  A very simple content management system for uwappdev.github.io.
  * Although it is intended to be usable for changes to page content,
  * its primary goal is for management of tools that might be exposed
