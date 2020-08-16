@@ -5937,8 +5937,8 @@ pre
 
 input, button
 {
-    background-color: rgba(155, 100, 255, 0.6);
-    background-image: linear-gradient(16deg, rgba(100, 100, 255, 0.7), rgba(100, 0, 100, 0.4), rgba(100, 100, 255, 0.7));
+    background-color: rgba(180, 200, 200, 0.6);
+    background-image: linear-gradient(16deg, rgba(180, 200, 205, 0.7), rgba(255, 255, 255, 0.4), rgba(200, 200, 255, 0.7));
     
     border: 1px solid #667766;
     border-radius: 6px;
@@ -21646,6 +21646,9 @@ SubWindowHelper.setDisplayNavabar = function(displayNavBar)
 "use strict";
 
 /**
+ * Note: This probably shouldn't be packaged with LibJS... TODO
+ * Consider removing it.
+ * 
  *  A very simple content management system for uwappdev.github.io.
  * Although it is intended to be usable for changes to page content,
  * its primary goal is for management of tools that might be exposed
