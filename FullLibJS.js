@@ -20615,7 +20615,7 @@ function SubWindow(globals, options)
 
     this.alwaysOnTop = options.alwaysOnTop || false;
     this.unsnappable = options.unsnappable === undefined ? (options.noResize || false) : options.unsnappable;
-    this.snapThreshold = options.snapThreshold !== undefined ? options.snapThreshold : 60; // How far to the left/right the user needs to drag the window for it to snap.
+    this.snapThreshold = options.snapThreshold !== undefined ? options.snapThreshold : 26; // How far to the left/right the user needs to drag the window for it to snap.
     this.snapped = false; // Whether the window is currently snapped.
     
     this.draggable = false;
