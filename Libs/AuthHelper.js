@@ -172,9 +172,7 @@ async () =>
     
     let passwordInput = HTMLHelper.addPasswordConcocter(contentWrapper,
                                                        AuthHelper.PASSWORD_REQUIREMENTS);
-    let disclaimer = HTMLHelper.addParagraph(`Please, do <i><b>not</b></i> create an
-                                              account unless explicitly told to do so
-                                              by club administration. We reserve the
+    let disclaimer = HTMLHelper.addParagraph(`We reserve the
                                               right to delete accounts and any data
                                               associated with them. We may also share
                                               any data given to this app <span class = "dash"></span>
