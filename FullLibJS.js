@@ -1476,6 +1476,10 @@ function Drawer2D(onSubmit, options)
     me.mainSubWindow.appendChild(canvas);
     
     let pointerDown = false, lastX, lastY;
+    let previousTool = undefined;
+
+    // Allow focusing the canvas.
+    canvas.setAttribute("tabindex", 0);
     
     // Configure events.
     
@@ -1483,6 +1487,14 @@ function Drawer2D(onSubmit, options)
     JSHelper.Events.registerPointerEvent("down", canvas, function(event)
     {
         event.preventDefault();
+        canvas.focus(); // TODO: Test whether this breaks touch-screen support.
+
+        // Are we temporarially changing the tool?
+        if (event.button == 1)
+        {
+            previousTool = me.currentTool; // If so, be prepared to change back at the end of the event.
+            me.currentTool = me.tools["View Panner"];
+        }
     
         let bbox = canvas.getBoundingClientRect();
         
@@ -1539,14 +1551,98 @@ function Drawer2D(onSubmit, options)
         let y = event.clientY - bbox.top;
         
         me.currentTool.handlePointerUp(ctx, imageCtx, x, y, x - pointerStartX, y - pointerStartY);
-        
+
         if (changesMade)
         {
             actionsSinceUndo++;
             
             cacheStateIfNecessary();
         }
+
+        if (previousTool)
+        {
+            me.currentTool = previousTool;
+
+            previousTool = undefined;
+        }
     }, false);
+
+    canvas.addEventListener("keydown", async (event) =>
+    {
+        if (event.ctrlKey)
+        {
+            if (event.key == "z")
+            {
+                performUndo();
+                event.preventDefault();
+            }
+            else if (event.key == "y" || event.shiftKey && event.key.toLowerCase() == 'z')
+            {
+                performRedo();
+                event.preventDefault();
+            }
+
+            render();
+        }
+    });
+
+    canvas.addEventListener("keypress", async (event) =>
+    {
+        if (event.key == "w" 
+                || event.key == "a" || event.key == "d" || event.key == "s")
+        {
+            let dx = 0, dy = 0;
+
+            if (event.key == "w")
+            {
+                dy = 1;
+            }
+            else if (event.key == "s")
+            {
+                dy = -1;
+            }
+            else if (event.key == "d")
+            {
+                dx = 1;
+            }
+            else if (event.key == "a")
+            {
+                dx = -1;
+            }
+
+            transformMatrix.translate([-dx * 8, dy * 8, 1]);
+            render();
+        }
+    });
+
+    const WHEEL_PIXEL_MODE = 0;
+    const WHEEL_LINE_MODE = 1;
+    const WHEEL_PAGE_MODE = 2;
+
+    canvas.addEventListener("wheel", async (event) =>
+    {
+        let dy = event.deltaY;
+
+        if (event.deltaMode == WHEEL_LINE_MODE)
+        {
+            dy *= 25;
+        }
+        else if (event.deltaMode == WHEEL_PAGE_MODE)
+        {
+            dy *= 500;
+        }
+
+        if (!event.shiftKey)
+        {
+            me.tools["View Zoomer"].performZoom(imageCtx, 0, -dy);
+        }
+        else
+        {
+            transformMatrix.translate([0, dy, 1]);
+        }
+
+        render();
+    });
     
     // Any async setup.
     (async () =>
@@ -1802,6 +1898,11 @@ Drawer2DHelper.ViewZoomer = function(matrixToManipulate)
     };
     
     this.handlePointerMove = (displayCtx, drawCtx, x, y, dx, dy) =>
+    {
+        performZoom(drawCtx, dx, dy);
+    };
+
+    this.performZoom = (drawCtx, dx, dy) =>
     {
         let minPosition = [0, 0, 0];
         let maxPosition = [drawCtx.canvas.width, drawCtx.canvas.height, 0];
