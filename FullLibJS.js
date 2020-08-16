@@ -22129,4 +22129,5 @@ self.SubWindowHelper = SubWindowHelper;
 self.EditorHelper = EditorHelper;
 self.AuthHelper = AuthHelper;
 self.JSHelper = JSHelper;
+self.CloudHelper = CloudHelper;
 })();
