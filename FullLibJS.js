@@ -1899,7 +1899,7 @@ Drawer2DHelper.ViewZoomer = function(matrixToManipulate)
     
     this.handlePointerMove = (displayCtx, drawCtx, x, y, dx, dy) =>
     {
-        performZoom(drawCtx, dx, dy);
+        me.performZoom(drawCtx, dx, dy);
     };
 
     this.performZoom = (drawCtx, dx, dy) =>
