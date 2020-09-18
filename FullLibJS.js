@@ -1344,17 +1344,6 @@ function SubWindow(globals, options)
     var maxWidth = options.maxWidth;
     var maxHeight = options.maxHeight;
     
-    // Given a specific maxWidth or maxHeight? Set it using CSS now...
-    if (options.maxWidth)
-    {
-        this.container.style.maxWidth = `{maxWidth}px`;
-    }
-    
-    if (options.maxHeight)
-    {
-        this.container.style.maxHeight = `{maxHeight}px`;
-    }
-    
     let getMaxWidth = () =>
     {
         return maxWidth || window.innerWidth || parent.clientWidth;
@@ -1378,6 +1367,17 @@ function SubWindow(globals, options)
     else if (options.content)
     {
         this.content.textContent = options.content;
+    }
+    
+    // Given a specific maxWidth or maxHeight? Set it using CSS...
+    if (options.maxWidth)
+    {
+        this.content.style.maxWidth = options.maxWidth + 'px';
+    }
+    
+    if (options.maxHeight)
+    {
+        this.content.style.maxHeight = options.maxHeight + 'px';
     }
     
     this.titleBar.appendChild(me.titleContent);
@@ -1684,13 +1684,13 @@ function SubWindow(globals, options)
         
         if (me.container.clientWidth + left > windowWidth)
         {
-            me.container.style.left = moveToLeft;
+            me.container.style.left = moveToLeft + "px";
             me.container.style.width = windowWidth + "px";
         }
         
         if (me.container.clientHeight + top > windowHeight)
         {
-            me.container.style.top = moveToTop;
+            me.container.style.top = moveToTop + "px";
             me.container.style.maxHeight = windowHeight + "px";
         }
         
