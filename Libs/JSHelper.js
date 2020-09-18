@@ -172,7 +172,7 @@ JSHelper.waitFor = (delay) =>
     let doResolve = false;
     let resolveFn = () => { doResolve = true; };
 
-    setTimeout(delay / 1000, () => resolveFn());
+    setTimeout(delay * 1000, () => resolveFn());
 
     return new Promise((resolve, reject) =>
     {

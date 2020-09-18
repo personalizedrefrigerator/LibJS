@@ -454,13 +454,18 @@ function EditControl(ctx)
         me.refreshPassedLines(oldViewOffset);
     };
 
-    this.render = function()
+    this.render = async function()
     {
-        // TODO Find a better solution.
         if (me.ctx.canvas.clientHeight !== me.ctx.canvas.height || me.ctx.canvas.clientWidth !== me.ctx.canvas.width)
         {
-            me.ctx.canvas.height = me.ctx.canvas.clientHeight || 150;
-            me.ctx.canvas.width = me.ctx.canvas.clientWidth || 150;
+            // If we have zero width or height...
+            if (!me.ctx.canvas.clientHeight || !me.ctx.canvas.clientWidth)
+            {
+                await JSHelper.waitFor(0.2); // Wait, then render. We could be transitioning in.
+            }
+            
+            me.ctx.canvas.height = me.ctx.canvas.clientHeight || 300; // If still zero, make a guess!
+            me.ctx.canvas.width = me.ctx.canvas.clientWidth || 500;
         }
 
         me.ctx.clearRect(0, 0, me.ctx.canvas.width, me.ctx.canvas.height);
@@ -3340,7 +3345,6 @@ Path: ${ me.saveDir }
     me.editCanvas.style.width = "calc(100% - 2px)";
 
     me.keyboard.render();
-
     me.editControl.render();
 
     textViewerParentElement.appendChild(me.editCanvas);
