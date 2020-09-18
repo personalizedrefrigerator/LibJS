@@ -251,6 +251,7 @@ function SubWindow(globals, options)
     //  noResize    Disable window resizing.                        bool
     // initialPosIsAbsolute Whether a with-page window should be given 
     //              initial position without consideration of scrollX/scrollY.
+    // (x, y)       Initial position of the window.                (int, int)
     // unsnappable  Prohibits a "snapping" behavior from occurring  bool
     //              when a window is brought near an edge of the screen.
     // fixed        Whether the user can drag the window.           bool
@@ -327,6 +328,17 @@ function SubWindow(globals, options)
     var minHeight = options.minHeight;
     var maxWidth = options.maxWidth;
     var maxHeight = options.maxHeight;
+    
+    // Given a specific maxWidth or maxHeight? Set it using CSS now...
+    if (options.maxWidth)
+    {
+        this.container.style.maxWidth = `{maxWidth}px`;
+    }
+    
+    if (options.maxHeight)
+    {
+        this.container.style.maxHeight = `{maxHeight}px`;
+    }
     
     let getMaxWidth = () =>
     {
