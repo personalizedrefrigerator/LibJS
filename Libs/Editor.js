@@ -16,36 +16,13 @@ const EDITOR_SOURCE = "<!DOCTYPE " + "html>\n"
 
 var DEFAULT_SPELLCHECK_WORDS = // Define some default words for the spellchecker.
 self.DEFAULT_SPELLCHECK_WORDS || // If the DefaultSpellcheckWords.js file wasn't included, use the following:
-`hardly
-any
-default
-words
-in
-this
-dictionary
-you
-should
-probably
-consider
-including
-the
-spell
-help
-script
-file
-but
-i
-think
-these
-may
-do
-for
-applications
-that
-aren't
-using
-this
-feature`;
+`there are hardly any default words in this dictionary
+you should probably consider including the
+spell help script file but I think these
+may do for applications that
+aren't using this feature
+such as those that focus on use of the code editing
+functionality`.replace(/\s+/g, "\n").toLowerCase();
 
 const VERSION_CODE = "1.11 (Main)";
 let noteError = self.noteError || console.error; // Error logging...
@@ -1593,7 +1570,7 @@ Path: ${ me.saveDir }
         var dy = event.deltaY;
         var lineHeight = me.editControl.lineH; 
 
-        if (dy !== 0)
+        if (dy !== 0 && lineHeight > 0)
         {
             if (event.deltaMode === WHEEL_LINE_MODE)
             {
@@ -1606,12 +1583,13 @@ Path: ${ me.saveDir }
 
             // Scroll the view, not the page.
             dy *= -1;
-
-            var didNotMove = me.editControl.moveView(0, dy);
             
-            if (!didNotMove)
+            var didNotMove = me.editControl.moveView(0, dy);
+            var lineDeltaCount = Math.floor(Math.abs(dy / lineHeight));
+            
+            if (!didNotMove || lineDeltaCount < 1)
             {
-            	event.preventDefault();
+                event.preventDefault();
             }
         }
 
@@ -2897,6 +2875,7 @@ Path: ${ me.saveDir }
         {
             var exitLine = me.editControl.appendLine("Exit (" + filteredWords.length + " to be checked)...");
             exitLine.editable = false;
+            exitLine.focus();
 
             var errorsCountDisplay = me.editControl.appendLine("Found " + errorsCount + " errors.");
             errorsCountDisplay.editable = false;
