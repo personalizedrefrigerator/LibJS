@@ -694,12 +694,11 @@ function SyntaxSelector(initialHighlightScheme)
 
     var getDepthSortedLabels = function(appliedLabels)
     {
-        var allLabels = [];
-        var i;
+        let allLabels = [];
 
-        for (var label in appliedLabels)
+        for (const label in appliedLabels)
         {
-            for (i = 0; i < appliedLabels[label].length; i++)
+            for (let i = 0; i < appliedLabels[label].length; i++)
             {
                 allLabels.push(appliedLabels[label][i]);
             }
@@ -840,12 +839,12 @@ function SyntaxTracker(currentLine, previousLine, nextLine, syntaxSelector)
 
     var linkLabels = function(forbiddenStartIndicies, labelSubset, highlightScheme)
     {
-        var labelIndex, currentLabel, startingLabels = [], endingLabels = [], unendedLabels = [];
-        var labels = labelSubset || me.labels;
+        let labelIndex, currentLabel, startingLabels = [], endingLabels = [];
+        let labels = labelSubset || me.labels;
 
 
-        // Check whether new continued labels are to be created...
-        for (var labelName in labels)
+        // Find starting and ending labels...
+        for (const labelName in labels)
         {
             for (labelIndex = 0; labelIndex < labels[labelName].length; labelIndex++)
             {
@@ -892,7 +891,8 @@ function SyntaxTracker(currentLine, previousLine, nextLine, syntaxSelector)
 
             if (matchedWith)
             {
-                me.labels[currentLabel.tagName].push(new SyntaxLabel(currentLabel.tagName, currentLabel.endIndex, matchedWith.endIndex, SyntaxHelper.LABEL_SINGLE));
+                me.labels[currentLabel.tagName].push(new SyntaxLabel(currentLabel.tagName, currentLabel.startIndex, matchedWith.endIndex, SyntaxHelper.LABEL_SINGLE));
+                currentLabel.disable(); // No need for the starting label! We've replaced it!
 
                 if (matchedWith.linkedTo)
                 {
@@ -1141,7 +1141,7 @@ function SyntaxTracker(currentLine, previousLine, nextLine, syntaxSelector)
 
             additionalLabels = me.syntaxSelector.getLabelIndicies(labelText,
                         startIndex, newHighlighter
-                        );
+            );
 
 
 
@@ -1217,11 +1217,10 @@ function SyntaxTracker(currentLine, previousLine, nextLine, syntaxSelector)
 
     this.getColorAtIndex = function(characterIndex)
     {
-        var result = me.syntaxSelector.getBaseColor();
+        let applicableLabels = {};
+        //let d = ""; // debug
 
-        var applicableLabels = {};
-
-        var handleLabel = function(label)
+        const handleLabel = function(label)
         {
             if (label.startIndex <= characterIndex
                 && (label.endIndex > characterIndex
@@ -1234,15 +1233,13 @@ function SyntaxTracker(currentLine, previousLine, nextLine, syntaxSelector)
 
                 applicableLabels[label.tagName].push(label);
 
-                d += ", " + label.tagName;
+                //d += ", " + label.tagName;
             }
         };
 
-        var d = "";
-        var i;
-        for (var labelName in me.labels)
+        for (const labelName in me.labels)
         {
-            for (i = 0; i < me.labels[labelName].length; i++)
+            for (let i = 0; i < me.labels[labelName].length; i++)
             {
                 handleLabel(me.labels[labelName][i]);
             }
