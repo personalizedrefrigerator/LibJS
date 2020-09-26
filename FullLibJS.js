@@ -5706,6 +5706,142 @@ Path: ${ me.saveDir }
 
     this.editCanvas.setAttribute('tabindex', 0);
 
+    this.openInteractiveConsole = async (contentToRun, options) =>
+    {
+        options = options || {};
+
+        const PROMPT_TEXT = "> ";
+
+        me.editControl.restoreState();
+        me.editControl.saveStateAndClear();
+
+        // View as JS.
+        me.editControl.setDefaultHighlightScheme("js");
+
+        const printResult = (result, color) =>
+        {
+            const lines = result.split('\n');
+
+            for (const line of lines)
+            {
+                let newLine = me.editControl.appendLine(line);
+                newLine.editable = false;
+
+                newLine.setColorFunction = (index) =>
+                {
+                    return color || "#ffaf70";
+                };
+            }
+        };
+        
+        // Show output...
+        if (contentToRun !== undefined)
+        {
+            const result = await EditorHelper.__runOutOfContext(contentToRun);
+            printResult(result);
+        }
+
+        let doneLine;
+        if (!options.hideExitLine)
+        {
+            doneLine = me.editControl.appendLine("DONE");
+            me.editControl.appendLine("");
+        }
+
+        let scriptLine;
+        let createScriptLine;
+        
+        const run = async (newCommand) =>
+        {
+            const result = await EditorHelper.__runOutOfContext(newCommand);
+
+            if (result.length > 0)
+            {
+                printResult(result);
+            }
+
+            createScriptLine().focus();
+            scriptLine.cursorPosition = scriptLine.text.length;
+
+            me.scrollToFocus();
+            requestAnimationFrame(() => me.editControl.render());
+        };
+
+        createScriptLine = () =>
+        {
+            if (scriptLine)
+            {
+                scriptLine.editable = false;
+                
+                const oldScriptLine = scriptLine;
+                scriptLine.onentercommand = () => 
+                { 
+                    // If removed...
+                    if (scriptLine.flaggedForRemoval)
+                    {
+                        createScriptLine();
+                    }
+
+                    scriptLine.text = oldScriptLine.text;
+                    const cursorPos = oldScriptLine.cursorPosition;
+                    
+                    scriptLine.focus();
+                    scriptLine.cursorPosition = cursorPos;
+
+                    me.scrollToFocus();
+                };
+            }
+
+            scriptLine = me.editControl.appendLine(PROMPT_TEXT);
+
+            scriptLine.onentercommand = async () =>
+            {
+                let newCommand = scriptLine.text.substring(PROMPT_TEXT.length);
+                scriptLine.text = PROMPT_TEXT + newCommand;
+
+                run(newCommand);
+            };
+
+            return scriptLine;
+        };
+
+        createScriptLine();
+        
+        requestAnimationFrame(() =>
+        {
+            if (doneLine)
+            {
+                doneLine.focus();
+            }
+            
+            me.editControl.render();
+        });
+
+        if (doneLine)
+        {
+            doneLine.editable = false;
+            doneLine.onentercommand = () =>
+            {
+                me.editControl.restoreState();
+            };
+        }
+
+        const controls = 
+        {
+            run: async (command) =>
+            {
+                // Log the command.
+                scriptLine.text = PROMPT_TEXT + command;
+
+                // THEN run it.
+                await run(command);
+            },
+            print: printResult,
+        };
+
+        return controls;
+    };
+
     this.toggleRun = function(inCurrentPage)
     {
         if (inCurrentPage) // If we could access device internals, we still allow running in
@@ -5745,83 +5881,7 @@ Path: ${ me.saveDir }
             
             yesLine.onentercommand = async () =>
             {
-                const PROMPT_TEXT = "> ";
-
-                me.editControl.restoreState();
-                me.editControl.saveStateAndClear();
-
-                // View as JS.
-                me.editControl.setDefaultHighlightScheme("js");
-
-                const printResult = (result) =>
-                {
-                    const lines = result.split('\n');
-
-                    for (const line of lines)
-                    {
-                        let newLine = me.editControl.appendLine(line);
-                        newLine.editable = false;
-
-                        newLine.setColorFunction = (index) =>
-                        {
-                            return "#ffaf70";
-                        };
-                    }
-                };
-                
-                // Show output...
-                const result = await EditorHelper.__runOutOfContext(contentToRun);
-                printResult(result);
-                    
-                const doneLine = me.editControl.appendLine("DONE");
-                me.editControl.appendLine("");
-
-                let scriptLine;
-                
-                const createScriptLine = () =>
-                {
-                    if (scriptLine)
-                    {
-                        scriptLine.editable = false;
-                        
-                        const oldScriptLine = scriptLine;
-                        scriptLine.onentercommand = () => { scriptLine.text = oldScriptLine.text; };
-                    }
-
-                    scriptLine = me.editControl.appendLine(PROMPT_TEXT);
-
-                    scriptLine.onentercommand = async () =>
-                    {
-                        let newCommand = scriptLine.text.substring(PROMPT_TEXT.length);
-                        scriptLine.text = PROMPT_TEXT + newCommand;
-
-                        const result = await EditorHelper.__runOutOfContext(newCommand);
-                        printResult(result);
-
-                        createScriptLine().focus();
-                        scriptLine.cursorPosition = scriptLine.text.length;
-
-                        me.scrollToFocus();
-                        requestAnimationFrame(() => me.editControl.render());
-                    };
-
-                    return scriptLine;
-                };
-
-                createScriptLine();
-                
-                requestAnimationFrame(() =>
-                {
-                    doneLine.focus();
-                    me.editControl.render();
-                });
-                
-                doneLine.editable = false;
-                
-                doneLine.onentercommand = () =>
-                {
-                    me.editControl.restoreState();
-                };
+                await me.openInteractiveConsole(contentToRun);
             };
             
             noLine.onentercommand = () =>
