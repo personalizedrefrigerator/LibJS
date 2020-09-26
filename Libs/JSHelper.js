@@ -199,6 +199,8 @@ JSHelper.Environs.__map = {};
  * IT CAN STILL EASILY BE DONE. This is JavaScript and JSHelper is a public dictionary. Malicious
  * clients have the ability to overwrite this, and other, functions.
  * 
+ * Note that each environment will crash after roughly 10000 push events. This is a bug.
+ * 
  * Note that push returns a string version of the code's output, including console logs, errors, etc.
  */
 JSHelper.Environs.makeNew = () =>
@@ -207,93 +209,119 @@ JSHelper.Environs.makeNew = () =>
     const env_exitEvent = "EVENT_EXIT";
     const env_pushedEvent = "EVENT_PUSHED";
     const env_returnedEvent = "EVENT_RETURNED";
+    const ENV_NEW_VAR_DECL = new RegExp('(\\s|[;\\n]|^)(let|var|const|function)($|\\s|[\\n])', 'g'); // We might have been pushed to a thread... In this case /.../g syntax might fail.
     
     let env_running = false;
     let env_result;
     
     env_result = 
     {
+        // The code inside this is rather frightening because
+        // with statements don't work in strict mode... Can it be changed?
         "__start": async () => // Start accepting code...
         {
             env_running = true;
             
             let env_toRun;
-            
-            const env_myEnv = new (function() { return this; })(); // Get SOME this...
+
+            // Prefix to avoid conflicts with eval...
             const env_console_log = self.console.log;
             const env_console_warn = self.console.warn;
             const env_console_error = self.console.error;
             const env_console = self.console;
             let env_evalResult = "";
             let env_consoleResult = "";
-            var console;
-            
-            while (env_running)
+            var // Re-map console.log...
+            console = 
             {
-                env_toRun = await env_updateNotifier.waitFor(env_pushedEvent, env_exitEvent); // Wait for either event...
-                
-                if (env_toRun)
+                log: (...output) =>
                 {
-                    env_evalResult = "";
-                    env_consoleResult = "";
-                    
-                    // Re-map console.log...
-                    console = 
+                    for (const elem of output)
                     {
-                        log: (...output) =>
+                        env_consoleResult += "" + elem;
+
+                        if (typeof (elem) === "object") // More detailed object logging.
                         {
-                            for (const elem of output)
-                            {
-                                env_consoleResult += "" + elem;
-
-                                if (typeof (elem) === "object") // More detailed object logging.
-                                {
-                                    env_consoleResult += "\n";
-
-                                    for (const key in elem)
-                                    {
-                                        env_consoleResult += "  " + key + ": ";
-
-                                        if (typeof (elem[key]) === "function")
-                                        {
-                                            env_consoleResult += "[FUNCTION]";
-                                        }
-                                        else
-                                        {
-                                            env_consoleResult += elem[key];
-                                        }
-                                        
-                                        env_consoleResult += "\n";
-                                    }
-                                }
-                            }
-
                             env_consoleResult += "\n";
-                            
-                            env_console_log.apply(self, output);
-                        },
-                        warn: (...output) =>
-                        {
-                            console.log("[!] ", output);
-                        },
-                        error: (...output) =>
-                        {
-                            console.log("[X] ", output);
+
+                            for (const key in elem)
+                            {
+                                env_consoleResult += "  " + key + ": ";
+
+                                if (typeof (elem[key]) === "function")
+                                {
+                                    env_consoleResult += "[FUNCTION]";
+                                }
+                                else
+                                {
+                                    env_consoleResult += elem[key];
+                                }
+                                
+                                env_consoleResult += "\n";
+                            }
                         }
-                    };
-                    
-                    try
-                    {
-                        env_evalResult += eval(env_toRun);
                     }
-                    catch(e)
-                    {
-                        env_evalResult += "\nError: " + e;
-                    }
+
+                    env_consoleResult += "\n";
                     
-                    env_updateNotifier.notify(env_returnedEvent, env_consoleResult + "" + env_evalResult);
+                    env_console_log.apply(self, output);
+                },
+                warn: (...output) =>
+                {
+                    console.log("[!] ", output);
+                },
+                error: (...output) =>
+                {
+                    console.log("[X] ", output);
                 }
-            }
+            };
+
+            const CODE_TO_RUN = `
+            (async function()
+            {
+                console.log('Entered eval block.');
+                while (env_running)
+                {
+                    env_toRun = await env_updateNotifier.waitFor(env_pushedEvent, env_exitEvent);
+
+                    /* TODO: Can this be made less evil? */
+                    /* TODO: What if we reach the maximum recursion depth? */
+                    if (env_running)
+                    {
+                        try
+                        {
+                            env_evalResult = "";
+                            env_consoleResult = "";
+
+                            
+                            if (env_toRun.search(ENV_NEW_VAR_DECL) !== -1)
+                            {
+                                env_evalResult += await eval("(async function() \\n{\\n" +
+                                     env_toRun + ";" +
+                                    "env_updateNotifier.notify(env_returnedEvent, env_consoleResult + '' + env_evalResult); await " +
+                                     CODE_TO_RUN + ";" +
+                                "\\n})()");
+
+                                return;
+                            }
+                            else
+                            {
+                                env_evalResult += eval(env_toRun);
+                            }
+                        }
+                        catch(e)
+                        {
+                            env_evalResult += "\\nError: " + e;
+                        }
+
+                        env_updateNotifier.notify(env_returnedEvent, env_consoleResult + "" + env_evalResult);
+                        // console.log(env_evalResult);
+                        /* Continue via while loop. We don't want to recurse if we don't have to. */
+                    }
+                }
+            })()`;
+
+            await eval(CODE_TO_RUN);
             
             env_updateNotifier.notify(env_exitEvent); // Note that we exited...
         },

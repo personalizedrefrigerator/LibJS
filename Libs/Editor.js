@@ -18,11 +18,7 @@ var DEFAULT_SPELLCHECK_WORDS = // Define some default words for the spellchecker
 self.DEFAULT_SPELLCHECK_WORDS || // If the DefaultSpellcheckWords.js file wasn't included, use the following:
 `there are hardly any default words in this dictionary
 you should probably consider including the
-spell help script file but I think these
-may do for applications that
-aren't using this feature
-such as those that focus on use of the code editing
-functionality`.replace(/\s+/g, "\n").toLowerCase();
+spell help script file if using the spelling checker`.replace(/\s+/g, "\n").toLowerCase();
 
 const VERSION_CODE = "1.11 (Main)";
 let noteError = self.noteError || console.error; // Error logging...
@@ -3398,6 +3394,7 @@ EditorHelper.replaceWithEditor = (elem, options) =>
         highlightScheme: undefined
     };
 
+    // Start loading contents.
     const KEYBOARD_BUTTON_MARGIN = 4;
 
     // Textbox and its parent...
@@ -3456,7 +3453,7 @@ EditorHelper.replaceWithEditor = (elem, options) =>
 
     if (options.highlightScheme)
     {
-        editor.setDefaultHighlightScheme(options.highlightScheme)
+        editor.setDefaultHighlightScheme(options.highlightScheme);
     }
 
     editor.clear();
