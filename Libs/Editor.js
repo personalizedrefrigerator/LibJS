@@ -447,9 +447,10 @@ function EditControl(ctx)
         me.ctx.textBaseline = "top";
         me.lineH = me.ctx.measureText("M").width * 1.5;
 
+        var minDisplayIndex = Math.max(-me.viewOffset - 1, 0);
         var i;
 
-        for (i = Math.max(-me.viewOffset - 1, 0); i < me.lines.length; i++)
+        for (i = minDisplayIndex; i < me.lines.length; i++)
         {
             me.lines[i].x = me.x;
             me.lines[i].h = me.lineH;
@@ -460,6 +461,9 @@ function EditControl(ctx)
                 break;
             }
         }
+
+        var maxDisplayIndex = i;
+        return [ minDisplayIndex, maxDisplayIndex ];
     };
 
     this.getCursorPosition = function()
@@ -731,6 +735,37 @@ function EditControl(ctx)
 
         return result;
     };
+
+    // Note: This causes a render.
+    // Gets all lines currently displayed.
+    this.getDisplayedLines = async function()
+    {
+        const displayRange = await me.render();
+        let result = [];
+
+        for (let index = displayRange[0]; index < displayRange[1]; index++)
+        {
+            result.push(me.lines[index]);
+        }
+
+        return result;
+    };
+
+    // Like getDisplayedLines, but returns 
+    // the text of the lines on display,
+    // rather than the line objects themselves.
+    this.getDisplayedText = async function()
+    {
+        let result = [];
+        let lines = await me.getDisplayedLines();
+
+        for (const line of lines)
+        {
+            result.push(line.text);
+        }
+
+        return result.join('\n');
+    };
     
     this.getDelta = function(savedState)
     {
@@ -1001,7 +1036,7 @@ function EditControl(ctx)
 // Note: textExportParentElement can also be a textarea. If so, 
 //       then it is used as the import/export zone.
 function Editor(textViewerParentElement, keyboardParentElement, 
-    textExportParentElement, runFrameParentElement, onRun)
+    textExportParentElement, runFrameParentElement, onRun, syncTextcontrol)
 {
     const CLICK_MAX_DISTANCE_MOVE = 10;
     const me = this;
@@ -1047,6 +1082,7 @@ function Editor(textViewerParentElement, keyboardParentElement,
 
     this.runFrame = document.createElement("iframe");
     this.runFrame.style.display = "none";
+
     var canUseLocalStorage = true;
 
     if (textExportParentElement.tagName.toLowerCase() !== "textarea")
@@ -1281,8 +1317,7 @@ function Editor(textViewerParentElement, keyboardParentElement,
 
             if (lastSelPoint)
             {
-
- me.editControl.select(lastSelPoint, currentPoint);
+                me.editControl.select(lastSelPoint, currentPoint);
                 lastSelPoint = undefined;
             }
             else
@@ -1358,6 +1393,11 @@ Path: ${ me.saveDir }
         }
 
         me.editControl.render();
+
+        if (me.syncControlContents)
+        {
+            me.syncControlContents();
+        }
 
         updateRestoreString();
     });
@@ -1538,10 +1578,9 @@ Path: ${ me.saveDir }
     });
 
     this.editCanvas.onpointercancel = me.editCanvas.onpointerup;
-
     this.editCanvas.onpointerleave = me.editCanvas.onpointerup;
 
-    this.editCanvas.addEventListener("keypress", function(event)
+    var handleKeyPress = (event) =>
     {
         if (!event.ctrlKey && event.key !== "Enter")
         {
@@ -1555,44 +1594,9 @@ Path: ${ me.saveDir }
         updateRestoreString();
 
         return true;
-    }, true);
+    };
 
-    const WHEEL_PIXEL_MODE = 0;
-    const WHEEL_LINE_MODE = 1;
-    const WHEEL_PAGE_MODE = 2;
-
-    this.editCanvas.addEventListener("wheel", function(event)
-    {
-        var dy = event.deltaY;
-        var lineHeight = me.editControl.lineH; 
-
-        if (dy !== 0 && lineHeight > 0)
-        {
-            if (event.deltaMode === WHEEL_LINE_MODE)
-            {
-                dy *= lineHeight;
-            }
-            else if (event.deltaMode === WHEEL_PAGE_MODE)
-            {
-                dy *= lineHeight * 25;
-            }
-
-            // Scroll the view, not the page.
-            dy *= -1;
-            
-            var didNotMove = me.editControl.moveView(0, dy);
-            var lineDeltaCount = Math.floor(Math.abs(dy / lineHeight));
-            
-            if (!didNotMove || lineDeltaCount < 1)
-            {
-                event.preventDefault();
-            }
-        }
-
-        me.editControl.render();
-    });
-
-    this.editCanvas.addEventListener("keydown", function(event)
+    var handleKeyDown = (event) =>
     {
         if (!event.shiftKey)
         {
@@ -1781,9 +1785,194 @@ Path: ${ me.saveDir }
         event.stopPropagation();
 
         return true;
+    };
+
+    const WHEEL_PIXEL_MODE = 0;
+    const WHEEL_LINE_MODE = 1;
+    const WHEEL_PAGE_MODE = 2;
+    
+    var handleWheel = (event) =>
+    {
+        var dy = event.deltaY;
+        var lineHeight = me.editControl.lineH; 
+
+        if (dy !== 0 && lineHeight > 0)
+        {
+            if (event.deltaMode === WHEEL_LINE_MODE)
+            {
+                dy *= lineHeight;
+            }
+            else if (event.deltaMode === WHEEL_PAGE_MODE)
+            {
+                dy *= lineHeight * 25;
+            }
+
+            // Scroll the view, not the page.
+            dy *= -1;
+            
+            var didNotMove = me.editControl.moveView(0, dy);
+            var lineDeltaCount = Math.floor(Math.abs(dy / lineHeight));
+            
+            if (!didNotMove || lineDeltaCount < 1)
+            {
+                event.preventDefault();
+            }
+        }
+
+        me.editControl.render();
+    };
+
+    this.editCanvas.addEventListener("keypress", function(event)
+    {
+        return handleKeyPress(event);
+    }, true);
+
+
+    this.editCanvas.addEventListener("wheel", function(event)
+    {
+        return handleWheel(event);
+    });
+
+    this.editCanvas.addEventListener("keydown", function(event)
+    {
+        return handleKeyDown(event);
     }, true);
 
     this.editCanvas.setAttribute('tabindex', 0);
+
+    if (syncTextcontrol)
+    {
+        const syncControlContents = async () =>
+        {
+            let elem = me.copyPasteControl;
+            let displayedLines = await me.editControl.getDisplayedLines();
+            let text = "";
+            let inSelection = false;
+            let selStart = -1;
+            let selEnd = -1;
+
+            for (const line of displayedLines)
+            {
+                if (line.hasFocus)
+                {
+                    selEnd = text.length + line.cursorPosition;
+                    
+                    if (selStart == -1)
+                    {
+                        selStart = selEnd;
+
+                        if (!line.hasSelection() || line.selRange[0] == line.selRange[1])
+                        {
+                            break;
+                        }
+                    }
+                }
+
+                if (line.hasSelection() && !inSelection)
+                {
+                    selStart = text.length + line.selRange[0];
+
+                    inSelection = true;
+                } // The selection ended.
+                else if (inSelection && !line.hasSelection())
+                {
+                    break;
+                }
+                
+                if (inSelection)
+                {
+                    selEnd = text.length + line.selRange[1];
+                }
+
+                text += line.text + '\n';
+            }
+
+            elem.value = await me.editControl.getDisplayedText();
+            elem.setSelectionRange(selStart, selEnd);
+        };
+
+        me.copyPasteControl.addEventListener('keydown', (event) =>
+        {
+            syncControlContents();
+
+            return handleKeyDown(event);
+        }, true);
+
+        me.copyPasteControl.addEventListener('keypress', (event) =>
+        {
+            return handleKeyPress(event);
+        });
+
+        me.copyPasteControl.addEventListener('keyup', () =>
+        {
+            syncControlContents();
+        });
+
+        JSHelper.Events.registerPointerEvent("up", me.copyPasteControl, async () =>
+        {
+            let elem = me.copyPasteControl;
+            let displayedLines = await me.editControl.getDisplayedLines();
+            let index = 0;
+
+            let selStart = elem.selectionStart;
+            let selEnd = elem.selectionEnd;
+
+            if (selStart > selEnd)
+            {
+                let temp = selStart;
+                selStart = selEnd;
+                selEnd = temp;
+            }
+
+            for (const line of displayedLines)
+            {
+                line.unfocus();
+                line.deselect();
+            }
+
+            for (const line of displayedLines)
+            {
+                if (index >= selStart || index + line.text.length >= selEnd)
+                {
+                    if (index == selEnd && index == selStart)
+                    {
+                        line.hasFocus = true;
+                        line.cursorPosition = index - selStart;
+
+                        line.deselect();
+
+                        break;
+                    }
+
+                    line.hasFocus = false;
+                    line.selRange = 
+                    [
+                        Math.max(0, selStart - index),
+                        Math.min(line.text.length, selEnd - index)
+                    ];
+
+                    if (index + line.text.length + 1 > selEnd)
+                    {
+                        line.hasFocus = true;
+                        line.cursorPosition = selEnd - index;
+
+                        line.deselect();
+                    }
+                }
+
+                if (index > selEnd)
+                {
+                    break;
+                }
+
+                index += line.text.length + 1; // +1 for \n
+            }
+
+            syncControlContents();
+        });
+
+        me.syncControlContents = syncControlContents;
+    }
 
     this.openInteractiveConsole = async (contentToRun, options) =>
     {
@@ -3451,11 +3640,12 @@ EditorHelper.replaceWithEditor = (elem, options) =>
     {
         height: 400,
         font: undefined, // use the default...
-        highlightScheme: undefined
+        highlightScheme: undefined,
+        noPreview: false, // Show the preview tab by default.
+        syncTextbox: false, // Sync with textbox contents.
     };
 
-    // Start loading contents.
-    const KEYBOARD_BUTTON_MARGIN = 4;
+    // Start loading contents...
 
     // Textbox and its parent...
     const container = document.createElement("div");
@@ -3494,7 +3684,7 @@ EditorHelper.replaceWithEditor = (elem, options) =>
     
     const editor = new Editor(editorElem, keyboardParent, elem, previewElem, () =>
     {
-        if (currentTabName !== "Preview")
+        if (currentTabName !== "Preview" && !options.noPreview)
         {
             tabView.selectTab("Preview");
         }
@@ -3504,7 +3694,7 @@ EditorHelper.replaceWithEditor = (elem, options) =>
         editor.runFrame.style.height = options.height + "px";
 
         return false;
-    });
+    }, options.syncTextbox);
 
     if (options.font)
     {
@@ -3514,6 +3704,11 @@ EditorHelper.replaceWithEditor = (elem, options) =>
     if (options.highlightScheme)
     {
         editor.setDefaultHighlightScheme(options.highlightScheme);
+    }
+
+    if (options.noPreview)
+    {
+        tabView.hideTab('Preview');
     }
 
     editor.clear();
@@ -3551,7 +3746,7 @@ EditorHelper.replaceWithEditor = (elem, options) =>
 
     const updateEditorText = () =>
     {
-        if (elem.value !== priorElemValue)
+        if (elem.value !== priorElemValue && !options.syncTextbox)
         {
             editor.clear();
             editor.displayContent(elem.value);
@@ -3562,8 +3757,15 @@ EditorHelper.replaceWithEditor = (elem, options) =>
 
     const updateElemText = () =>
     {
-        elem.value = editor.getText();
-        priorElemValue = elem.value;
+        if (editor.syncControlContents)
+        {
+            editor.syncControlContents();
+        }
+        else
+        {
+            elem.value = editor.getText();
+            priorElemValue = elem.value;
+        }
     };
 
     // Handle tab switching.

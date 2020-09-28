@@ -633,12 +633,12 @@ HTMLHelper.addTabGroup = function(tabDescriptors, parent, defaultTab, reRunTabAc
     
     let showTab = (tabName) =>
     {
-        tabLabels[selectedTab].setAttribute("class", "tabLabel tabLabelShown");
+        tabLabels[tabName].setAttribute("class", "tabLabel tabLabelShown");
     };
     
     let hideTab = (tabName) =>
     {
-        tabLabels[selectedTab].setAttribute("class", "tabLabel tabLabelHidden");
+        tabLabels[tabName].setAttribute("class", "tabLabel tabLabelHidden");
     };
     
     let selectTab = (tabName) =>
