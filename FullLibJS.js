@@ -9643,6 +9643,11 @@ function SyntaxTracker(currentLine, previousLine, nextLine, syntaxSelector)
                 me.nextLine.requestRefresh();
             }
 
+            if (me.currentLine.text === "")
+            {
+                me.nextLine.requestRefresh();
+            }
+
             if (!me.labels[label])
             {
                 me.labels[label] = [];
