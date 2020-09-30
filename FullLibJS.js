@@ -21689,6 +21689,7 @@ function CSSSyntaxHighlightScheme()
         "auto": "#00ffaa",
         "block": "#00ffaa",
         "border-box": "#00ffaa",
+        "-box": "#00ffaa",
         "absolute": "#00ffaa",
         "fixed": "#00ffaa",
         "flex": "#00ffaa",
@@ -21746,6 +21747,9 @@ function CSSSyntaxHighlightScheme()
     this.labelSearchSeparators["h1"] = SyntaxHelper.SEARCH_ALL;
     this.labelSearchSeparators["box-shadow"] = SyntaxHelper.CSS_LABEL_SEPARATORS;
     this.labelSearchSeparators["text-shadow"] = SyntaxHelper.CSS_LABEL_SEPARATORS;
+    this.labelSearchSeparators["border-box"] = SyntaxHelper.CSS_LABEL_SEPARATORS;
+    this.labelSearchSeparators["-box"] = SyntaxHelper.CSS_LABEL_SEPARATORS;
+    this.labelSearchSeparators["box-sizing"] = SyntaxHelper.CSS_LABEL_SEPARATORS;
     this.labelSearchSeparators["overflow-x"] = SyntaxHelper.CSS_LABEL_SEPARATORS;
     this.labelSearchSeparators["overflow-y"] = SyntaxHelper.CSS_LABEL_SEPARATORS;
 
@@ -21790,7 +21794,7 @@ function CSSSyntaxHighlightScheme()
 
     var addedLabels = {};
     this.labelPrecedence =
-    [SyntaxHelper.COMMENT];
+    [SyntaxHelper.COMMENT, "border-box"];
 
     // Add any un-recorded labels to the precedence list.
     for (var i = 0; i < this.labelPrecedence.length; i++)
