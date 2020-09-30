@@ -398,6 +398,13 @@ button:focus
     transform: matrix(1.0, 0, 0, 1.1, 0, 0);
 }
 
+button[disabled]
+{
+    cursor: not-allowed;
+    transform: matrix(1, 0, 0, 1, 0, 0);
+    background-color: rgba(180, 200, 200, 0.6);
+}
+
 canvas
 {
     user-select: none;
