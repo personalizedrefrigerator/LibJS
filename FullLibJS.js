@@ -7564,6 +7564,7 @@ EditorHelper.replaceWithEditor = (elem, options) =>
         highlightScheme: undefined,
         noPreview: false, // Show the preview tab by default.
         syncTextbox: false, // Sync with textbox contents.
+        defaultTab: undefined,
     };
 
     // Start loading contents...
@@ -7601,7 +7602,7 @@ EditorHelper.replaceWithEditor = (elem, options) =>
         "Textbox": textboxGrowzone,
         "Editor": editorParent,
         "Preview": previewElem
-    }, container, "Editor");
+    }, container, options.defaultTab || "Editor");
     
     const editor = new Editor(editorElem, keyboardParent, elem, previewElem, () =>
     {
@@ -7635,6 +7636,11 @@ EditorHelper.replaceWithEditor = (elem, options) =>
     editor.clear();
     editor.displayContent(elem.value);
     editor.render();
+
+    if (options.defaultTab == "Preview")
+    {
+        editor.updateRunFrame();
+    }
 
     // Show & hide keyboard
     let showKeyboardButton = HTMLHelper.addButton("⌨", editorElem, () =>
