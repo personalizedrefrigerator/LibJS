@@ -12491,7 +12491,7 @@ const styleSheets = `
 {
     box-shadow: 2px 1px 24px rgba(100, 100, 100, 0.6);
     position: fixed;
-    background-color: rgba(200, 200, 200, 0.8);
+    background-color: rgba(240, 240, 240, 0.9);
     
     border-top-left-radius: 7px;
 }
