@@ -22559,4 +22559,7 @@ self.AuthHelper = AuthHelper;
 self.JSHelper = JSHelper;
 self.HTMLHelper = HTMLHelper;
 self.CloudHelper = CloudHelper;
+self.Mat33Helper = Mat33Helper;
+self.Mat44Helper = Mat44Helper;
+self.Mat = Mat;
 })();
