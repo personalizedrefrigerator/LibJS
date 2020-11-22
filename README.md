@@ -30,4 +30,4 @@ If willing to export everything, remove the `(function() {` ... `})();` wrapping
  * This project does not use [ES6 modules](https://hacks.mozilla.org/2015/08/es6-in-depth-modules/)! As such, while including the single-file version of the libaray is not ideal, it is probably easiest! '
  
 # Licensing
- * Licensed to you under the BSD-3-Clause License (see (`LICENSE`)[LICENSE]) or, at your option, the MIT License (see (`LICENSE_ALTERNATE`)[LICENSE_ALTERNATE]).
+ * Licensed to you under the BSD-3-Clause License (see [`LICENSE`](LICENSE)) or, at your option, the MIT License (see [`LICENSE_ALTERNATIVE`](LICENSE_ALTERNATIVE)).
