@@ -1,5 +1,5 @@
 # LibJS
-A collection of JavaScript libraries, I have found myself passing between pages.
+A collection of JavaScript libraries.
 
 # Conversion into a single-file script.
 ```bash
@@ -26,6 +26,8 @@ window.SubWindowHelper = SubWindowHelper;
 If willing to export everything, remove the `(function() {` ... `})();` wrapping the library. This is done in the included `FullLibJS.js` file.
 
 # Notes
- * Pull requests are welcome!
  * This project **does not** have a suite of unit tests! There are probably many, many bugs.
- * This project does not use [ES6 modules](https://hacks.mozilla.org/2015/08/es6-in-depth-modules/)! As such, while including the single-file version of the libaray is not ideal, it is probably easiest! 
+ * This project does not use [ES6 modules](https://hacks.mozilla.org/2015/08/es6-in-depth-modules/)! As such, while including the single-file version of the libaray is not ideal, it is probably easiest! '
+ 
+# Licensing
+ * Licensed to you under the BSD-3-Clause License or, at your option, the MIT License.
