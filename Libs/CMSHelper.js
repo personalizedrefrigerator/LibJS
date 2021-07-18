@@ -1,5 +1,9 @@
 "use strict";
 
+/// @require ./LibJS.js
+/// @require ./AuthHelper.js
+/// @export ContentManager
+
 /**
  * Note: This probably shouldn't be packaged with LibJS... TODO
  * Consider removing it.
@@ -571,15 +575,16 @@ ContentManager.init = () =>
     
     me.initializePages();
     me.initializeMainMenu();
+
+	// Await page load, but push the request to a
+	//background frame to ensure JSHelper has loaded.
+	requestAnimationFrame(
+	async () =>
+	{
+			await JSHelper.Notifier.waitFor(JSHelper.GlobalEvents.PAGE_SETUP_COMPLETE, true);
+			
+			// Enable backstack navigation.
+			window.addEventListener("popstate", ContentManager.onBackstackTransit);
+	});
 };
 
-// Await page load, but push the request to a
-//background frame to ensure JSHelper has loaded.
-requestAnimationFrame(
-async () =>
-{
-    await JSHelper.Notifier.waitFor(JSHelper.GlobalEvents.PAGE_SETUP_COMPLETE, true);
-    
-    // Enable backstack navigation.
-    window.addEventListener("popstate", ContentManager.onBackstackTransit);
-});

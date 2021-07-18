@@ -1,5 +1,9 @@
 "use strict";
 
+/// @require ./SubWindowHelper.js
+/// @equire ./JSHelper.js
+/// @export Drawer2D
+
 // A simple 2D drawing program, created with the goal of
 //allowing users to create and edit textures.
 

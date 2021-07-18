@@ -1,5 +1,7 @@
 "use strict";
 
+/// @require ./MathHelper.js
+
 var JSHelper = {};
 
 // Get a random array that represents a color.
@@ -11,25 +13,25 @@ JSHelper.getRandomColorArray = function(round)
 {
     var result = [];
     var impliedMin, impliedMax;
-    
+
     var generateComponent = function(min, max)
     {
         var component = Math.random() * (max - min) + min;
-        
+
         if (round)
         {
             Math.floor(component);
         }
-        
+
         return component;
     };
-    
+
     // For all arguments following the first,
     for (var i = 1; i < arguments.length - 1; i += 2)
     {
         result.push(generateComponent(arguments[i], arguments[i + 1]));
     }
-    
+
     if (round)
     {
         impliedMin = 0;
@@ -40,12 +42,12 @@ JSHelper.getRandomColorArray = function(round)
         impliedMin = 0.0;
         impliedMax = 1.0;
     }
-    
+
     while (result.length < 3)
     {
         result.push(generateComponent(impliedMin, impliedMax));
     }
-    
+
     return result;
 };
 
@@ -61,8 +63,8 @@ JSHelper.getArrayOfRandomColors = (count, round, numComponents, ...componentRang
     for (let index = 0; index < count; index++)
     {
         currentColor = JSHelper.getRandomColorArray.apply(this, [round].concat(componentRanges));
-        
-        
+
+
         for (colorComponentIndex = 0; colorComponentIndex < currentColor.length && colorComponentIndex < numComponents; colorComponentIndex++)
         {
             result.push(currentColor[colorComponentIndex]);
@@ -94,7 +96,7 @@ JSHelper.colorMap =
 JSHelper.colorToVector = (htmlColor) =>
 {
     let result = new Vector3(0, 0, 0);
-    
+
     // Check is it in hex?
     if (htmlColor.indexOf("#") == 0 && htmlColor.length === 7)
     {
@@ -107,18 +109,18 @@ JSHelper.colorToVector = (htmlColor) =>
     {
         // Parse rgba.
         htmlColor = htmlColor.substring(htmlColor.indexOf("(") + 1, htmlColor.length - 1);
-        
+
         // Remove all spaces.
         htmlColor = htmlColor.replace(/\s/g, "");
-        
+
         let parts = htmlColor.split(",");
-        
+
         // RGBA must have red, green, blue, and alpha.
         if (parts.length < 3)
         {
             return result;
         }
-        
+
         // Store the parts.
         result.x = MathHelper.forceParseInt(parts[0]);
         result.y = MathHelper.forceParseInt(parts[1]);
@@ -129,7 +131,7 @@ JSHelper.colorToVector = (htmlColor) =>
     {
         result.fromArray(JSHelper.colorMap[htmlColor]);
     }
-    
+
     // Return
     return result;
 };
@@ -142,7 +144,7 @@ JSHelper.colorToVector = (htmlColor) =>
 //value. Alpha is an optional value from
 //zero to one, representing the alpha channel
 //desired in the resultant color.
-JSHelper.vec3ToRGBString = (inputVector, 
+JSHelper.vec3ToRGBString = (inputVector,
                             componentMax,
                             alpha) =>
 {
@@ -150,19 +152,19 @@ JSHelper.vec3ToRGBString = (inputVector,
     //to [0, 256).
     let transformedCopy = inputVector.mulScalar
                                 (1 / (componentMax || 1) * 255);
-    
+
     // Values in rgba(...) format should be bytes,
     //not floats.
     transformedCopy.x = Math.floor(transformedCopy.x);
     transformedCopy.y = Math.floor(transformedCopy.y);
     transformedCopy.z = Math.floor(transformedCopy.z);
-    
+
     // Why break `result = ...` into two lines?
     //Hopefully, it makes it less breakable.
     let result = "rgba(" + transformedCopy.x
-                 + ", " + transformedCopy.y + ", " + 
+                 + ", " + transformedCopy.y + ", " +
                  transformedCopy.z + ", " + (alpha || 1.0) + ")";
-                 
+
     return result;
 };
 
@@ -198,9 +200,9 @@ JSHelper.Environs.__map = {};
  * Although this is more difficult to disturb/inject code into than JSHelper.Environs.request,
  * IT CAN STILL EASILY BE DONE. This is JavaScript and JSHelper is a public dictionary. Malicious
  * clients have the ability to overwrite this, and other, functions.
- * 
+ *
  * Note that each environment will crash after roughly 10000 push events. This is a bug.
- * 
+ *
  * Note that push returns a string version of the code's output, including console logs, errors, etc.
  */
 JSHelper.Environs.makeNew = () =>
@@ -210,18 +212,18 @@ JSHelper.Environs.makeNew = () =>
     const env_pushedEvent = "EVENT_PUSHED";
     const env_returnedEvent = "EVENT_RETURNED";
     const ENV_NEW_VAR_DECL = new RegExp('(\\s|[;\\n]|^)(let|var|const|function)($|\\s|[\\n])', 'g'); // We might have been pushed to a thread... In this case /.../g syntax might fail.
-    
+
     let env_running = false;
     let env_result;
-    
-    env_result = 
+
+    env_result =
     {
         // The code inside this is rather frightening because
         // with statements don't work in strict mode... Can it be changed?
         "__start": async () => // Start accepting code...
         {
             env_running = true;
-            
+
             let env_toRun;
 
             // Prefix to avoid conflicts with eval...
@@ -232,7 +234,7 @@ JSHelper.Environs.makeNew = () =>
             let env_evalResult = "";
             let env_consoleResult = "";
             var // Re-map console.log...
-            console = 
+            console =
             {
                 log: (...output) =>
                 {
@@ -256,14 +258,14 @@ JSHelper.Environs.makeNew = () =>
                                 {
                                     env_consoleResult += elem[key];
                                 }
-                                
+
                                 env_consoleResult += "\n";
                             }
                         }
                     }
 
                     env_consoleResult += "\n";
-                    
+
                     env_console_log.apply(self, output);
                 },
                 warn: (...output) =>
@@ -293,7 +295,7 @@ JSHelper.Environs.makeNew = () =>
                             env_evalResult = "";
                             env_consoleResult = "";
 
-                            
+
                             if (env_toRun.search(ENV_NEW_VAR_DECL) !== -1)
                             {
                                 env_evalResult += await eval("(async function() \\n{\\n" +
@@ -322,7 +324,7 @@ JSHelper.Environs.makeNew = () =>
             })()`;
 
             await eval(CODE_TO_RUN);
-            
+
             env_updateNotifier.notify(env_exitEvent); // Note that we exited...
         },
         "push": async (code) => // Push code to the environment...
@@ -331,9 +333,9 @@ JSHelper.Environs.makeNew = () =>
             {
                 env_result.__start(); // Do not await... Would cause something similar to deadlock.
             }
-        
+
             env_updateNotifier.notify(env_pushedEvent, code);
-            
+
             // Wait for the reply...
             return await env_updateNotifier.waitFor(env_returnedEvent);
         },
@@ -341,20 +343,20 @@ JSHelper.Environs.makeNew = () =>
         {
             env_updateNotifier.notify(env_exitEvent);
             env_running = false;
-            
+
             // Wait for the reply...
             await env_updateNotifier.waitFor(env_exitEvent);
         }
     };
-    
+
     return env_result;
 }
 
 /**
  * Request or create an environment of name [environName]. If
  * no such environment exists, one is created.
- * 
- * If one desires a unique, only-returned (rather than stored in 
+ *
+ * If one desires a unique, only-returned (rather than stored in
  * a "private" (can be accessed) location), please use JSHelper.Environs.makeNew.
  *
  * Note that anEnviron.push(someStringCode)
@@ -367,7 +369,7 @@ JSHelper.Environs.request = (environName) => // Get an environment with the give
     {
         JSHelper.Environs.__map[environName] = JSHelper.Environs.makeNew();
     }
-    
+
     return JSHelper.Environs.__map[environName];
 };
 
@@ -380,13 +382,13 @@ JSHelper.Events.getSupportsPointerEvents = function()
     {
         return JSHelper.Events.supportsPointerEvents;
     }
-    
+
     let testElement = document.createElement("div");
-    
+
     // This should be null if the client's browser supports
     //pointer events.
     JSHelper.Events.supportsPointerEvents = testElement.onpointerdown === null;
-    
+
     return JSHelper.Events.supportsPointerEvents;
 };
 
@@ -407,17 +409,17 @@ JSHelper.Events.setPaused = function(paused)
 JSHelper.Events.registerPointerEvent = function(eventName, target, onEvent, allowBubbling)
 {
     allowBubbling = allowBubbling === undefined ? true : allowBubbling; // Whether to continue event propagation.
-    
+
     // The stop event occurrs whenever a chain
     //of events stops. Stop can override out/up/leave/etc.
     if (eventName === "stop")
     {
         JSHelper.Events.registerPointerEvent("up", target, onEvent, allowBubbling);
         JSHelper.Events.registerPointerEvent("leave", target, onEvent, allowBubbling);
-        
+
         return;
     }
-    
+
     let processGeneralEvent = (event, parentEvent) =>
     {
         let result =
@@ -432,32 +434,32 @@ JSHelper.Events.registerPointerEvent = function(eventName, target, onEvent, allo
                 (parentEvent || event).preventDefault();
             }
         };
-            
+
         return result;
     };
-    
+
     // Check: Does the client support pointer events?
-    if (JSHelper.Events.getSupportsPointerEvents() 
+    if (JSHelper.Events.getSupportsPointerEvents()
             && !JSHelper.Events.useLegacyEvents)
     {
         target.addEventListener("pointer" + eventName, (event) =>
         {
             let result = processGeneralEvent(event);
-            
+
             result.pointerId = event.pointerId;
             result.width = event.width;
             result.height = event.height;
             result.pressure = event.pressure;
             result.isPrimary = event.isPrimary;
-            
+
             // Stop if we've been paused.
             if (JSHelper.Events.paused)
             {
                 return;
             }
-            
+
             onEvent.call(result, result);
-            
+
             return true;
         }, allowBubbling); // Prevent propagation.
     }
@@ -467,27 +469,27 @@ JSHelper.Events.registerPointerEvent = function(eventName, target, onEvent, allo
         target.addEventListener("mouse" + eventName, (event) =>
         {
             let result = processGeneralEvent(event);
-            
+
             result.pointerId = 1;
             result.width = 1;
             result.height = 1;
             result.pressure = 0.5;
             result.isPrimary = true;
-            
+
             // If we're paused, stop.
             if (JSHelper.Events.paused)
             {
                 return;
             }
-            
+
             onEvent.call(target, result);
-            
+
             return true;
         }, allowBubbling);
-        
+
         // Change the event name for touch.
         let newEventName = eventName;
-        
+
         if (newEventName === "down")
         {
             newEventName = "start";
@@ -496,37 +498,37 @@ JSHelper.Events.registerPointerEvent = function(eventName, target, onEvent, allo
         {
             newEventName = "end";
         }
-        
+
         target.addEventListener("touch" + newEventName, (event) =>
         {
             if (JSHelper.Events.paused)
             {
                 return;
             }
-            
+
             let result, touch;
-            
+
             let handleTouch = (touch) =>
             {
                 result = processGeneralEvent(touch, event);
-                
+
                 result.pointerId = touch.identifier;
                 result.width = touch.radiusX * 2;
                 result.height = touch.radiusY * 2;
                 result.pressure = touch.force;
                 result.isPrimary = (i === 0);
-                
+
                 onEvent.call(target, result);
             };
-            
+
             for (var i = 0; i < event.changedTouches.length; i++)
             {
                 handleTouch(event.changedTouches[i]);
             }
-            
+
             return true;
         }, allowBubbling);
-        
+
         // Allow event firing.
         target.style.touchAction = "none";
     }
@@ -538,7 +540,7 @@ JSHelper.Events.registerPointerEvent = function(eventName, target, onEvent, allo
 //The main application code should handle this.
 // DO NOT WAIT ON THESE EVENTS UNLESS MAIN APPLICATION
 // CODE IS SET TO FIRE THEM.
-JSHelper.GlobalEvents = 
+JSHelper.GlobalEvents =
 {
     PAGE_SETUP_COMPLETE: "global_e_page_setup_complete"
 };
@@ -547,19 +549,19 @@ JSHelper.GlobalEvents =
 // For global communication, use JSHelper.Notifier.
 // For internal communication, construct JSHelper.UniqueNotifier
 // using "new".
-JSHelper.UniqueNotifier = 
+JSHelper.UniqueNotifier =
 (function()
 {
     let listeners = {};
     let listenerIdCounter = 0; // The id for the next listener.
-    let firedEvents = {}; 
-    
-    
-    
+    let firedEvents = {};
+
+
+
     // Wait for eventName to be distributed by notify.
     //A message is included with the distributed event.
     //If more than one argument is given, each additional argument
-    //is interpreted as a possible additional event to continue if 
+    //is interpreted as a possible additional event to continue if
     //encountered.
     this.waitFor = (...eventNames) =>
     {
@@ -570,13 +572,13 @@ JSHelper.UniqueNotifier =
 
         let registered = false, registeredContent, resolvedEvent;
         let listenerId = "l" + (listenerIdCounter++); // Each listener has an ID. This is ours.
-        
+
         let resolveWait = (content, eventName) => // A default listener, should the notification be
         {                                         //received before the promise sets resolveWait.
             registered = true;
             registeredContent = content;
             resolvedEvent = eventName;
-                
+
             // Remove our listener.
             // delete listeners[eventName][listenerId];
         };
@@ -589,12 +591,12 @@ JSHelper.UniqueNotifier =
         {
             eventNames = eventNames[0];
 
-            if (typeof eventNames === "string") 
+            if (typeof eventNames === "string")
             {
                 eventNames = [eventNames]; // It must be an array.
             }
 
-            // If the event has already been fired, 
+            // If the event has already been fired,
             // we can resolve early.
             for (const eventName of eventNames)
             {
@@ -604,7 +606,7 @@ JSHelper.UniqueNotifier =
                 }
             }
         }
-        
+
         // For every given event...
         for (const name of eventNames)
         {
@@ -614,7 +616,7 @@ JSHelper.UniqueNotifier =
                 {
                     listeners[eventName] = {};
                 }
-                
+
                 // Put a default method in place, in case a notification comes before the next browser
                 //frame.
                 listeners[eventName][listenerId] = (content) =>
@@ -622,11 +624,11 @@ JSHelper.UniqueNotifier =
                     resolveWait(content, eventName);
                 };
             })(name);      // Create a scope. This might be paranoid -- in older JavaScript,
-                           // loop variables defined with var's values were lost after the 
+                           // loop variables defined with var's values were lost after the
                            // current iteration, and so something like this was required.
                            // This may no longer be the case.
         }
-        
+
         let result = new Promise((resolve, reject) =>
         {
             // Update the resolve function.
@@ -643,31 +645,31 @@ JSHelper.UniqueNotifier =
                 }
                 // Remove our listener.
                 delete listeners[eventName][listenerId];
-                
+
                 // After this, only resolve by removing the listener
                 // from the event.
-                resolveWait = (content, eventName) => 
+                resolveWait = (content, eventName) =>
                 {
                     delete listeners[eventName][listenerId];
                 };
             };
-            
+
             if (registered) // We already received the event!
             {    // Notify now.
                 resolveWait(registeredContent, resolvedEvent);
             }
         });
-        
+
         return result;
     };
 
-    // Used by older code. Wait for any of eventNames to 
+    // Used by older code. Wait for any of eventNames to
     //complete and get a detailed result = { data: eventData, event: eventName }.
     this.waitForAny = (...eventNames) =>
-    { 
+    {
         return this.waitFor([eventNames]);
     };
-    
+
     // Notify all listeners on eventName.
     this.notify = (eventName, content) =>
     {
@@ -687,16 +689,16 @@ JSHelper.UniqueNotifier =
     };
 });
 
-JSHelper.Notifier = new JSHelper.UniqueNotifier(); // Publicly-accessible, singleton 
+JSHelper.Notifier = new JSHelper.UniqueNotifier(); // Publicly-accessible, singleton
                                                        // instance of the notifier.
 
 // A method that throws.
-JSHelper.NotImplemented = (signature, message) => 
+JSHelper.NotImplemented = (signature, message) =>
 {
     signature = signature || "";
     message = message || "";
 
-    return () => 
+    return () =>
     {
         throw "Not implemented: " + signature + " " + message;
     };
@@ -706,7 +708,7 @@ JSHelper.NotImplemented = (signature, message) =>
 JSHelper.getCharCount = (text, charset) =>
 {
     let charCount = 0;
-    
+
     for (let i = 0; i < text.length; i++)
     {
         if (charset.indexOf(text.charAt(i)) !== -1)
@@ -714,7 +716,7 @@ JSHelper.getCharCount = (text, charset) =>
             charCount++;
         }
     }
-    
+
     return charCount;
 };
 
@@ -748,7 +750,7 @@ JSHelper.nextAnimationFrame = () =>
     {
         requestAnimationFrame(() => { resolve(true); });
     });
-    
+
     return result;
 };
 
@@ -759,7 +761,7 @@ JSHelper.waitFor = (waitTime) =>
     {
         setTimeout(() => { resolve(true); }, waitTime);
     });
-    
+
     return result;
 };
 
@@ -772,27 +774,27 @@ JSHelper_replacedMethods.addEventListener = HTMLElement.prototype.addEventListen
 
 // Define a new event, push, that awaits both clicks and
 //the press of the enter key.
-HTMLElement.prototype.addEventListener = 
+HTMLElement.prototype.addEventListener =
 function (eventType, onEnact, ...allOthers)
 {
     if (eventType === "click")
     {
         eventType = "keyup";
-        JSHelper_replacedMethods.addEventListener.apply(this, [eventType, 
+        JSHelper_replacedMethods.addEventListener.apply(this, [eventType,
         function(event)
         {
             if (event.keyCode === 13) // Enter key.
             {
                 // Make it look somewhat like a mouse event.
                 event.button = 0;
-                
+
                 onEnact.apply(this, arguments);
             }
         }].concat(allOthers));
-        
+
         // Now, on click!
         eventType = "click";
     }
-    
+
     return JSHelper_replacedMethods.addEventListener.apply(this, arguments);
 };

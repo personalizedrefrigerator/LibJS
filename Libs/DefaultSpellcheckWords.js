@@ -1,5 +1,7 @@
 "use strict";
 
+/// @export DEFAULT_SPELLCHECK_WORDS
+
 // Citation: Wikipedia contributors, "Quicksort," Wikipedia, The Free Encyclopedia, https://en.wikipedia.org/w/index.php?title=Quicksort&oldid=969250830 (accessed July 24, 2020). 
 // Additional words may have been added. Others may have been removed.
 var DEFAULT_SPELLCHECK_WORDS = // Words taken from https://en.wikipedia.org/wiki/Quicksort

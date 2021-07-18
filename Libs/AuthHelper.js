@@ -1,5 +1,11 @@
 "use strict";
 
+/// @require JSHelper
+/// @require HTMLHelper
+/// @require SubWindowHelper
+/// @require CloudHelper
+/// @export AuthHelper
+
 /**
  *  A simple authentication manager.
  */

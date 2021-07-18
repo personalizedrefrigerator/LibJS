@@ -1,5 +1,7 @@
 "use strict";
 
+// TODO: Move this to an examples/ directory.
+
 function IntroScreen(options)
 {
     var me = this;
@@ -21,7 +23,7 @@ function IntroScreen(options)
         {
             me.stop();
         });
-        
+
         me.subWindow.enableFlex();
     }
     else
@@ -127,7 +129,7 @@ function IntroScreen(options)
 
         // Clear the context.
         me.renderer.clear();
-        
+
         me.renderer.updateCamera();
 
         me.renderer.setFogDecay(fogDecay);
@@ -186,7 +188,7 @@ function IntroScreen(options)
     };
 
     var lastTime = undefined;
-    this.animate = () => 
+    this.animate = () =>
     {
         if (!lastTime)
         {
@@ -232,7 +234,7 @@ function IntroScreen(options)
     };
 }
 
-const IntroScreenHelper = 
+const IntroScreenHelper =
 {
     test: () =>
     {

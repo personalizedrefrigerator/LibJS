@@ -1,5 +1,13 @@
 "use strict";
 
+/// @require ./JSHelper.js
+/// @require ./MathHelper.js
+/// @require ./SyntaxHelper.js
+/// @require ./HTMLHelper.js
+/// @require ./SubWindowHelper.js
+/// @export EditorHelper
+/// @export Editor
+
 const EDITOR_SOURCE = "<!DOCTYPE " + "html>\n"
                      +
                      `

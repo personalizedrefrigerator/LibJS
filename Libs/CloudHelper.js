@@ -1,5 +1,8 @@
 "use strict";
 
+/// @require JSHelper
+/// @export CloudHelper
+
 /**
  *  Wraps communication with a cloud service (probably firebase)
  * and permits global access and management.
@@ -47,12 +50,12 @@ CloudHelper.WrappedDBs =
 // The name of the primary database.
 CloudHelper.PRIMARY_DB_NAME = "primary";
 
-// Initialize a database
-//with given API data. Options.apiData should
-//contain data used for authentication.
-//Options.resources should be an array of CloudHelper.Service
-//modules to load.
-//Ref: firebase.google.com/docs/firestore/quickstart?authuser=1
+/// Initialize a database
+/// with given API data. Options.apiData should
+/// contain data used for authentication.
+/// Options.resources should be an array of CloudHelper.Service
+/// modules to load.
+/// Ref: firebase.google.com/docs/firestore/quickstart?authuser=1
 CloudHelper.initDB = (database, options) =>
 {
     if (!database)
@@ -124,8 +127,8 @@ CloudHelper.initDB = (database, options) =>
     }
 };
 
-// Wait for a component in the CloudHelper.Service
-//enum.
+/// Wait for a component in the CloudHelper.Service
+/// enum.
 CloudHelper.awaitComponent = (componentEnumVal) =>
 {
     return JSHelper.Notifier.waitFor(CloudHelper.SERVICE_NOTIFY_PREFIX + componentEnumVal, true);
@@ -135,7 +138,7 @@ CloudHelper.awaitComponent = (componentEnumVal) =>
 // TODO: Do we even <i>need</i> this? I think it should just
 // be gotten rid of.
 
-// The base class of all database wrappers.
+/// The base class of all database wrappers.
 CloudHelper.BaseWrappedDB = function()
 {
     this.sub = JSHelper.NotImplemented("string : name", "Get a sub-category of the database.", "-> data/WrappedDB");
@@ -191,3 +194,4 @@ CloudHelper.FirestoreWrappedDoc = function(doc)
         me.doc.set(data);
     };
 };
+

@@ -1,5 +1,7 @@
 "use strict";
 
+/// @export AreaHelper
+
 var AreaHelper = {};
 
 // SAT stands for the "Separating Axis Theorem".
