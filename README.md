@@ -1,3 +1,6 @@
+# Note
+`main` is now the default branch for `LibJS`. Please switch to that branch.
+
 # LibJS
 A collection of JavaScript libraries.
 
