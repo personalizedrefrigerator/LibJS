@@ -169,7 +169,7 @@ JSHelper.vec3ToRGBString = (inputVector,
 };
 
 // Wait delay seconds...
-JSHelper.waitFor = (delay) =>
+JSHelper.waitForSeconds = (delay) =>
 {
     let doResolve = false;
     let resolveFn = () => { doResolve = true; };

@@ -6,28 +6,28 @@ function SubWindowGlobals(parent, windowsList)
     this.windowsList = windowsList;
     this.dragElement = document.createElement("div");
     this.minZIndex = 100;
-    
+
     var me = this;
-    
+
     this.sortWindowsList = function()
     {
         /* Sort descending order. */
-        me.windowsList.sort(function(windowA, windowB) 
+        me.windowsList.sort(function(windowA, windowB)
         {
             return windowB.zIndex - windowA.zIndex;
         });
     };
-    
+
     this.getMaxZIndex = function(excludeObject)
     {
         me.sortWindowsList();
-        
+
         var result = this.minZIndex;
-        
+
         if (me.windowsList.length > 0)
         {
             result = me.windowsList[0].zIndex;
-            
+
             if (me.windowsList[0] == excludeObject)
             {
                 if (me.windowsList.length > 1)
@@ -40,7 +40,7 @@ function SubWindowGlobals(parent, windowsList)
                 }
             }
         }
-        
+
         return result;
     };
 
@@ -60,23 +60,23 @@ function SubWindowGlobals(parent, windowsList)
             hadBelowTop = hadBelowTop || !me.windowsList[i].alwaysOnTop;
         }
     };
-    
+
     this.addWindow = function(newWindow)
     {
         me.windowsList.push(newWindow);
     };
-    
+
     this.removeDestroyed = function()
     {
         me.sortWindowsList();
-        
-        while (me.windowsList.length > 0 
+
+        while (me.windowsList.length > 0
             && me.windowsList[me.windowsList.length - 1].zIndex === -1)
         {
             me.windowsList.pop();
         }
     };
-    
+
     // Listen for shift + F3 to switch between windows.
     me.parent.addEventListener("keydown", function(event)
     {
@@ -86,9 +86,9 @@ function SubWindowGlobals(parent, windowsList)
             {
                 // Don't perform default action.
                 event.preventDefault();
-                
+
                 me.sortWindowsList();
-                
+
                 // Select the last window.
                 me.windowsList[me.windowsList.length - 1].toTheFore();
             }
@@ -96,15 +96,15 @@ function SubWindowGlobals(parent, windowsList)
             {
                 // Don't perform default action.
                 event.preventDefault();
-                
+
                 me.sortWindowsList();
-                
+
                 // Close the first (focused) window.
                 me.windowsList[0].close();
             }
         }
     }, true);
-    
+
     this.parent.appendChild(this.dragElement);
     this.dragElement.setAttribute("class", "windowDragElement");
     this.dragElement.style.position = "fixed";
@@ -119,7 +119,7 @@ function SubWindowGlobals(parent, windowsList)
 function SubWindowTab(label, options)
 {
     options = options || {};
-    
+
     var parent = undefined;
     var me = this;
     var stylePrefix = options.stylePrefix || "base";
@@ -130,7 +130,7 @@ function SubWindowTab(label, options)
     this.mainElementCommand.textContent = label;
     this.label = label;
     this.mainElement.appendChild(this.mainElementCommand);
-    
+
     if (!options.command)
     {
         this.menuElement = document.createElement("div");
@@ -147,7 +147,7 @@ function SubWindowTab(label, options)
                 me.menuElement.style.display = "none";
             }
         }, true);
-        
+
         this.onClick = function()
         {
             me.menuElement.style.display = "block";
@@ -159,33 +159,33 @@ function SubWindowTab(label, options)
     {
         this.onClick = options.command;
     }
-    
+
     this.setLabel = function(newLabel)
     {
         me.mainElementCommand.textContent = newLabel;
         me.label = newLabel;
     };
-    
+
     this.addCommand = function(label, action)
     {
         if (me.menuElement === undefined)
         {
             throw "Cannot add sub-commands to a tab with a pre-set action.";
         }
-        
+
         var subTab;
         subTab = new SubWindowTab(label, { command: function(event) { action(subTab, event); }, stylePrefix: stylePrefix, mainElement: "div" });
         subTab.addToElement(me.menuElement);
-        
+
         return subTab;
     };
-    
+
     this.addToElement = function(element)
     {
         element.appendChild(me.mainElement);
         parent = element;
     };
-    
+
     // Unhides the element.
     this.show = function()
     {
@@ -194,7 +194,7 @@ function SubWindowTab(label, options)
         me.mainElement.style.height = "auto";
         me.mainElement.setAttribute("title", "Visible item. " + me.label);
     };
-    
+
     this.hide = function()
     {
         me.mainElement.style.visibility = "hidden";
@@ -202,7 +202,7 @@ function SubWindowTab(label, options)
         me.mainElement.style.width = "0px";
         me.mainElement.setAttribute("title", "Hidden item. " + me.label);
     };
-    
+
     this.destroy = function()
     {
         if (me.menuElement)
@@ -210,7 +210,7 @@ function SubWindowTab(label, options)
             me.mainElement.removeChild(me.menuElement);
             delete me.menuElement;
         }
-        
+
         if (me.subTabs)
         {
             for (var i = 0; i < me.subTabs.length; i++)
@@ -218,7 +218,7 @@ function SubWindowTab(label, options)
                 me.subTabs[i].destroy();
             }
         }
-        
+
         if (parent !== undefined)
         {
             parent.removeChild(me.mainElement);
@@ -227,10 +227,10 @@ function SubWindowTab(label, options)
         {
             me.mainElement.outerHTML = "";
         }
-        
+
         delete me.mainElement;
     };
-    
+
     this.mainElementCommand.setAttribute("tabIndex", 2);
     this.mainElementCommand.addEventListener("click", me.onClick);
 }
@@ -249,7 +249,7 @@ function SubWindow(globals, options)
     //              size in pixels after load or to allow its size
     //              to be determined by its contents until resize.
     //  noResize    Disable window resizing.                        bool
-    // initialPosIsAbsolute Whether a with-page window should be given 
+    // initialPosIsAbsolute Whether a with-page window should be given
     //              initial position without consideration of scrollX/scrollY.
     // (x, y)       Initial position of the window.                (int, int)
     // unsnappable  Prohibits a "snapping" behavior from occurring  bool
@@ -265,38 +265,38 @@ function SubWindow(globals, options)
 
     options = options || {};
     var parent = globals.parent;
-    
+
     var me = this;
     var styleClassName = options.className || "windowContainerDefault";
-    
+
     // Get a string representing a component's style classes
     //for a given suffix.
     var getStyleClass = (suffix) =>
     {
         let result;
-        
+
         result = styleClassName + suffix + " " + "windowContainer" + suffix;
-        
+
         return result;
     };
-    
+
     this.zIndex = globals.minZIndex;
-    
+
     this.container = document.createElement("div");
     this.container.setAttribute("class", getStyleClass(""));
-    
+
     this.container.style.display = "flex";
     this.container.style.flexDirection = "column";
     this.container.style.position = options.withPage ? "absolute" : "fixed";
-    
+
     this.titleBar = document.createElement("div");
     this.titleBar.setAttribute("class", getStyleClass("TitleBar"));
     this.titleBar.setAttribute("tabIndex", 2);
-    
+
     this.titleBar.style.display = "flex";
     this.titleBar.style.flexDirection = "row";
     this.titleBar.setAttribute("title", "In-page window. Title bar.");
-    
+
     this.titleContent = document.createElement("div");
     this.titleContent.setAttribute("class", getStyleClass("TitleContent"));
     this.titleContent.style.flexGrow = "1";
@@ -306,9 +306,9 @@ function SubWindow(globals, options)
     this.unsnappable = options.unsnappable === undefined ? (options.noResize || false) : options.unsnappable;
     this.snapThreshold = options.snapThreshold !== undefined ? options.snapThreshold : 26; // How far to the left/right the user needs to drag the window for it to snap.
     this.snapped = false; // Whether the window is currently snapped.
-    
+
     this.draggable = false;
-    
+
     if (options.titleHTML)
     {
         this.titleContent.innerHTML = options.titleHTML;
@@ -317,34 +317,34 @@ function SubWindow(globals, options)
     {
         this.titleContent.textContent = options.title;
     }
-    
+
     this.tabZone = document.createElement("div");
     this.tabZone.setAttribute("class", getStyleClass("TabZone"));
     this.tabZone.style.display = "none";
     var hasTabs = false;
     var tabs = [];
-    
+
     var minWidth = options.minWidth;
     var minHeight = options.minHeight;
     var maxWidth = options.maxWidth;
     var maxHeight = options.maxHeight;
-    
+
     let getMaxWidth = () =>
     {
         return maxWidth || window.innerWidth || parent.clientWidth;
     };
-    
+
     let getMaxHeight = () =>
     {
         return maxHeight || window.innerHeight || parent.clientHeight;
     };
-    
+
     var onCloseListener = undefined;
-    
+
     this.content = document.createElement("div");
     this.content.setAttribute("class", getStyleClass("Content"));
     this.content.style.flexGrow = "1";
-    
+
     if (options.contentHTML)
     {
         this.content.innerHTML = options.contentHTML;
@@ -353,60 +353,60 @@ function SubWindow(globals, options)
     {
         this.content.textContent = options.content;
     }
-    
+
     // Given a specific maxWidth or maxHeight? Set it using CSS...
     if (options.maxWidth)
     {
         this.content.style.maxWidth = options.maxWidth + 'px';
     }
-    
+
     if (options.maxHeight)
     {
         this.content.style.maxHeight = options.maxHeight + 'px';
     }
-    
+
     this.titleBar.appendChild(me.titleContent);
     this.container.appendChild(this.titleBar);
     this.container.appendChild(this.tabZone);
     this.container.appendChild(this.content);
-    
+
     me.container.style.filter = "opacity(0%)";
     var transitionInOutFunction = function(progress)
     {
         me.container.style.filter = "opacity(" + Math.floor(progress * 100) + "%)";
     };
-    
+
     this.destroyTransition = new Transition(transitionInOutFunction,
         options.destroyTransitionDuration !== undefined ? options.destoryTransitionDuration : 300,
         function()
         {
             parent.removeChild(me.container);
-            
+
             for (var i = 0; i < tabs.length; i++)
             {
                 tabs[i].destroy();
             }
-            
+
             delete me.container;
             delete me.content;
             delete me.tabZone;
             delete me.titleBar;
             delete me.titleContent;
-            
+
             me.zIndex = -1;
             globals.removeDestroyed();
-            
+
             me.closed = true;
-            
+
             if (onCloseListener)
             {
                 onCloseListener();
             }
 
         });
-        
+
     this.destroyTransition.reverse();
-    
+
     var initialWidth, initialHeight, toWidth, toHeight;
     this.sizeTransition = new Transition(function(progress)
     {
@@ -420,7 +420,7 @@ function SubWindow(globals, options)
     {
         initialWidth = me.container.clientWidth;
         initialHeight = me.container.clientHeight;
-        
+
         if (endWidth !== undefined && endHeight !== undefined)
         {
             toWidth = endWidth;
@@ -432,7 +432,7 @@ function SubWindow(globals, options)
         {
             toWidth = minWidth;
         }
-        
+
         if (minHeight !== undefined && toHeight < minHeight)
         {
             toHeight = minHeight;
@@ -448,12 +448,12 @@ function SubWindow(globals, options)
             toHeight = getMaxHeight();
         }
     });
-    
+
     this.locationTransition = new Transition(function(progress)
     {
         me.container.style.left = (this.transitFromX + (this.transitToX - this.transitFromX) * progress) + "px";
         me.container.style.top = (this.transitFromY + (this.transitToY - this.transitFromY) * progress) + "px";
-        
+
         me.updateResizeCircleLocation(false); // DO NOT re-measure the size of the container.
     }, options.locationTransitDuration !== undefined ? options.locationTransitDuration : 100, function() // On end.
     {
@@ -461,14 +461,14 @@ function SubWindow(globals, options)
     }, function(toX, toY) // On before start.
     {
         var bbox = me.container.getBoundingClientRect();
-    
+
         // Note that "this" is the transition.
         this.transitToX = toX;
         this.transitToY = toY;
         this.transitFromX = bbox.left;
         this.transitFromY = bbox.top;
     });
-        
+
     this.createTransition = new Transition(transitionInOutFunction,
         options.createTransitionDuration !== undefined ? options.createTransitionDuration : 300,
         function()
@@ -479,37 +479,37 @@ function SubWindow(globals, options)
             {
                 me.createResizeCircle();
             }
-            
+
             me.scaleToParentWindow();
         });
-    
+
     this.addTab = function(tab)
     {
         tab.addToElement(me.tabZone);
         tabs.push(tab);
-        
+
         if (!me.hasTabs)
         {
             me.tabZone.style.display = "block";
-            
+
             me.hasTabs = true;
         }
     };
-    
+
     this.appendChild = function(child)
     {
         me.content.appendChild(child);
     };
-    
+
     this.removeChild = function(child)
     {
         me.content.removeChild(child);
     };
-    
+
     this.enableFlex = function(direction)
     {
         me.content.style.display = "flex";
-        
+
         if (direction)
         {
             me.content.style.flexDirection = direction;
@@ -519,7 +519,7 @@ function SubWindow(globals, options)
     this.getXY = function()
     {
         var bbox = me.container.getBoundingClientRect();
-        
+
         var left = bbox.left;
         var top = bbox.top;
 
@@ -538,7 +538,7 @@ function SubWindow(globals, options)
     {
         if (me.snapped)
         {
-            me.sizeTransition.start(widthPreSnap || minWidth, 
+            me.sizeTransition.start(widthPreSnap || minWidth,
                         heightPreSnap || minHeight).then(() =>
             {
                 me.snapped = false;
@@ -596,59 +596,59 @@ function SubWindow(globals, options)
 
         me.snap(divide, divide)
     };
-    
+
     // Adjust the scale of the sub-window to fit in the browser's window.
     this.scaleToParentWindow = function()
     {
         toWidth = me.container.clientWidth;
         toHeight = me.container.clientHeight;
         var runSizeTransition = false;
-        
+
         if (minWidth === undefined)
         {
             minWidth = me.container.clientWidth / 2;
         }
-        
+
         if (minHeight === undefined)
         {
             minHeight = me.container.clientHeight / 2;
         }
-        
+
         if (me.container.clientHeight < minHeight)
         {
             toHeight = minHeight;
-            
+
             runSizeTransition = true;
         }
-        
+
         if (me.container.clientWidth < minWidth)
         {
             toWidth = minWidth;
-            
+
             runSizeTransition = true;
         }
-        
+
         if (me.container.clientWidth > getMaxWidth())
         {
             toWidth = getMaxWidth();
-            
+
             runSizeTransition = true;
         }
-        
+
         if (me.container.clientHeight > getMaxHeight())
         {
             toHeight = getMaxHeight();
-            
+
             runSizeTransition = true;
         }
-        
+
         if (runSizeTransition)
         {
             me.sizeTransition.start();
         }
-        
+
         var bbox = me.container.getBoundingClientRect();
-        
+
         var left = bbox.left;
         var top = bbox.top;
 
@@ -663,55 +663,55 @@ function SubWindow(globals, options)
             moveToLeft = window.scrollX;
             moveToTop = window.scrollY;
         }
-        
+
         var windowWidth = window.innerWidth || globals.dragElement.clientWidth;
         var windowHeight =  window.innerHeight || globals.dragElement.clientHeight;
-        
+
         if (me.container.clientWidth + left > windowWidth)
         {
             me.container.style.left = moveToLeft + "px";
             me.container.style.width = windowWidth + "px";
         }
-        
+
         if (me.container.clientHeight + top > windowHeight)
         {
             me.container.style.top = moveToTop + "px";
             me.container.style.maxHeight = windowHeight + "px";
         }
-        
+
         me.updateResizeCircleLocation(true);
     };
-    
+
     this.createCloseButton = function()
     {
         me.closeButton = document.createElement("div");
         me.closeButton.innerHTML = "X";
-        
+
         me.closeButton.setAttribute("title", "Push button: Close");
         me.closeButton.setAttribute("tabIndex", 2);
-        
+
         me.closeButton.setAttribute("class", getStyleClass("CloseButton"));
-        
+
         me.titleBar.appendChild(me.closeButton);
-        
+
         me.closeButton.addEventListener("click", function(event)
         {
             event.preventDefault();
-            
+
             me.destroy();
         });
     };
-    
+
     this.createMinimizeMaximizeButton = function()
     {
         me.minMaxButton = document.createElement("div");
         me.minMaxButton.setAttribute("class", getStyleClass("MaximizeButton"));
-        
+
         me.minMaxButton.setAttribute("title", "Push button: Minimize or maximize.");
         me.minMaxButton.setAttribute("tabIndex", 2);
-        
+
         me.titleBar.appendChild(me.minMaxButton);
-        
+
         // Original state
         var originalResizeCircleDisplay = "block";
         var originalWidth = minWidth;
@@ -719,60 +719,60 @@ function SubWindow(globals, options)
         var originalX = 0;
         var originalY = 0;
         var originalMovable = true;
-        
+
         var storeOriginalState = function()
         {
             var bbox = me.content.getBoundingClientRect();
-                
+
             originalWidth = me.container.clientWidth;
             originalHeight = me.container.clientHeight;
-            
+
             originalWidth = Math.max(originalWidth, minWidth);
             originalHeight = Math.max(originalHeight, minHeight);
-            
+
             originalX = bbox.left;
             originalY = bbox.top;
-            
+
             originalMovable = me.getDraggable();
-            
+
             if (me.resizeZone)
-            {   
+            {
                 originalResizeCircleDisplay = me.resizeZone.style.display;
             }
         };
-        
+
         me.minMaxButton.addEventListener("click", function(event)
         {
             event.preventDefault();
-            
+
             // Set up state for size transition.
             initialWidth = me.container.clientWidth;
             initialHeight = me.container.clientHeight;
-            
+
             if (me.minMaxButton.getAttribute("class").indexOf("MinimizeB") === -1)
             {
                 // Change the button's looks!
                 me.minMaxButton.setAttribute("class", getStyleClass("MinimizeButton"));
-                
+
                 // Allow a return to the state of the window before maximization.
                 storeOriginalState();
-                
+
                 me.locationTransition.start(0, 0);
-                
+
                 me.sizeTransition.start(window.innerWidth || parent.clientWidth, window.innerHeight || parent.clientHeight);
-                
+
                 me.setDraggable(false);
-                
+
                 setDragReplacementAction((dx, dy) =>
                 {
                     if (dy > 0)
                     {
                         clearDragReplacementAction();
-                        
+
                         me.minMaxButton.click();
                     }
                 });
-                
+
                 if (me.resizeZone)
                 {
                     me.resizeZone.style.display = "none";
@@ -781,16 +781,16 @@ function SubWindow(globals, options)
             else
             {
                 me.sizeTransition.start(originalWidth, originalHeight);
-                
-                me.locationTransition.start(originalX, originalY).then(() => 
+
+                me.locationTransition.start(originalX, originalY).then(() =>
                 {
                     // Only change state related to minimization/maximization at the end.
                     me.minMaxButton.setAttribute("class", getStyleClass("MaximizeButton"));
                     me.setDraggable(originalMovable);
                 });
-                
+
                 clearDragReplacementAction();
-                
+
                 // Show the resize circle.
                 if (me.resizeZone)
                 {
@@ -799,21 +799,21 @@ function SubWindow(globals, options)
             }
         });
     };
-    
+
     this.updateResizeCircleLocation = function(measureSize)
     {
         // Do nothing if the circle is nonexistant.
     };
-    
+
     this.createResizeCircle = function()
     {
         var bbox = me.container.getBoundingClientRect();
-    
+
         me.resizeZone = document.createElement("div");
         me.resizeZone.setAttribute("class", getStyleClass("ResizeZone"));
         me.resizeZone.style.position = "absolute"; // Note: "fixed" has issues in WebKit.
         me.container.appendChild(me.resizeZone);
-        
+
         // If specified, set the width and height of the window
         //to concrete values.
         if (options.fixWindowSize)
@@ -821,16 +821,16 @@ function SubWindow(globals, options)
             me.container.style.width = me.container.clientWidth + "px";
             me.container.style.height = me.container.clientHeight + "px";
         }
-        
+
         var left = me.container.clientWidth - 5;
         var top = me.container.clientHeight - 5;
-        
+
         me.resizeZone.style.left = left + "px";
         me.resizeZone.style.top = top + "px";
-        
+
         var width = me.container.clientWidth;
         var height = me.container.clientHeight;
-        
+
         me.updateResizeCircleLocation = function(measureSize)
         {
             if (measureSize)
@@ -838,45 +838,45 @@ function SubWindow(globals, options)
                 width = me.container.clientWidth;
                 height = me.container.clientHeight;
             }
-        
+
             me.resizeZone.style.left = (width - me.resizeZone.clientWidth / 2) + "px";
             me.resizeZone.style.top = (height - me.resizeZone.clientHeight / 2) + "px";
         };
-        
+
         var draggableWrapper = new DraggableElement(me.resizeZone, globals.dragElement);
         draggableWrapper.onDrag = function(dx, dy, x, y)
         {
             me.toTheFore();
-        
+
             if ((width + dx > minWidth || dx > 0) && (width + dx < getMaxWidth() || dx < 0))
             {
                 width += dx;
             }
-            
+
             if ((height + dy > minHeight || dy > 0) && (height + dy < getMaxHeight() || dy < 0))
             {
                 height += dy;
             }
-            
+
             me.updateResizeCircleLocation(false);
-            
+
             me.container.style.width = (width) + "px";
             me.container.style.height = (height) + "px";
         };
-        
+
         draggableWrapper.onBeforeDrag = function()
         {
             me.toTheFore();
-            
+
             width = me.container.clientWidth;
             height = me.container.clientHeight;
         };
     };
-    
+
     this.toTheFore = function(calledFromTopToTheFore)
     {
         var maxZIndex = globals.getMaxZIndex(me);
-        
+
         if (maxZIndex >= me.zIndex)
         {
             me.zIndex = maxZIndex + 1;
@@ -889,54 +889,54 @@ function SubWindow(globals, options)
             }
         }
     };
-    
+
     this.getDraggable = function()
     {
         return me.draggable;
     };
-    
+
     this.setDraggable = function(draggable)
     {
         me.draggable = draggable;
     };
-    
+
     var dragReplacementAction;
-    
+
     var setDragReplacementAction = function(action)
     {
         dragReplacementAction = action;
     };
-    
+
     var clearDragReplacementAction = function()
     {
         dragReplacementAction = undefined;
     };
-    
+
     this.makeMovable = function()
     {
         var bbox = me.container.getBoundingClientRect();
         var left = bbox.left;
         var top = bbox.top;
-      
+
         // If using absolute positioning, position relative to the document.
         if (me.container.style.position === "absolute")
         {
             left += window.scrollX;
             top += window.scrollY;
         }
-          
+
         me.container.style.left = left + "px";
         me.container.style.top = top + "px";
-        
+
         me.draggable = true;
-        
+
         var draggableWrapper = new DraggableElement(me.titleContent, globals.dragElement,
             undefined, me.container.style.position === "absolute");
 
         draggableWrapper.onDrag = function(dx, dy, x, y)
         {
             me.toTheFore();
-            
+
             if (!me.getDraggable())
             {
                 // Replace the action, if requested.
@@ -944,13 +944,13 @@ function SubWindow(globals, options)
                 {
                     dragReplacementAction(dx, dy);
                 }
-            
+
                 return;
             }
-        
+
             left += dx;
             top += dy;
-            
+
             me.container.style.left = left + "px";
             me.container.style.top = top + "px";
 
@@ -971,11 +971,11 @@ function SubWindow(globals, options)
                 me.minMaxButton.click();
             }
         };
-        
+
         draggableWrapper.onBeforeDrag = function()
         {
             me.toTheFore();
-        
+
             bbox = me.container.getBoundingClientRect();
             left = bbox.left;
             top = bbox.top;
@@ -988,7 +988,7 @@ function SubWindow(globals, options)
             }
         };
     };
-    
+
     this.destroy = async function()
     {
         if (!me.closed)
@@ -996,65 +996,65 @@ function SubWindow(globals, options)
             await me.destroyTransition.start();
         }
     };
-    
+
     this.close = this.destroy;
-    
+
     this.setOnCloseListener = function(newOnCloseListener)
     {
         onCloseListener = newOnCloseListener;
     };
-    
+
     this.show = function()
     {
         parent.appendChild(me.container);
-        
+
         me.createTransition.start();
         globals.addWindow(me);
         me.toTheFore();
-        
+
         me.container.style.zIndex = me.zIndex;
-        
+
         globals.dragElement.style.zIndex = me.zIndex * 2;
-        
+
         if (!options.noFullScreenBox && !options.noResize)
         {
             me.createMinimizeMaximizeButton();
         }
-        
+
         if (!options.noCloseButton)
         {
             me.createCloseButton();
         }
-        
+
         if (!options.fixed)
         {
             me.makeMovable();
         }
-        
+
         // Select the container's title.
         if (me.container.style.position !== "absolute")
         {
             me.titleContent.focus();
         }
-        
+
         // Allow the window to scale, then
         //change its dimensions, if necessary.
         requestAnimationFrame(function()
-        { 
+        {
             var initialX = options.x !== undefined ? options.x : Math.max(0, window.innerWidth - me.container.clientWidth) / 2;
             var initialY = options.y !== undefined ? options.y : Math.max(5, window.innerHeight / 4 - me.container.clientHeight) / 2;
-            
+
             if (me.container.style.position === "absolute" && !options.initialPosIsAbsolute)
             {
                 initialX += window.scrollX;
                 initialY += window.scrollY;
             }
-            
+
             me.locationTransition.start(initialX, initialY);
             me.scaleToParentWindow();
         });
     };
-    
+
     this.container.addEventListener("click",
     function()
     {
@@ -1069,28 +1069,29 @@ SubWindowHelper.create = function(options)
     {
         SubWindowHelper.globals = new SubWindowGlobals(document.body, []);
     }
-    
+
     var newWindow = new SubWindow(SubWindowHelper.globals, options);
-    
+
     newWindow.show();
-    
+
     return newWindow;
 };
 
+/// Display an OK/CANCEL dialog. Returns async(true) on OK and async(false) on CANCEL.
 SubWindowHelper.confirm = function(title, message, okLabel, cancelLabel, htmlText, windowOptions)
 {
-    var dialog = SubWindowHelper.create(windowOptions 
-    || { title: title, 
-         content: "", 
-         noCloseButton: true, 
-         noResize: true, 
-         maxWidth: 400, 
-         minWidth: 400, 
-         x: (window.innerWidth / 2 - 200), 
+    var dialog = SubWindowHelper.create(windowOptions
+    || { title: title,
+         content: "",
+         noCloseButton: true,
+         noResize: true,
+         maxWidth: 400,
+         minWidth: 400,
+         x: (window.innerWidth / 2 - 200),
          minHeight: 120 });
-    
+
     var contentDiv = document.createElement("div");
-    
+
     if (!htmlText)
     {
         contentDiv.innerText = message;
@@ -1099,41 +1100,41 @@ SubWindowHelper.confirm = function(title, message, okLabel, cancelLabel, htmlTex
     {
         contentDiv.innerHTML = message;
     }
-    
+
     dialog.enableFlex("column");
     contentDiv.style.flexGrow = 2;
     contentDiv.style.overflowY = "auto";
-    
+
     // Add additional padding.
     contentDiv.style.paddingLeft = "4px";
-    
+
     var submitButtonOk = document.createElement("button");
     var submitButtonCancel = document.createElement("button");
-    
+
     submitButtonOk.innerHTML = okLabel || "Ok";
     submitButtonCancel.innerHTML = cancelLabel || "Cancel";
-    
+
     submitButtonOk.setAttribute("class", "dialogSubmitButton");
     submitButtonCancel.setAttribute("class", "dialogSubmitButton");
-    
+
     dialog.content.appendChild(contentDiv);
     dialog.content.appendChild(submitButtonOk);
     dialog.content.appendChild(submitButtonCancel);
-    
+
     return new Promise((resolve, reject) =>
     {
         const submit = (result) =>
         {
             dialog.close();
-            
+
             resolve(result);
         };
-    
+
         submitButtonOk.addEventListener("click", function()
         {
             submit(true);
         });
-        
+
         submitButtonCancel.addEventListener("click", function()
         {
             submit(false);
@@ -1143,18 +1144,18 @@ SubWindowHelper.confirm = function(title, message, okLabel, cancelLabel, htmlTex
 
 SubWindowHelper.alert = function(title, message, onClose, htmlText, windowOptions)
 {
-    var alertDialog = SubWindowHelper.create(windowOptions 
-    || { title: title, 
-         content: "", 
-         noCloseButton: true, 
-         noResize: true, 
-         maxWidth: 400, 
-         minWidth: 400, 
-         x: (window.innerWidth / 2 - 200), 
+    var alertDialog = SubWindowHelper.create(windowOptions
+    || { title: title,
+         content: "",
+         noCloseButton: true,
+         noResize: true,
+         maxWidth: 400,
+         minWidth: 400,
+         x: (window.innerWidth / 2 - 200),
          minHeight: 120 });
-    
+
     var contentDiv = document.createElement("div");
-    
+
     if (!htmlText)
     {
         contentDiv.innerText = message;
@@ -1163,90 +1164,91 @@ SubWindowHelper.alert = function(title, message, onClose, htmlText, windowOption
     {
         contentDiv.innerHTML = message;
     }
-    
+
     alertDialog.enableFlex("column");
     contentDiv.style.flexGrow = 2;
     contentDiv.style.overflowY = "auto";
-    
+
     // Add additional padding.
     contentDiv.style.paddingLeft = "4px";
-    
+
     var submitButton = document.createElement("button");
     submitButton.innerHTML = "Ok";
     submitButton.setAttribute("class", "alertSubmitButton");
-    
+
     alertDialog.content.appendChild(contentDiv);
     alertDialog.content.appendChild(submitButton);
-    
+
     return new Promise((resolve, reject) =>
     {
         submitButton.addEventListener("click", function()
         {
             alertDialog.close();
-            
+
             if (onClose !== undefined)
             {
                 onClose.call(this);
             }
-            
+
             resolve(this);
         });
     });
 };
 
-// Prompt a user for input.
-//This method takes a map of input placeholders/
-//labels to input types as "inputs". It returns a promise.
-//windowOptions is passed directly to SubWindowHelper.
-//promptOptions is a map with further options related to
-//the prompt. For example, promptOptions.initialContent
-//should map from labels to initial content.
-SubWindowHelper.prompt = function(title, message, inputs, 
+/// Prompt a user for input.
+/// This method takes a map of input placeholders/
+/// labels to input types as "inputs". It returns a promise.
+///
+/// windowOptions is passed directly to SubWindowHelper.
+/// promptOptions is a map with further options related to
+///   the prompt. For example, promptOptions.initialContent
+///   should map from labels to initial content.
+SubWindowHelper.prompt = function(title, message, inputs,
         windowOptions, promptOptions)
 {
     var promptDialog = SubWindowHelper.create
             (windowOptions
-             || { title: title, 
-                  content: "",  
-                  minWidth: 400, 
-                  x: (window.innerWidth / 2 - 200), 
+             || { title: title,
+                  content: "",
+                  minWidth: 400,
+                  x: (window.innerWidth / 2 - 200),
                   minHeight: 120 });
-                  
+
     promptDialog.enableFlex("column");
-    
+
     promptOptions = promptOptions || {};
     promptOptions.initialContent = promptOptions.initialContent || {};
-            
+
     var contentArea = document.createElement("div");
     var messageZone = document.createElement("div");
     var inputZone = document.createElement("div");
-    
+
     contentArea.appendChild(messageZone);
     contentArea.appendChild(inputZone);
-    
+
     promptDialog.appendChild(contentArea);
-    
+
     messageZone.innerText = message;
     messageZone.style.flexGrow = 0.8;
-    
+
     var addedInputs = [];
     var inputMap = {};
     var submit = () => {};
-    
+
     var handleInput = (label) =>
     {
         const inputIndex = addedInputs.length;
-        
+
         let newInputContainer = document.createElement("div");
-        
+
         newInputContainer.style.display = "flex";
         newInputContainer.style.flexDirection = "row";
-        
+
         let labelElement = HTMLHelper.addLabel(label, newInputContainer);
-        
+
         labelElement.style.paddingRight = "6px";
-        
-        let newInput = HTMLHelper.addInput(label, 
+
+        let newInput = HTMLHelper.addInput(label,
                 promptOptions.initialContent[label] || "",
                 inputs[label], newInputContainer, (value) => // On input.
         {
@@ -1254,8 +1256,8 @@ SubWindowHelper.prompt = function(title, message, inputs,
         }, (value) => // On Enter key.
         {
             inputMap[label] = value;
-            
-            if (inputIndex + 1 < addedInputs.length 
+
+            if (inputIndex + 1 < addedInputs.length
                     && inputs[label] !== "textarea")
             {
                 addedInputs[inputIndex + 1].focus();
@@ -1265,37 +1267,37 @@ SubWindowHelper.prompt = function(title, message, inputs,
                 submit();
             }
         });
-        
+
         newInput.style.flexGrow = 1;
-        
+
         inputZone.appendChild(newInputContainer);
-        
+
         return newInput;
     };
-    
+
     // For every given input...
     for (var label in inputs)
     {
         let input = handleInput(label);
-        
+
         inputMap[label] = HTMLHelper.getInputContent(input, inputs[label]);
         addedInputs.push(input);
     }
-    
+
     // Add a submit button.
     const submitButton = HTMLHelper.addButton("Submit", promptDialog, () =>
     {
         submit();
     });
-    
+
     submitButton.style.flexGrow = 0.4;
-    
+
     return new Promise((resolve, reject) =>
     {
         submit = () =>
         {
             promptDialog.close();
-            
+
             resolve(inputMap);
         };
     });
@@ -1307,35 +1309,35 @@ SubWindowHelper.makeProgressDialog = function(title)
 {
     // Default values.
     title = title || "Loading...";
-    
+
     // Make the window.
     let progressDialog = SubWindowHelper.create({ title: title, noCloseButton: true, noResize: true, maxWidth: 400, minWidth: 400, x: window.innerWidth / 2 - 200 });
-    
+
     let statusText = HTMLHelper.addLabel("...", progressDialog, "div");
     let progressBar = HTMLHelper.addProgressBar(0, progressDialog);
-    
+
     let update = function(progress, status)
     {
         progressBar.setProgress(progress);
         statusText.textContent = status;
     };
-    
+
     let close = function()
     {
         progressDialog.close();
     };
-    
+
     // Dictionaries cannot be
     //constructed in return statements.
-    let result =  
+    let result =
     {
         update: update,
-        
+
         close: close,
-        
+
         dialog: progressDialog
     };
-    
+
     return result;
 };
 
