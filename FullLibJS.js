@@ -20,7 +20,7 @@ function Line(ctx, parentEditor, x, y, h, myIndex)
     this.hasFocus = false;
     this.hadFocus = false;
     this.syntaxTracker = new SyntaxTracker(this, null, null, parentEditor.syntaxSelector);
-    
+
     this.lastModifiedTime = (new Date()).getTime();
     this.creationTime = (new Date()).getTime();
     this.id = "id_" + (__lineIdCounter++);
@@ -39,7 +39,7 @@ function Line(ctx, parentEditor, x, y, h, myIndex)
 
     this.flaggedForRemoval = false;
 
-    let me = this; // NON-CONST: ME IS SET WHEN CODE MUST 
+    let me = this; // NON-CONST: ME IS SET WHEN CODE MUST
                    // CHANGE CONTEXT.
 
     this.requestRender = function()
@@ -74,14 +74,14 @@ function Line(ctx, parentEditor, x, y, h, myIndex)
             if (me.setColorFunction)
             {
                 let colorSetResult = me.setColorFunction(index);
-                
+
                 // Did the function actually return a color?
                 if (typeof colorSetResult == "string")
                 {
                     return colorSetResult;
                 }
             }
-        
+
             if (!codeEditing)
             {
                 return me.color;
@@ -99,7 +99,7 @@ function Line(ctx, parentEditor, x, y, h, myIndex)
 
             return color;
         };
-        
+
         const canvasWidth = me.ctx.canvas.width;
 
         var currentChar, x = me.x, y = me.y,
@@ -141,7 +141,7 @@ function Line(ctx, parentEditor, x, y, h, myIndex)
             }
 
             me.ctx.restore();
-            
+
             if (x > canvasWidth)
             {
                 return;
@@ -249,11 +249,11 @@ function Line(ctx, parentEditor, x, y, h, myIndex)
             me.maxCursorPosition = me.cursorPosition;
 
             me.cursorPosition = Math.min(me.text.length, me.cursorPosition);
-            
+
             return () =>
             {
                 me.hadFocus = true;
-            
+
                 return fromLine.transitionFocus(me);
             };
         }
@@ -261,7 +261,7 @@ function Line(ctx, parentEditor, x, y, h, myIndex)
         if (me.hadFocus && otherWayLine)
         {
             me.hasFocus = false;
-            
+
             return () =>
                 me.transitionFocus(otherWayLine);
         }
@@ -274,9 +274,9 @@ function Line(ctx, parentEditor, x, y, h, myIndex)
             if (me.cursorPosition + direction >= 0 && me.cursorPosition + direction <= me.text.length)
             {
                 me.cursorPosition += direction;
-                
+
                 // Returns an undo function.
-                return () => 
+                return () =>
                 {
                     return me.lrTransitionFocus(toLine, -direction);
                 };
@@ -295,7 +295,7 @@ function Line(ctx, parentEditor, x, y, h, myIndex)
                 {
                     toLine.cursorPosition = 0;
                 }
-                
+
                 // Return an undo function.
                 return () =>
                 {
@@ -314,9 +314,9 @@ function Line(ctx, parentEditor, x, y, h, myIndex)
         }
 
         var added = false, undoResult = null;
-        
+
         let topLevelArguments = arguments;
-        
+
         let generalRedo = () =>
         {
             return me.handleKey.apply(me, topLevelArguments);
@@ -327,7 +327,7 @@ function Line(ctx, parentEditor, x, y, h, myIndex)
             if (key === "🔽" || key === "ArrowDown")
             {
                 undoResult = me.transitionFocus(lineAbove, lineBelow);
-                
+
                 me.refreshHighlitingIfNeeded(myIndex, false, true);
 
                 added = true;
@@ -335,7 +335,7 @@ function Line(ctx, parentEditor, x, y, h, myIndex)
             else if (key === "🔼" || key === "ArrowUp")
             {
                 undoResult = me.transitionFocus(lineBelow, lineAbove);
-                
+
                 me.refreshHighlitingIfNeeded(myIndex, false, true);
 
                 added = true;
@@ -363,13 +363,13 @@ function Line(ctx, parentEditor, x, y, h, myIndex)
         if (hasSelection && !added && me.parentEditor.editable && me.editable)
         {
             let oldText = me.text + "";
-            
+
             let oldHasFocus = me.hasFocus;
-            
+
             const selStart = me.selRange[0],
                   selEnd = me.selRange[1],
                   cursorPosition = me.cursorPosition;
-            
+
             let removeAction = () =>
             {
                 me.text = me.text.substring(0, selStart) + me.text.substring(selEnd);
@@ -377,24 +377,24 @@ function Line(ctx, parentEditor, x, y, h, myIndex)
                 me.cursorPosition = selStart;
 
                 me.deselect();
-                
+
                 return undoResult;
             };
-            
+
             undoResult = (lineHelper) =>
             {
                 me.text = oldText;
-                
+
                 me.cursorPosition = cursorPosition;
                 me.selRange = [selStart, selEnd];
-                
+
                 me.hasFocus = oldHasFocus;
-                
+
                 console.log("Undid! Text: " + oldText);
-                
+
                 return removeAction;
             };
-            
+
             removeAction();
         }
 
@@ -412,9 +412,9 @@ function Line(ctx, parentEditor, x, y, h, myIndex)
 
                         lineAbove.text += me.text;
                         let myText = me.text;
-                        
+
                         let priorTextAbove = lineAbove.text;
-                        
+
                         undoResult = (lineHelper) =>
                         {
                             // Insert this line.
@@ -423,10 +423,10 @@ function Line(ctx, parentEditor, x, y, h, myIndex)
                                 me.flaggedForRemoval = false;
                                 lineHelper.insertLineObject(myIndex, me);
                             }
-                            
+
                             me.cursorPosition = 0;
                             me.focus();
-                            
+
                             return generalRedo;
                         };
                     }
@@ -434,17 +434,17 @@ function Line(ctx, parentEditor, x, y, h, myIndex)
                 else if (!hasSelection)
                 {
                     me.cursorPosition--;
-                    
+
                     let oldText = me.text;
 
                     me.text = me.text.substring(0, me.cursorPosition) + me.text.substring(me.cursorPosition + 1);
-                    
+
                     undoResult = () =>
                     {
                         me.cursorPosition++;
-                        
+
                         me.text = oldText;
-                        
+
                         return generalRedo;
                     };
                 }
@@ -470,20 +470,20 @@ function Line(ctx, parentEditor, x, y, h, myIndex)
 
                     newLine.cursorPosition = newLine.text.length - originalMovedText.length;
                     newLine.refreshHighlitingIfNeeded(myIndex + 1);
-                    
+
                     me.requestRefresh();
-                    
+
                     undoResult = () =>
                     {
                         me.text = me.text + movedText;
                         me.cursorPosition = me.text.length - movedText.length;
                         me.focus();
-                        
+
                         // Remove the new line.
                         newLine.flaggedForRemoval = true;
-                    
+
                         me.requestRefresh();
-                        
+
                         return generalRedo;
                     };
                 }
@@ -503,7 +503,7 @@ function Line(ctx, parentEditor, x, y, h, myIndex)
                 }
 
                 let priorText = me.text;
-                
+
                 me.text = me.text.substring(0, me.cursorPosition) + toInsert + me.text.substring(me.cursorPosition);
 
                 me.cursorPosition += toInsert.length;
@@ -511,7 +511,7 @@ function Line(ctx, parentEditor, x, y, h, myIndex)
 
                 // Was an undo function created for some other action?
                 let oldUndo = undoResult;
-                
+
                 undoResult = () =>
                 {
                     me.text = priorText;
@@ -524,7 +524,7 @@ function Line(ctx, parentEditor, x, y, h, myIndex)
                     {
                         redoOther = oldUndo();
                     }
-                    
+
                     return () =>
                     {
                         redoOther();
@@ -537,33 +537,33 @@ function Line(ctx, parentEditor, x, y, h, myIndex)
         if (hasSelection && !added && me.text.length === 0)
         {
             me.flaggedForRemoval = true;
-            
+
             let oldUndoResult = undoResult,
                 oldRedoResult;
             let oldIndex = myIndex;
-            
+
             undoResult = (lineHelper) =>
             {
                 if (me.flaggedForRemoval)
                 {
                     me.parentEditor.removeLinesFlaggedForRemoval();
-                    
+
                     me.flaggedForRemoval = false;
                     lineHelper.insertLineObject(oldIndex, me);
                 }
-                
+
                 if (oldUndoResult)
                 {
                     console.log("IT DID EXIST!");
-                    
+
                     oldRedoResult = oldUndoResult(lineHelper, me);
                 }
-            
+
                 return () =>
                 {
                     me.flaggedForRemoval = true;
                     me.requestRefresh();
-                    
+
                     return undoResult;
                 };
             };
@@ -573,7 +573,7 @@ function Line(ctx, parentEditor, x, y, h, myIndex)
         {
             try
             {
-                requestAnimationFrame(() => 
+                requestAnimationFrame(() =>
                 {
                     me.onentercommand(me, myIndex)
                     me.parentEditor.render();
@@ -587,7 +587,7 @@ function Line(ctx, parentEditor, x, y, h, myIndex)
 
         me.updateModifiedTime();
         me.refreshHighlitingIfNeeded(myIndex);
-        
+
         // Permits general undoing and redoing.
         return undoResult;
     };
@@ -611,24 +611,24 @@ function Line(ctx, parentEditor, x, y, h, myIndex)
             });
         }
     };
-    
+
     this.getText = function()
     {
         return me.text;
     };
-    
+
     this.setText = function(newText)
     {
         var oldText = me.text + "";
-        
+
         me.text = newText;
-        
+
         if (oldText !== newText)
         {
             me.lastModifiedTime = (new Date()).getTime();
         }
     };
-    
+
     var lastText = "";
     this.updateModifiedTime = function()
     {
@@ -637,14 +637,14 @@ function Line(ctx, parentEditor, x, y, h, myIndex)
             me.lastModifiedTime = (new Date()).getTime();
         }
     };
-    
+
     this.setModifiedTime = function(lastTime)
     {
         me.lastModifiedTime = lastTime;
-        
+
         lastText = me.text;
     };
-    
+
     this.getLastTimeModified = function()
     {
         return me.lastModifiedTime;
@@ -710,7 +710,7 @@ function Line(ctx, parentEditor, x, y, h, myIndex)
         {
             me.text = startingSpaces + me.text;
         }
-        
+
         me.updateModifiedTime();
     };
 
@@ -724,7 +724,7 @@ function Line(ctx, parentEditor, x, y, h, myIndex)
         {
             me.text = me.text.substring(maxSpaces);
         }
-        
+
         me.updateModifiedTime();
     };
 
@@ -755,15 +755,15 @@ function Line(ctx, parentEditor, x, y, h, myIndex)
 function Mat(width, height)
 {
     var me = this;
-    
+
     this.content = [];
     this.rightMulTransform = true;
-    
+
     var w = width;
     var h = height;
-    
+
     var saveStack = [];
-    
+
     var x;
     for (var y = 0; y < h; y++)
     {
@@ -772,48 +772,48 @@ function Mat(width, height)
             this.content.push(0);
         }
     }
-    
+
     this.getOrSetAt = function(x, y, setTo)
     {
         var result = 0;
         var index = x + y * w;
-        
+
         if (index < this.content.length)
         {
             result = this.content[index];
-            
+
             if (setTo !== undefined)
             {
                 this.content[index] = setTo;
             }
         }
-        
+
         return result;
     };
-    
+
     this.getAt = function(x, y)
     {
         return this.getOrSetAt(x, y);
     };
-    
+
     this.setAt = function(x, y, setTo)
     {
         return this.getOrSetAt(x, y, setTo);
     };
-    
+
     this.swapValues = function(x1, y1, x2, y2)
     {
         var temp = me.getAt(x1, y1);
-        
+
         me.setAt(x1, y1, me.getAt(x2, y2));
         me.setAt(x2, y2, temp);
     };
-    
+
     this.leftMul = function(other)
     {
         return other.rightMul(this);
     };
-    
+
     this.rightMul = function(other)
     {
         // Check to make sure other is not
@@ -828,19 +828,19 @@ function Mat(width, height)
             was called with otherMatrix === undefined. A copy
             of Mat(${ w }, ${ h }) was returned.
             `);
-            
+
             // Return a copy -- nothing was to
             //happen.
             return this.getCopy();
         }
-        
+
         var combinedW = w;
         var combinedH = other.getHeight();
-        
+
         var otherWidth = other.getWidth();
-        
+
         var resultMat = new Mat(combinedW, combinedH);
-        
+
         var x, i, sum;
         for (var y = 0; y < combinedH; y++)
         {
@@ -851,24 +851,24 @@ function Mat(width, height)
                 {
                     sum += me.getAt(x, i) * other.getAt(i, y);
                 }
-                
+
                 resultMat.setAt(x, y, sum);
             }
         }
-        
+
         return resultMat;
     };
-    
+
     this.rightMulAndSet = function(other)
     {
         me.content = me.rightMul(other).getArrayCopy();
     };
-    
+
     this.leftMulAndSet = function(other)
     {
         me.content = me.leftMul(other).getArrayCopy();
     };
-    
+
     this.fromArray = function(array)
     {
         for (var i = 0; i < array.length; i++)
@@ -877,32 +877,32 @@ function Mat(width, height)
             {
                 this.content.push(0);
             }
-            
+
             this.content[i] = array[i];
         }
-        
+
         return this;
     };
-    
+
     this.getArray = function()
     {
         return this.content;
     };
-    
+
     this.getArrayCopy = function()
     {
         var result = [];
-        
+
         for (var i = 0; i < this.content.length; i++)
         {
             result[i] = this.content[i];
         }
-        
+
         return result;
     };
-    
+
     this.toArray = this.getArrayCopy;
-    
+
     this.scalarMul = function(scalar)
     {
         for (var i = 0; i < this.content.length; i++)
@@ -910,7 +910,7 @@ function Mat(width, height)
             this.content[i] *= scalar;
         }
     };
-    
+
     this.multiplyScalar = this.scalarMul;
 
     this.scale = function(...scaleBy)
@@ -932,17 +932,17 @@ function Mat(width, height)
             this.setAt(i, i, indicies[i] * this.getAt(i, i));
         }
     };
-    
+
     this.getWidth = function()
     {
         return w;
     };
-    
+
     this.getHeight = function()
     {
         return h;
     };
-    
+
     this.toIdentity = function()
     {
         var y;
@@ -960,20 +960,20 @@ function Mat(width, height)
                 }
             }
         }
-        
+
         return this;
     };
-    
+
     this.toRightMulTranslateMatrix = function(translate)
     {
         this.toIdentity();
-        
+
         for (var i = 0; i < translate.length && i < h - 1; i++)
         {
             this.setAt(w - 1, i, translate[i]);
         }
     };
-    
+
     this.translate = function(translation)
     {
         for (var i = 0; i < translation.length && i < h - 1 && i < w - 1; i++)
@@ -988,27 +988,27 @@ function Mat(width, height)
             }
         }
     };
-    
+
     this.zoomCenter = function(zoom, width, height)
     {
         if (zoom < 1)
         {
             this.translate([width / 2, height / 2]);
         }
-    
+
         this.multiplyScalar(zoom);
-        
+
         if (zoom > 1)
         {
             this.translate([-width / 2, -height / 2]);
         }
     };
-    
+
     this.getCopy = function()
     {
         return (new Mat(w, h)).fromArray(this.getArrayCopy());
     };
-    
+
     this.multiplyRowByScalar = function(rowIndex, scalar)
     {
         for (var x = 0; x < w; x++)
@@ -1016,32 +1016,32 @@ function Mat(width, height)
             this.setAt(x, rowIndex, this.getAt(x, rowIndex) * scalar);
         }
     };
-    
+
     this.addConstantMultipleOfRowToRow = function(rowFromIndex, rowToIndex, scalar)
     {
         var rowFromValue, rowToValue;
-        
+
         for (var x = 0; x < w; x++)
         {
             rowFromValue = this.getAt(x, rowFromIndex);
             rowToValue = this.getAt(x, rowToIndex);
-            
+
             this.setAt(x, rowToIndex, rowToValue + rowFromValue * scalar);
         }
     };
-    
+
     this.getInverse = function()
     {
         var moveToIdentity = this.getCopy();
-        
+
         var moveToInverse = new Mat(w, h);
         moveToInverse.toIdentity();
-        
+
         var x = 0, y = 0, diagonalValue = 0, scalar;
         for (x = 0; x < w; x++)
         {
             diagonalValue = moveToIdentity.getAt(x, x);
-            
+
             // No inverse can be found using this method.
             //Return the closest value to the inverse, log
             //an error message.
@@ -1050,13 +1050,13 @@ function Mat(width, height)
                 console.warn("Error (Finding Inverse): Diagonal values cannot be zero!");
                 return moveToInverse;
             }
-            
+
             // Make the diagonal value 1.
             scalar = 1 / diagonalValue;
-            
+
             moveToIdentity.multiplyRowByScalar(x, scalar);
             moveToInverse.multiplyRowByScalar(x, scalar);
-            
+
             // Make all others in that column zero.
             for(y = 0; y < h; y++)
             {
@@ -1066,21 +1066,21 @@ function Mat(width, height)
                 {
                     continue;
                 }
-                
+
                 scalar = -moveToIdentity.getAt(x, y);
                 moveToIdentity.addConstantMultipleOfRowToRow(x, y, scalar);
                 moveToInverse.addConstantMultipleOfRowToRow(x, y, scalar);
             }
         }
-        
+
         return moveToInverse;
     };
-    
+
     this.transpose = function()
     {
         var result = new Mat(h, w);
         var y;
-        
+
         for (var x = 0; x < w; x++)
         {
             for (y = 0; y < h; y++)
@@ -1088,10 +1088,10 @@ function Mat(width, height)
                 result.setAt(y, x, me.getAt(x, y));
             }
         }
-        
+
         return result;
     };
-    
+
     this.getTranspose = this.transpose;
 
     this.transposeAndSet = function()
@@ -1102,11 +1102,11 @@ function Mat(width, height)
         me.w = me.h;
         me.h = oldW;
     };
-    
+
     this.save = function()
     {
         saveStack.push(this.getArrayCopy());
-        
+
         // If the save stack is getting long, warn.
         if (saveStack.length > 10000)
         {
@@ -1114,47 +1114,47 @@ function Mat(width, height)
             window.leakedMat = this;
         }
     };
-    
+
     this.restore = function()
     {
         if (saveStack.length > 0)
         {
             var restoreTo = saveStack.pop();
-            
+
             this.fromArray(restoreTo); // ".content = restoreTo" should be faster than fromArray.
         }
     };
-    
+
     this.toString = function(roundTo)
     {
         roundTo = roundTo || 3;
-        
+
         var result = "[\n";
-        
+
         var strings = [];
-        
+
         var colStrings = [];
-        
+
         var x, y, currentString, maxStringLengthInCol = 0, roundingMultiplier = Math.pow(10, roundTo);
         for (x = 0; x < w; x++)
         {
             maxStringLengthInCol = 0;
             colStrings = [];
-            
+
             for (y = 0; y < h; y++)
             {
                 currentString = (Math.floor(this.getAt(x, y) * roundingMultiplier) / roundingMultiplier) + "";
-                
+
                 if (currentString.indexOf(".") == -1)
                 {
                     currentString += ".";
                 }
-                
+
                 colStrings.push(currentString);
-                
+
                 maxStringLengthInCol = Math.max(currentString.length, maxStringLengthInCol);
             }
-            
+
             for (y = 0; y < h; y++)
             {
                 while (colStrings[y].length < maxStringLengthInCol)
@@ -1162,22 +1162,22 @@ function Mat(width, height)
                     colStrings[y] += "0";
                 }
             }
-            
+
             strings.push(colStrings);
-        } 
-        
+        }
+
         for (y = 0; y < h; y++)
         {
             for (x = 0; x < w; x++)
             {
                 result += " " + strings[x][y];
             }
-            
+
             result += "\n";
         }
-        
+
         result += "]";
-        
+
         return result;
     };
 }
@@ -1185,9 +1185,9 @@ function Mat(width, height)
 function Mat44()
 {
     var me = this;
-    
+
     Mat.call(me, 4, 4);
-    
+
     var transform = function(transformMatrix)
     {
         if (me.rightMulTransform)
@@ -1199,25 +1199,25 @@ function Mat44()
             me.leftMulAndSet(transformMatrix.transpose());
         }
     };
-    
+
     this.rotateX = function(dTheta)
     {
         var transformMatrix = Mat44Helper.getXRotationMatrix(dTheta);
-        
+
         transform(transformMatrix);
     };
-    
+
     this.rotateY = function(dTheta)
     {
         var transformMatrix = Mat44Helper.getYRotationMatrix(dTheta);
-        
+
         transform(transformMatrix);
     };
-    
+
     this.rotateZ = function(dTheta)
     {
         var transformMatrix = Mat44Helper.getZRotationMatrix(dTheta);
-        
+
         transform(transformMatrix);
     };
 }
@@ -1230,19 +1230,19 @@ var Mat44Helper = {};
  This can be derived using y = r*sin(a), x = r*cos(a),
  y' = r*sin(a + da), and x' = r*cos(a + da). y' and x' can
  then be expanded using trigenometric identities (derivable from
- exp(ix + iy) = cos(x+y) + i*sin(x + y) 
+ exp(ix + iy) = cos(x+y) + i*sin(x + y)
  exp(ix + iy) = exp(ix) * exp(iy) = (cos(x) + i*sin(x))*(cos(y) + i*sin(y)).
 */
 Mat33Helper.getRotationRightMulMatrix = function(deltaTheta)
 {
     var result = new Mat(3, 3);
     result.toIdentity();
-    
+
     result.setAt(0, 0, Math.cos(deltaTheta));
     result.setAt(1, 0, -Math.sin(deltaTheta));
     result.setAt(0, 1, Math.sin(deltaTheta));
     result.setAt(1, 1, Math.cos(deltaTheta));
-    
+
     return result;
 };
 
@@ -1250,15 +1250,15 @@ Mat44Helper.getXRotationMatrix = function(deltaTheta)
 {
     var result = new Mat(4, 4);
     result.toIdentity();
-    
+
     var cosValue = Math.cos(deltaTheta);
     var sinValue = Math.sin(deltaTheta);
-    
+
     result.setAt(1, 1, cosValue);
     result.setAt(2, 1, sinValue);
     result.setAt(1, 2, -sinValue);
     result.setAt(2, 2, cosValue);
-    
+
     return result;
 };
 
@@ -1266,15 +1266,15 @@ Mat44Helper.getYRotationMatrix = function(deltaTheta)
 {
     var result = new Mat(4, 4);
     result.toIdentity();
-    
+
     var cosValue = Math.cos(deltaTheta);
     var sinValue = Math.sin(deltaTheta);
-    
+
     result.setAt(0, 0, cosValue);
     result.setAt(2, 0, -sinValue);
     result.setAt(0, 2, sinValue);
     result.setAt(2, 2, cosValue);
-    
+
     return result;
 };
 
@@ -1282,15 +1282,15 @@ Mat44Helper.getZRotationMatrix = function(deltaTheta)
 {
     var result = new Mat(4, 4);
     result.toIdentity();
-    
+
     var cosValue = Math.cos(deltaTheta);
     var sinValue = Math.sin(deltaTheta);
-    
+
     result.setAt(0, 0, cosValue);
     result.setAt(1, 0, -sinValue);
     result.setAt(0, 1, sinValue);
     result.setAt(1, 1, cosValue);
-    
+
     return result;
 };
 
@@ -1298,7 +1298,7 @@ Mat44Helper.fromArray = function(array)
 {
     var result = new Mat44();
     result.fromArray(array);
-    
+
     return result;
 };
 
@@ -1309,11 +1309,11 @@ Mat44Helper.createLookAtMatrix = function(cameraPosition, lookAt, up)
     var zAxis = lookAt.subtract(cameraPosition);
     var yAxis = up.cross(zAxis);
     var xAxis = yAxis.cross(zAxis);
-    
+
     xAxis.normalize();
     yAxis.normalize();
     zAxis.normalize();
-    
+
     return Mat44Helper.createAxisTransformMatrix(xAxis, yAxis, zAxis, cameraPosition);
 };
 
@@ -1329,12 +1329,12 @@ Mat44Helper.createAxisTransformMatrix = function(xAxis, yAxis, zAxis, origin)
         zAxis.x, zAxis.y, zAxis.z, origin.z,
         0,       0,       0,       1
     ]);
-    
+
     return result;
 };
 
 // Note: Aspect is height / width.
-//zMin = zNear, zMax = zFar. Note that with this 
+//zMin = zNear, zMax = zFar. Note that with this
 //view matrix, positive z is into the screen.
 // This matrix is designed for right-multiplication,
 //so be sure to transpose it if using for left-multiplication!
@@ -1343,7 +1343,7 @@ Mat44Helper.frustumViewMatrix = function(aspect, fovY, zMin, zMax)
     /*
         Note: result[x, y] denotes the (y + 1)th row and the (x + 1)th column
         of the resultant matrix.
-    
+
         A reminder on how this works:
             For every point in world-space, x, y, and z must be scaled between -1 and 1 (clip-space).
             This can be done using a frustum (the shape below).
@@ -1360,54 +1360,54 @@ Mat44Helper.frustumViewMatrix = function(aspect, fovY, zMin, zMax)
                    |/   |  [  |                      ]               ]
             CAMERA /)A  | P_z | ----------> +z  < ---]          < ---]
                        zMin  zMax
-                       
+
             Consider a point, P and scaled point Q.
-            
+
             To scale the y-component of P:
                 Let A = fovY / 2.
-                
+
                 Define yMax to be the maximum P_y that can be displayed for the current P_z (before being clipped). This is labeled as "yMax (FOR THE CURRENT POINT)" on the diagram.
-                
+
                 Find yMax (For z = P_z):
                   tan(A)          = yMax / z
                   tan(A) * z      = yMax
                   yMax            = z * tan(A)
-                
+
                 Scale P_y:
                   Let y = P_y and y' = Q_y. (Where Q = P')
-                  
+
                   y' = y / yMax                 Scale such that |y'| belongs to [0, 1].
                   y' = y / (z * tan(A))         Substitute.
                   y' = y / tan(A)
-                        * (1 / z) < ------------ WebGL automatically divides by the w-component of gl_Position, so, a +1 is placed at result[2, 3] (zero-indexed) to set Q_z to w. 
-                 
+                        * (1 / z) < ------------ WebGL automatically divides by the w-component of gl_Position, so, a +1 is placed at result[2, 3] (zero-indexed) to set Q_z to w.
+
                   Based on this, result[1, 1] should be set to cot(A) to set y' to y / tan(A).
-                
+
             To scale the x-component of P:
                 Again, let x = P_x, y = P_y, z = P_z,
                     x' = Q_x, y' = Q_y, and z' = Q_z.
-                
+
                 Rather than providing separate fields of view for the x and y-axes, the x-axis is scaled with the y-axis.
                 To prevent shapes generated from seeming "stretched," or "squished," we multiply the scaling factor by an "aspect ratio" -- the width / the height of the screen. This can be thought of as converting units -- from y-axis' units to the x-axis' units.
-                
+
                 x' = x * k * aspect_ratio where k = cot(A) * (1 / z) -- the scaling factor for P_y.
                 x' = x * cot(A) / z * aspect_ratio (Note that x' is multiplied by -1 in the solution.
                                                     THIS IS A HACK. It compensates for an error somewhere
                                                     in the math and makes things work).
-                
+
                 From this, result[0, 0] is set to cot(A) * aspect_ratio. Note that the setting of result[2, 3] causes WebGL to divide x and y by z.
-                
+
             To scale the z-component of P:
                 P_z must be mapped from [zMin, zMax] to [-1, 1]. To do this, let
                 z' = a / z + b -- scaling and shifting z to map between domains.
                 Note that a division by z occurs -- WebGL automatically divides
                 all components, even z by w, which we have set to z. This makes
-                the math slightly more complicated for the z-component, but 
+                the math slightly more complicated for the z-component, but
                 less complicated for the x and y-components.
-                
+
                 To find a and b:
                     -1.0 = a / zMin + b and 1.0 = a / zMax + b
-                    
+
                     -1.0 - a / zMin = b and 1.0 - a / zMax = b
                     -1.0 - a / zMin      =   1.0 - a / zMax
                     1.0 + a / zMin       =   a / zMax - 1.0
@@ -1415,18 +1415,18 @@ Mat44Helper.frustumViewMatrix = function(aspect, fovY, zMin, zMax)
 a * zMax / (zMin * zMax) - a * zMin / (zMin * zMax)    =   -2.0
                     a * (zMax - zMin) / (zMin * zMax)  =   -2.0
                     a                                  =   -2.0 * zMin * zMax / (zMax - zMin)
-                    
+
                     1.0 = a / zMax + b
                     1.0 = -2.0 * zMin * zMax / ((zMax - zMin) * zMax) + b
                     b   = 1.0 + 2 * zMin * zMax / (zMax * (zMax - zMin))
                     b   = 1.0 + 2 * zMin / (zMax - zMin), zMax != 0
                     so,
-                    
+
                     z' = (-2.0 * zMin * zMax / (zMax - zMin)) / z + 1.0 + 2 * zMin / (zMax - zMin).
-                
+
                     Assuming w = z,
                     result[3, 2] = a = -2.0 * zMin * zMax / (zMax - zMin)
-                    
+
                     result[2, 2] = b = 1.0 + 2 * zMin / (zMax - zMin) <-- This part is multiplied
                                                                               by z, but then DIVIDED
                                                                               BY z BY WEBGL BECAUSE IT
@@ -1435,15 +1435,15 @@ a * zMax / (zMin * zMax) - a * zMin / (zMin * zMax)    =   -2.0
             Matrix.js (Written 1 year ago).
             <stackoverflow link here>
     */
-    
+
     // Calculate cot(fovY / 2).
     var cotValue = Math.tan(fovY / 2);
-    
+
     // Uncomment for aid in debugging (like a unit-test,
     //but not as useful).
     //console.warn(1.0 + 2 * zMin / (zMax - zMin) + " b");
     //console.warn(-2.0 * zMin * zMax / (zMax - zMin) + " a");
-    
+
     // Avoid division by zero.
     if (cotValue !== 0)
     {
@@ -1456,7 +1456,7 @@ a * zMax / (zMin * zMax) - a * zMin / (zMin * zMax)    =   -2.0
         //1 / 0.
         cotValue = 999999999;
     }
-    
+
     var result = Mat44Helper.fromArray(
     [
         cotValue * aspect, 0,        0,                              0,
@@ -1464,7 +1464,7 @@ a * zMax / (zMin * zMax) - a * zMin / (zMin * zMax)    =   -2.0
         0,                 0,        1.0 + 2 * zMin / (zMax - zMin), -2.0 * zMin * zMax / (zMax - zMin),
         0,                 0,        1,                              0
     ]);
-    
+
     return result;
 };
 
@@ -1472,7 +1472,7 @@ Mat33Helper.getTranslateMatrix = function(tX, tY)
 {
     var result = new Mat(3, 3);
     result.toRightMulTranslateMatrix([tX, tY]);
-    
+
     return result;
 };
 
@@ -1480,7 +1480,7 @@ MatHelper.transformPoint = function(arrayVector, transformMatrix)
 {
     var pointMatrix = new Mat(1, arrayVector.length);
     pointMatrix.content = arrayVector;
-    
+
     pointMatrix.fromArray(pointMatrix.rightMul(transformMatrix).getArray());
 };
 
@@ -1490,72 +1490,72 @@ MatHelper.transformPoint = function(arrayVector, transformMatrix)
 function Modeler3D(verticies, onSubmit)
 {
     const IN_WEBGL_2 = false;
-    
-    var vertexShaderSource = 
+
+    var vertexShaderSource =
     `
     attribute vec4 a_position;
     attribute vec3 a_normal;
     attribute vec4 a_color;
-       
+
     uniform mat4 u_worldMatrix;
     uniform mat4 u_worldInverseTranspose;
     uniform mat4 u_viewMatrix;
     uniform mat4 u_cameraMatrix;
-    
+
     uniform vec4 u_cameraPosition;
     uniform vec4 u_lightPosition;
     uniform vec4 u_color;
-    
+
     varying vec3 v_color;
     varying vec3 v_normal;
     varying vec3 v_toCamera;
     varying vec3 v_toLight;
-    
+
     void main()
     {
         gl_Position = u_viewMatrix * u_cameraMatrix * u_worldMatrix * a_position;// * u_worldMatrix * u_cameraMatrix * u_viewMatrix;
-        
+
         vec4 worldPosition = u_worldMatrix * a_position;
-        
+
         v_toLight = (u_lightPosition - worldPosition).xyz;
         v_toCamera = (u_cameraPosition - worldPosition).xyz;
-        
+
         v_normal = mat3(u_worldInverseTranspose) * a_normal.xyz;
-        
+
         v_color = a_color.rgb; // (v_normal + vec3(0.5, 0.5, 0.5)) / 2.0;
     }
     `;
-    
-    var fragmentShaderSource = 
+
+    var fragmentShaderSource =
     `
     precision highp float;
-    
+
     uniform float u_shine;
-    
+
     varying vec3 v_color;
     varying vec3 v_normal;
     varying vec3 v_toCamera;
     varying vec3 v_toLight;
-    
+
     void main()
     {
         // Normalize all varying vectors.
         vec3 normal = normalize(v_normal);
         vec3 toLight = normalize(v_toLight);
         vec3 toCamera = normalize(v_toCamera);
-        
+
         // The vector halfway between the camera and light.
         vec3 halfVector = normalize(toCamera + toLight);
-        
+
         // The lighting is proportional to the cosine of the angle between
         //the normal and the vector to the light.
         float lighting = dot(normal, toLight);
-        
+
         // The specular (before being brought to a power) is proportional to the cosine of the angle between
         //the half-vector and the normal (a greater cosine value signifying
         //a greater correlation).
         float specular = dot(halfVector, toCamera);
-        
+
         if (specular > 0.0 && lighting > 0.0)
         {
             specular = pow(specular, u_shine);
@@ -1564,34 +1564,34 @@ function Modeler3D(verticies, onSubmit)
         {
             specular = 0.0;
         }
-        
+
         if (lighting <= 0.0)
         {
             lighting = 0.0;
         }
-        
+
         if (lighting >= 0.9)
         {
             lighting = 0.9;
         }
-        
+
         vec4 resultantColor = vec4(v_color.rgb, 1.0);
-        
+
         resultantColor.rgb += specular;
         resultantColor.rgb *= lighting;
-        
+
         gl_FragColor = resultantColor;
     }
     `;
-    
+
     var compileShader = function(gl, shaderType, shaderSource)
     {
         var shader = gl.createShader(shaderType);
-        
+
         gl.shaderSource(shader, shaderSource);
-        
+
         gl.compileShader(shader);
-        
+
         // Check whether the shader was compiled successfully.
         if (gl.getShaderParameter(shader, gl.COMPILE_STATUS))
         {
@@ -1600,23 +1600,23 @@ function Modeler3D(verticies, onSubmit)
         else
         {
             var errorMessage = gl.getShaderInfoLog(shader);
-            
+
             gl.deleteShadeer(shader);
-            
+
             // Throw the error.
             throw errorMessage;
         }
     };
-    
+
     var linkProgram = function(gl, vertexShader, fragmentShader)
     {
         var program = gl.createProgram();
-        
+
         gl.attachShader(program, vertexShader);
         gl.attachShader(program, fragmentShader);
-        
+
         gl.linkProgram(program);
-        
+
         // Check whether the program was linked successfully.
         if (gl.getProgramParameter(program, gl.LINK_STATUS))
         {
@@ -1626,19 +1626,19 @@ function Modeler3D(verticies, onSubmit)
         else
         {
             var errorMessage = gl.getProgramInfoLog(program);
-            
+
             gl.deleteProgram(program);
-            
+
             // Throw the error.
             throw errorMessage;
         }
     };
-    
+
     var canvas = document.createElement("canvas");
     canvas.style.width = "calc(100% - 2px)";
     canvas.style.height = "calc(100% - 25px)";
     canvas.style.touchAction = "none";
-    
+
     var silhouettePoints = [];
     var editControlSilhouettePoints = [];
     var silhouetteDivisions = 8;
@@ -1647,45 +1647,45 @@ function Modeler3D(verticies, onSubmit)
     let generationMode = GENERATION_MODES.ROTATE;
     let extrudeDirection = new Vector3(0, 0, 60);
     let noCap = false;
-    
+
     // Generates verticies from a silhouette and renders.
     //If showProgress, show a progress window to the user.
     var recreateVerticies = function(silhouette, showProgress)
     {
         silhouette = silhouette || silhouettePoints; // Default values.
-        
+
         let showProgressFunction = function(progress, status) {}; // A default, do nothing
                                                                   //update function.
-        
+
         let hideProgressDialog = function() {};
-        
+
         // If to display progress, display
         //the progress dialog.
         if (showProgress)
         {
             let progressDialog = SubWindowHelper.makeProgressDialog();
-            
+
             // Update the progress.
             showProgressFunction = function(progress, status)
             {
                 progressDialog.update(progress, status);
             };
-            
+
             // Hide the dialog -- make the function.
             hideProgressDialog = function()
             {
                 progressDialog.close();
             };
         }
-        
+
         showProgressFunction(0.0, "Generating verticies...");
-        
+
         // Create the vertex generation task.
         let vertexGenerationTask = (silhouette, silhouetteDivisions, generationMode, GENERATION_MODES, extrudeDirection, excludeCap) =>
         new Promise((resolve, reject) =>
         {
             var newVerticies;
-            
+
             if (generationMode === GENERATION_MODES.EXTRUDE)
             {
                 newVerticies = ModelHelper.extrude(silhouette, extrudeDirection, excludeCap, 0);
@@ -1694,22 +1694,22 @@ function Modeler3D(verticies, onSubmit)
             {
                 newVerticies = ModelHelper.silhouetteToVerticies(silhouette, 0, Math.PI * 2, silhouetteDivisions);
             }
-            
+
             resolve(newVerticies);
         });
-        
+
         var vertexGenerationPromise;
-        
+
         // Decide whether to run the task directly, or on a background thread.
         if (silhouetteDivisions * silhouette.length > 200) // If more than 200 verticies...
         {
             // Create a background thread.
             let thread = ThreadHelper.makeLibLinkedThread();
             thread.putFunction("generateVerticies", ["silhouette", "silhouetteDivisions", "generationMode", "GENERATION_MODES", "extrudeDirection", "noCap"], vertexGenerationTask);
-            
+
             // Compile the thread.
             thread.compile();
-            
+
             // Create the promise.
             vertexGenerationPromise = thread.callFunction("generateVerticies", [silhouette, silhouetteDivisions, generationMode, GENERATION_MODES, extrudeDirection, noCap]);
         }
@@ -1718,32 +1718,32 @@ function Modeler3D(verticies, onSubmit)
             // Run on the main thread.
             vertexGenerationPromise = vertexGenerationTask(silhouette, silhouetteDivisions, generationMode, GENERATION_MODES, extrudeDirection, noCap);
         }
-        
+
         // Render after reloading verticies.
         vertexGenerationPromise.then((newVerticies) =>
         {
             verticies = newVerticies;
             //console.log(verticies);
             //window.v = verticies;
-            
+
             return reloadVerticies((progress, message) => showProgressFunction(progress * 0.75 + 0.25, message), newVerticies);
         }).then(() =>
         {
             hideProgressDialog(); // Note: Even if the progress dialog wasn't created,
                                   //this function should be defined.
-            
+
             render(rotateX, rotateY, rotateZ, tX, tY, tZ);
         }).catch(reason =>
         {
             hideProgressDialog();
-            
+
             SubWindowHelper.alert("Error", "Vertex generation failed with error: " + reason);
         });
     };
-    
+
     var controlsContainer = document.createElement("div");
     var cachedUndoBuffer = [], cachedRedoBuffer = [];
-    
+
     // Allow the user to edit the shape's silhouette.
     var editPointsButton = HTMLHelper.addButton("Edit Silhouette", controlsContainer, function()
     {
@@ -1751,29 +1751,29 @@ function Modeler3D(verticies, onSubmit)
         {
             silhouettePoints = silhouette; // Store the silhouette's point for later modification.
             editControlSilhouettePoints = editControlPoints; // The actual objects manipulated by the editor.
-            
+
             // Cache the undo and redo buffers for ease of use.
             cachedUndoBuffer = undoBuffer;
             cachedRedoBuffer = redoBuffer;
-            
+
             recreateVerticies(silhouette, true); // DO show progress.
         },  editControlSilhouettePoints, cachedUndoBuffer, cachedRedoBuffer);
     });
-    
+
     var editModelButton = HTMLHelper.addButton("Edit Model", controlsContainer, function()
     {
         // Make a new window that allows the user to select a model and modify it.
         var optionsWindow = SubWindowHelper.create({ title: "Model Options" });
-        
+
         var revolutionContainer = document.createElement("div");
         var extrudeContainer = document.createElement("div");
-        
+
         var tabbedDisplay = HTMLHelper.addTabGroup(
         {
             "Solid of Revolution": revolutionContainer,
             "Extrusion": extrudeContainer
         }, optionsWindow, "Solid of Revolution");
-        
+
         // Set default value.
         if (generationMode === GENERATION_MODES.ROTATE)
         {
@@ -1783,20 +1783,20 @@ function Modeler3D(verticies, onSubmit)
         {
             tabbedDisplay.selectTab("Extrusion");
         }
-        
+
         // Solid of revolution options.
         HTMLHelper.addLabel("Number of Divisions: ", revolutionContainer);
-        
+
         // Let the user edit the number of divisions (place holder, initial content, input type, parent,
         //onInput).
         var editDivisionsInput = HTMLHelper.addInput("Edit Divisions", silhouetteDivisions, "number", revolutionContainer);
-        
+
         HTMLHelper.addHR(revolutionContainer);
-        
+
         HTMLHelper.addButton("Submit", revolutionContainer, function()
         {
             var divisions;
-            
+
             try
             {
                 divisions = parseFloat(editDivisionsInput.value);
@@ -1804,21 +1804,21 @@ function Modeler3D(verticies, onSubmit)
             catch(event)
             {
                 SubWindowHelper.alert("Warning", "Check divisions for number formatting errors.");
-                
+
                 return;
             }
-            
+
             // Ensure the selected number of divisions is reasonable.
             if (divisions > 0 && divisions <= maxDivisions)
             {
                 // Note that a solid of revolution is to be used.
                 generationMode = GENERATION_MODES.ROTATE;
-            
+
                 // Update the divisions.
                 silhouetteDivisions = divisions;
                 recreateVerticies(undefined, true); // No changes to the silhouette,
                                                     //but still show progress.
-                
+
                 optionsWindow.close();
             }
             else
@@ -1833,44 +1833,44 @@ function Modeler3D(verticies, onSubmit)
                 }
             }
         });
-        
+
         editDivisionsInput.setAttribute("class", "smallInput");
-        
+
         // Extrusion options.
         HTMLHelper.addHeader("Direction", extrudeContainer, "h3");
         HTMLHelper.addHR(extrudeContainer);
-        
+
         var extrudeVectorToEdit = extrudeDirection.copy();
         HTMLHelper.addVectorEditor(extrudeVectorToEdit, 3, extrudeContainer);
-        
+
         HTMLHelper.addHR(extrudeContainer);
-        
+
         var resultantNoCap = noCap;
-        
+
         HTMLHelper.addHeader("Exclude Cap", extrudeContainer, "h3");
         HTMLHelper.addInput("Exclude Cap", noCap, "checkbox", extrudeContainer, function(checked)
         {
             resultantNoCap = checked;
         });
-        
+
         HTMLHelper.addHR(extrudeContainer);
-        
+
         HTMLHelper.addButton("Submit", extrudeContainer, function()
         {
             generationMode = GENERATION_MODES.EXTRUDE;
-            
+
             extrudeDirection = extrudeVectorToEdit;
-            
+
             noCap = resultantNoCap;
-            
+
             recreateVerticies(undefined, true); // No changes to the silhouette, but show generation progress.
-            
+
             optionsWindow.close();
         });
     });
-    
+
     var manipulationMode = "ROTATE";
-    
+
     // Change the tool.
     var toggleToolButton = HTMLHelper.addButton("Zoom", controlsContainer, function()
     {
@@ -1885,58 +1885,58 @@ function Modeler3D(verticies, onSubmit)
             manipulationMode = "ROTATE";
         }
     });
-    
+
     var gl = canvas.getContext(IN_WEBGL_2 ? "webgl2" : "webgl");
-    
+
     // If the user's browser does not support WebGL 2,
     //display an error message and exit.
     if (gl == undefined) // Note the use of a double, rather than a tripple equals-sign.
-                         //a webkit-based browser on Linux sets gl to null, rather than 
+                         //a webkit-based browser on Linux sets gl to null, rather than
                          //undefined. THIS IS NOT A MISTAKE.
     {
         SubWindowHelper.alert("WebGL", "Oh, no! Your browser does not support WebGL! Please try a different browser (or if using WebKit, try to use this program again later).");
-        
+
         return;
     }
-    
+
     // Set up program.
     var vertexShader = compileShader(gl, gl.VERTEX_SHADER, vertexShaderSource);
     var fragmentShader = compileShader(gl, gl.FRAGMENT_SHADER, fragmentShaderSource);
-    
+
     var program = linkProgram(gl, vertexShader, fragmentShader);
-    
+
     // Bind the program.
     gl.useProgram(program);
-    
+
     gl.clearColor(0.0, 0.0, 0.0, 1.0);
-    
+
     // Create matricies.
     var worldMatrix = new Mat44();
     worldMatrix.toIdentity();
-    
+
     var cameraMatrix = new Mat44();
     cameraMatrix.toIdentity();
-    
+
     var viewMatrix;
-    
+
     var updateView = function()
     {
         canvas.width = canvas.clientWidth;
         canvas.height = canvas.clientHeight;
-        
+
         var aspect = gl.drawingBufferHeight / gl.drawingBufferWidth;
         var fovY = 70 / 180.0 * Math.PI;
         var zMin = 1;
         var zMax = 3000;
-        
+
         viewMatrix = Mat44Helper.frustumViewMatrix(aspect, fovY, zMin, zMax);
         gl.viewport(0, 0, gl.drawingBufferWidth, gl.drawingBufferHeight);
-        
+
         return viewMatrix;
     };
-    
+
     updateView();
-    
+
     // Uniform locations.
     var worldMatrixUniformLocation = gl.getUniformLocation(program, "u_worldMatrix");
     var worldInverseTrLocation = gl.getUniformLocation(program, "u_worldInverseTranspose");
@@ -1945,27 +1945,27 @@ function Modeler3D(verticies, onSubmit)
     var lightPositionUniformLocation = gl.getUniformLocation(program, "u_lightPosition");
     var cameraPositionUniformLocation = gl.getUniformLocation(program, "u_cameraPosition");
     var shineAmountUniformLocation = gl.getUniformLocation(program, "u_shine");
-    
+
     // Attribute locations.
     var positionLocation = gl.getAttribLocation(program, "a_position");
     var normalsLocation = gl.getAttribLocation(program, "a_normal") || 1;
     var vertexColorLocation = gl.getAttribLocation(program, "a_color") || 2;
-    
+
     //console.log("a_position: " + positionLocation + "; a_normal: " + normalsLocation + "; a_color: " + vertexColorLocation + ";");
-    
+
     var subWindow = SubWindowHelper.create({ title: "Modeler 3D", minWidth: 200, minHeight: 150 });
     subWindow.appendChild(canvas);
     subWindow.appendChild(controlsContainer);
-    
+
     subWindow.content.style.display = "flex";
     subWindow.content.style.flexDirection = "column";
     canvas.style.flexGrow = "1";
 
     let computedNormals = [];
-    
+
     // Tabs.
     var fileMenu = new SubWindowTab("File");
-    
+
     if (onSubmit)
     {
         fileMenu.addCommand("Submit", function()
@@ -1973,22 +1973,22 @@ function Modeler3D(verticies, onSubmit)
             onSubmit(verticies, computedNormals);
         });
     }
-    
+
     fileMenu.addCommand("Exit", function()
     {
         subWindow.close();
     });
-    
+
     subWindow.addTab(fileMenu);
-    
+
     // WebGL Settings.
     gl.enable(gl.DEPTH_TEST);
     gl.enable(gl.CULL_FACE);
-    
+
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-    
+
     var vertexAttribArray;
-    
+
     // Copied from WebGL3.html
     verticies = verticies ||
     [
@@ -1996,66 +1996,66 @@ function Modeler3D(verticies, onSubmit)
         50, 50, 0,
         50, 0, 0,
         0, 0, 0,
-        
+
         50, 50, 0,
         0, 0, 0,
         0, 50, 0,
-        
+
         // Face 2
         50, 0, 50,
         50, 50, 50,
         0, 50, 50,
-        
+
         50, 0, 50,
         0, 50, 50,
         0, 0, 50,
-        
+
         // Face 3
         0, 50, 0,
         0, 0, 0,
         0, 0, 50,
-                
+
         0, 50, 0,
         0, 0, 50,
         0, 50, 50,
-        
+
         // Face 4
         50, 0, 0,
         50, 50, 0,
         50, 50, 50,
-        
+
         50, 0, 0,
         50, 50, 50,
         50, 0, 50,
-        
+
         // Face 5
         50, 50, 50,
         50, 50, 0,
         0, 50, 0,
-        
+
         50, 50, 50,
         0, 50, 0,
         0, 50, 50,
-        
+
         // Face 6
         50, 0, 50,
         0, 0, 50,
         0, 0, 0,
-        
+
         50, 0, 50,
-        0, 0, 0, 
+        0, 0, 0,
         50, 0, 0
     ];
-    
+
     let numberOfTrianglesToRender = 0; // Updated after verticies are buffered.
-    
+
     // Create a progress-estimating function.
     let normalComputationProgressEstimator = new ProgressEstimator((n) => n);
-    
+
     // Returns a promise. An optional updateProgress function
     //can be provided, with arguments estimated progress and message.
     //Note: Estimated progress is a real number, from zero to one.
-    
+
     var reloadVerticies = function(updateProgressArg, newVerticies)
     {
         // If a set of new verticies were specified,
@@ -2064,14 +2064,14 @@ function Modeler3D(verticies, onSubmit)
             // Update the list of verticies.
             verticies = newVerticies;
         }
-        
+
         // Variables for progress tracking.
         const totalSegments = 6;
         let currentSegment = 0;
-        
+
         let lastProgressMessage = "";
         let lastProgressAmount = 0;
-        
+
         // Allows progress to be displayed to the user.
         const updateProgress = function(message)
         {
@@ -2080,27 +2080,27 @@ function Modeler3D(verticies, onSubmit)
             {
                 return; // Stop.
             }
-            
+
             lastProgressMessage = message;
             lastProgressAmount = currentSegment;
-            
+
             // Make sure totalSegments is updated.
             console.assert(currentSegment < totalSegments);
-            
+
             // Otherwise, note the progress change.
             let progress = currentSegment / totalSegments;
             updateProgressArg( progress, message );
-            
+
             // Note that a new segment has begun.
             currentSegment++;
         };
-        
+
         updateProgress("Preparing to generate normals and vertex colors...");
-        
+
         // Decide whether to create a background thread.
         let usingThreads = verticies.length > 300;
         var thread;
-        
+
         // Only if using threads,
         if (usingThreads)
         {
@@ -2108,20 +2108,20 @@ function Modeler3D(verticies, onSubmit)
             //thread.
             thread = ThreadHelper.makeLibLinkedThread();
         }
-        
+
         // Create tasks for async processing.
         const normalsTolerance = 0.3; // When cos(angle between normals) is greater than normalsTolerance,
                                       // those normals are blended.
-        
+
         const computeNormalsTask = (verticies, normalsTolerance) =>
         new Promise((resolve, reject) =>
         {
             // Compute normals from verticies.
             let normals = ModelHelper.computeNormals(verticies, normalsTolerance);
-            
+
             resolve(normals);
         });
-        
+
         const createColorsTask = (verticies) =>
         new Promise((resolve, reject) =>
         {
@@ -2134,36 +2134,36 @@ function Modeler3D(verticies, onSubmit)
                         0.3, 0.4, // Min and max for red.
                         0.3, 0.4, // Min and max for green.
                         0.4, 0.9); // Min and max for blue.
-                        
+
                 // Append each part of the current to the full color array.
                 for (j = 0; j < currentPart.length && j < 3; j++)
                 {
                     colors.push(currentPart[j]);
                 }
             }
-            
+
             resolve(colors);
         });
-        
+
         // Push the tasks to the background thread,
         //if using threads.
         if (usingThreads)
         {
             thread.putFunction("computeNormals", ["verticies", "normalsTolerance"], computeNormalsTask);
             thread.putFunction("createColors", ["verticies"], createColorsTask);
-        
+
             // Compile the thread.
             thread.compile();
         }
-        
+
         // Run this after finding normals and vertex colors.
         const bufferDataTask = (normals, vertexColors) =>
         new Promise((resolve, reject) =>
         {
             updateProgress("Preparing to buffer data...");
-            
+
             // Push to the end of the task queue, so
-            //that the user can be notified of any 
+            //that the user can be notified of any
             //progress changes.
             setTimeout(() =>
             {
@@ -2171,75 +2171,75 @@ function Modeler3D(verticies, onSubmit)
                 const positionBuffer = gl.createBuffer();
                 const normalsBuffer = gl.createBuffer();
                 const colorsBuffer = gl.createBuffer();
-                
+
                 // Create the vertex attributes array.
                 if (IN_WEBGL_2)
                 {
                     vertexAttribArray = gl.createVertexArray();
                     gl.bindVertexArray(vertexAttribArray);
                 }
-                
+
                 // Buffer verticies.
                 gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
-                
+
                 // Enable the vertex buffer.
                 gl.enableVertexAttribArray(positionLocation);
-                
+
                 // Attribute data buffering...
                 gl.vertexAttribPointer(positionLocation, 3, // 3 elements/calling.
                         gl.FLOAT,
                         false, // No normalization
                         0, 0); // Zero stride, zero offset.
-                
-                
+
+
                 // Send the data to WebGL.
                 gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(verticies), gl.STATIC_DRAW);
-                
-                
+
+
                 // Select the normals buffer.
                 gl.bindBuffer(gl.ARRAY_BUFFER, normalsBuffer);
-                
+
                 gl.enableVertexAttribArray(normalsLocation);
-                
+
                 // Set up the pointer to the buffer.
                 gl.vertexAttribPointer(normalsLocation, 3, // 3 elements/calling of shader
                         gl.FLOAT,
                         false,  // Do not normalize the normals.
                         0, 0); // No stride, no offset.
-                
-                
+
+
                 // Send WebGL the data.
                 gl.bufferData(gl.ARRAY_BUFFER, ModelHelper.vectorArrayToFloat32Array(normals), gl.STATIC_DRAW);
-                
-                
+
+
                 // Select the colors buffer.
                 gl.bindBuffer(gl.ARRAY_BUFFER, colorsBuffer);
-                
+
                 gl.enableVertexAttribArray(vertexColorLocation);
-                
+
                 // Set up the pointer to the color attribute.
                 gl.vertexAttribPointer(vertexColorLocation, 3, // Each color has three components.
                         gl.FLOAT, // Color components are floats.
                         false, // Don't normalize the colors.
                         0, 0); // Stride and offset are set to zero -- there is no ADDITIONAL STRIDE.
-                        
+
                 // Send the data to WebGL.
                 gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertexColors), gl.STATIC_DRAW);
-                
+
                 // Update the number of triangles to render.
                 numberOfTrianglesToRender = verticies.length / 3;
-                
+
                 // Note the completion of this segment.
                 updateProgress("Buffered data!");
-                
+
                 resolve(gl);
             }, 0);
         });
-        
+
         // Create promises for both tasks.
-        
+
         var colorsCalledResult, normalsCalledResult, startTime;
-        
+
         // Note: The createColorsTask will finish before
         //the computeNormalsTask -- this allows estimated
         //progress to be displayed during the often-long-running
@@ -2254,29 +2254,29 @@ function Modeler3D(verticies, onSubmit)
             colorsCalledResult = createColorsTask(verticies);
             normalsCalledResult = computeNormalsTask(verticies, normalsTolerance);
         }
-        
+
         // Start recording the running time...
         normalComputationProgressEstimator.startRecord();
-        
+
         const computeColorsPromise = colorsCalledResult.then(
-        (colors) => 
+        (colors) =>
         {
             updateProgress("Created colors! Now computing normals...");
-            
+
             return colors;
         });
-        
+
         const computeNormalsPromise = normalsCalledResult.then(
-        (normals) => 
+        (normals) =>
         {
             updateProgress("Found normals!");
-            
+
             // Stop recording progress.
             normalComputationProgressEstimator.stopRecord(verticies.length);
-            
+
             return normals;
         });
-        
+
         // If displaying progress,
         if (updateProgressArg)
         {
@@ -2285,23 +2285,23 @@ function Modeler3D(verticies, onSubmit)
             {
                 // Underestimate progress.
                 let progressPercentString = "~ " + Math.floor(progress * 0.8 * 100) + "%";
-                
+
                 if (progress > 1.0)
                 {
                     progressPercentString = "...";
                 }
-                
+
                 updateProgressArg(lastProgressAmount / totalSegments + progress / totalSegments, lastProgressMessage + " (" + progressPercentString + ")");
             });
         }
-        
+
         // After both the normals and random colors for verticies have generated,
         return Promise.all([computeNormalsPromise, computeColorsPromise]).then(values =>
         {
             // Unpack arguments.
             const normals      = values[0],
                   vertexColors = values[1];
-            
+
             updateProgress("Done finding normals and vertex colors! Now buffering data...");
 
             // Cache the normals.
@@ -2311,20 +2311,20 @@ function Modeler3D(verticies, onSubmit)
             return bufferDataTask(normals, vertexColors);
         });
     };
-    
+
     reloadVerticies().then(render);
-    
+
     // Where the camera is to look.
     var cameraLookAt = new Vector3(12, 0, 10);
     var upDirection = new Vector3(0, 1, 0);
     var cameraPosition = new Vector3(0, 0, 405);
-    
+
     var updateWorldMatrix = function()
     {
         gl.uniformMatrix4fv(worldMatrixUniformLocation, false, worldMatrix.getTranspose().getArray());
         gl.uniformMatrix4fv(worldInverseTrLocation, false, worldMatrix.getInverse().getArray());
     };
-    
+
     var updateMatricies = function()
     {
         // DO transpose.
@@ -2334,86 +2334,86 @@ function Modeler3D(verticies, onSubmit)
         gl.uniformMatrix4fv(viewMatrixUniformLocation, false, viewMatrix.getTranspose().getArray());
         gl.uniformMatrix4fv(cameraMatrixUniformLocation, false, cameraMatrix.getTranspose().getArray());
     };
-    
+
     var setLightPosition = function(position)
     {
         gl.uniform4fv(lightPositionUniformLocation, [position.x, position.y, position.z, 1]);
     };
-    
+
     var setCameraPosition = function(position)
     {
         cameraMatrix = Mat44Helper.createLookAtMatrix(position, cameraLookAt, upDirection);
         gl.uniform4fv(cameraPositionUniformLocation, [position.x, position.y, position.z, 1]);
-        
+
         //cameraMatrix.rotateY(0.5);
-        
+
         gl.uniformMatrix4fv(cameraMatrixUniformLocation, false, cameraMatrix.getTranspose().getArray());
     };
-    
+
     // Set specular amount. Should be large floats.
     var setShine = function(shine)
     {
         gl.uniform1f(shineAmountUniformLocation, shine);
     };
-    
+
     // Set initial light and camera positions.
     setLightPosition(new Vector3(1, -36, 800));
     setCameraPosition(cameraPosition);
     setShine(5000.0);
-    
+
     var timesAnimated = 0;
-    
+
     var render = function(xRotation, yRotation, zRotation, tX, tY, tZ)
     {
         if (canvas.width != canvas.clientWidth || canvas.height != canvas.clientHeight)
         {
             updateView();
         }
-        
+
         var time = (new Date()).getTime();
-        
+
         if (xRotation === undefined)
         {
             xRotation = Math.cos(time / 1000) * 0.2;
         }
-        
+
         if (yRotation === undefined)
         {
             yRotation = Math.sin(time / 2000) * 6.28;
         }
-        
+
         tX = tX || 0.0;
         tY = tY || 0.0;
         tZ = tZ !== undefined ? tZ : 300 + Math.sin(time / 6000) * 20;
-        
+
         gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-        
-        
+
+
         worldMatrix.save();
-        
+
         worldMatrix.rotateY(yRotation);
         worldMatrix.rotateX(xRotation);
         worldMatrix.rotateZ(zRotation || 0.0);
         worldMatrix.translate([tX, tY, tZ]);
-        
+
         setCameraPosition(cameraPosition);
         updateMatricies();
-        
+
         gl.drawArrays(gl.TRIANGLES, 0, numberOfTrianglesToRender);
-        
+
         worldMatrix.restore();
     };
-    
+
     var animationRunning = false;
     var animate = function()
     {
         render();
         animationRunning = true;
-        
+
         if (timesAnimated < 2000)
         {
             timesAnimated++;
-            
+
             requestAnimationFrame(animate);
         }
         else
@@ -2422,36 +2422,36 @@ function Modeler3D(verticies, onSubmit)
             animationRunning = false;
         }
     };
-    
+
     var tX = 0, tY = 0, tZ = 230,
         rotateX = 0.1, rotateY = 0.2, rotateZ = 0.3;
     render(rotateX, rotateY, rotateZ, tX, tY, tZ);
-    
+
     var pointerDown = false;
     var lastX, lastY;
-    
+
     JSHelper.Events.registerPointerEvent("down", canvas, function(e)
     {
         e.preventDefault();
-        
+
         pointerDown = true;
-        
+
         lastX = e.clientX;
         lastY = e.clientY;
     });
-    
+
     JSHelper.Events.registerPointerEvent("move", canvas, function(e)
     {
         if (pointerDown)
         {
             e.preventDefault();
-            
+
             var x = e.clientX;
             var y = e.clientY;
-            
+
             var dx = x - lastX;
             var dy = y - lastY;
-            
+
             if (manipulationMode === "ROTATE")
             {
                 rotateX += dx / (canvas.width || 100) * 6.28;
@@ -2462,32 +2462,32 @@ function Modeler3D(verticies, onSubmit)
             {
                 cameraPosition.z -= dy;
             }
-            
+
             render(rotateX, rotateY, rotateZ, tX, tY, tZ);
-            
+
             lastX = x;
             lastY = y;
         }
     });
-    
+
     JSHelper.Events.registerPointerEvent("stop", canvas, function(e)
     {
         e.preventDefault();
-        
+
         pointerDown = false;
     });
-    
+
     /*
     canvas.onclick = function(e)
     {
         e.preventDefault();
-        
+
         if (!animationRunning)
         {
             timesAnimated = 0;
-            
+
             console.log("Starting animation.");
-            
+
             animate();
         }
     };*/
@@ -2509,7 +2509,7 @@ MathHelper.numberScheme = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQ
 MathHelper.parseCharacter = function(character, numberScheme)
 {
     numberScheme = numberScheme || MathHelper.numberScheme;
-    
+
     let numberIndex = numberScheme.indexOf(character);
 
     return numberIndex;
@@ -2525,16 +2525,16 @@ MathHelper.forceParseNumber = function(inputString, radix, initialPlaceValue)
     radix = radix || 10;
 
     let currentChar, result = 0, placeValue = initialPlaceValue || 0;
-    
+
     // For every character in the string.
     //  Add its single-char parse times radix**position
     //   to the result.
     for (var i = inputString.length - 1; i >= 0; i--, placeValue++)
     {
         currentChar = inputString.charAt(i);
-        
+
         // Accumulate!
-        result += Math.pow( 
+        result += Math.pow(
                               radix, placeValue // Multiply radix^placeValue
                           )
                           *
@@ -2542,7 +2542,7 @@ MathHelper.forceParseNumber = function(inputString, radix, initialPlaceValue)
                                                                        //signified by the
                                                                        //current character.
     }
-    
+
     return result;
 };
 
@@ -2556,27 +2556,27 @@ MathHelper.forceParseFloat = function(inputString, radix)
     let dotLocation = inputString.indexOf('.');
     let initialPlaceValue;
     let smallHalf = "", largeHalf = "";
-    
+
     if (dotLocation === -1)
     {
         initialPlaceValue = 0;
-        
+
         largeHalf = inputString;
     }
     else
     {
         initialPlaceValue = inputString.length - dotLocation - 1;
-        
+
         // Divide into before/after the dot.
         smallHalf = inputString.substring(dotLocation + 1);
         largeHalf = inputString.substring(0, dotLocation);
     }
-    
+
     let result = 0;
-    
+
     result += MathHelper.forceParseNumber(smallHalf, radix, -initialPlaceValue);
     result += MathHelper.forceParseNumber(largeHalf, radix, 0);
-    
+
     return result;
 };
 
@@ -2589,46 +2589,46 @@ function Point(x, y, z)
     this.x = x;
     this.y = y;
     this.z = z || 0;
-    
+
     this.NUM_COMPONENTS = 3;
-    
+
     this.transformBy = function(matrix)
     {
         var arrayToTransform = [this.x, this.y, this.z];
-        
+
         if (matrix.getWidth() === matrix.getHeight() && matrix.getWidth() === 4)
         {
             arrayToTransform.push(1);
         }
-        
+
         MatHelper.transformPoint(arrayToTransform, matrix);
-        
+
         this.x = arrayToTransform[0];
         this.y = arrayToTransform[1];
         this.z = arrayToTransform[2];
     };
-    
+
     // Returns a copy of this object. Subclasses
     //should override this.
     this.copy = function()
     {
         var result = new Point(this.x, this.y, this.z);
-        
+
         return result;
     };
-    
-    // Returns a rounded copy of the point, rounded to 
+
+    // Returns a rounded copy of the point, rounded to
     //the specified number of decimal places.
     this.asRounded = function(decimalPlaces)
     {
         var result = this.copy();
-        
+
         var multiplier = Math.pow(10, decimalPlaces);
-        
+
         result.x = Math.floor(this.x * multiplier) / multiplier;
         result.y = Math.floor(this.y * multiplier) / multiplier;
         result.z = Math.floor(this.z * multiplier) / multiplier;
-        
+
         return result;
     };
 
@@ -2636,22 +2636,22 @@ function Point(x, y, z)
     {
         return [this.x, this.y, this.z];
     };
-    
+
     this.fromArray = function(array)
     {
         let arrayCopy = [];
-        
+
         // Ensure the array has sufficient size...
         for (let i = 0; i < this.NUM_COMPONENTS; i++)
         {
             arrayCopy.push(array[i] || 0);
         }
-        
+
         this.x = arrayCopy[0];
         this.y = arrayCopy[1];
         this.z = arrayCopy[2];
     };
-    
+
     this.toString = function()
     {
         return "(" + this.x + ", " + this.y + ", " + this.z + ")";
@@ -2673,7 +2673,7 @@ function Drawer2D(onSubmit, options)
 {
     //options:
     //  initialHeight,
-    //  initialWidth -- The initial size of the window and image, 
+    //  initialWidth -- The initial size of the window and image,
     //                  if imageWidth,imageHeight/image not given
     //  initialImage -- An initial entity with width and ehight properties
     //                  that can be drawn onto a Context2D via context.drawImage.
@@ -2683,61 +2683,61 @@ function Drawer2D(onSubmit, options)
     //                  be given.
     //  windowOptions -- Additional options to be given to the SubWindowHelper on window creation.
     //  background   -- CSS background property value for the drawing view. E.g. radial-gradient(red, white).
-    options = options || {};    
-    
+    options = options || {};
+
     var me = this;
-    
+
     let undoStack = [];
     let redoStack = [];
-    
+
     const INITIAL_WIDTH = options.initialWidth || 500;
     const INITIAL_HEIGHT = options.initialHeight || 500;
     const MAX_UNDO = 30;
-    
+
     const INITIAL_VIEW_X = 0;
     const INITIAL_VIEW_Y = 0;
-    
+
     // To add something to the undo stack,
     //at least two changes should have occurred
     //and five seconds passed.
     const UNDO_TIME_DELTA = 2000;
     const UNDO_MIN_ACTIONS = 2;
-    
+
     let lastUndoTime = (new Date()).getTime();
     let actionsSinceUndo = 0;
 
     // Join any provided window options with a set of defaults.
-    const windowOptions = JSHelper.mapUnite(options.windowOptions || {}, 
+    const windowOptions = JSHelper.mapUnite(options.windowOptions || {},
     {
         title: "Drawer 2D", content: "",
-        minWidth: INITIAL_WIDTH, 
-        minHeight: INITIAL_HEIGHT 
+        minWidth: INITIAL_WIDTH,
+        minHeight: INITIAL_HEIGHT
     });
-    
+
     this.mainSubWindow = SubWindowHelper.create(windowOptions);
     this.mainSubWindow.enableFlex(); // Stretches elements vertically, especially the canvas.
-    
+
     const canvas = document.createElement("canvas");
     const ctx = canvas.getContext("2d");
-    
+
     // The canvas should fill the window.
     canvas.style.width = "calc(100% - 5px)"; // Subtract 5px to prevent the creation
                                              // of scrollbars.
     canvas.style.height = "auto";
-    
+
     // Give the canvas a background, to permit visualization of the alpha channel.
-    canvas.style.background = options.background 
+    canvas.style.background = options.background
             || "radial-gradient(rgba(255, 255, 255, 0.8), rgba(200, 200, 200, 0.6))";
     canvas.style.backgroundSize = "5px 5px";
-    
+
     const imageCanvas = document.createElement("canvas");
     const imageCtx = imageCanvas.getContext("2d");
-    
+
     if (options.initialImage)
     {
         imageCtx.canvas.width = options.imageWidth || options.initialImage.width;
         imageCtx.canvas.height = options.imageHeight || options.initialImage.height;
-        
+
         try
         {
             imageCtx.drawImage(options.initialImage, 0, 0, imageCtx.canvas.width, imageCtx.canvas.height);
@@ -2752,10 +2752,10 @@ function Drawer2D(onSubmit, options)
         imageCtx.canvas.width = options.imageWidth || INITIAL_WIDTH;
         imageCtx.canvas.height = options.imageHeight || INITIAL_HEIGHT;
     }
-    
+
     // Get an initial transform matrix.
     let transformMatrix = Mat33Helper.getTranslateMatrix(INITIAL_VIEW_X, INITIAL_VIEW_Y);
-    
+
     me.tools = { "Base Pen": new Drawer2DHelper.BasePen(),
                  "Custom Pen 1": new Drawer2DHelper.CustomizablePen(),
                  "Custom Pen 2": new Drawer2DHelper.CustomizablePen(),
@@ -2763,23 +2763,23 @@ function Drawer2D(onSubmit, options)
                  "View Panner": new Drawer2DHelper.ViewPanner(transformMatrix),
                  "View Zoomer": new Drawer2DHelper.ViewZoomer(transformMatrix) };
     me.currentTool = me.tools["Base Pen"];
-    
+
     // Keep track of the number of context-saves.
     let contextViewSaves = 0;
-    
+
     let saveContextView = () =>
     {
         transformMatrix.save();
-        
+
         contextViewSaves++;
     };
-    
+
     let restoreContextView = () =>
     {
         if (contextSaves > 0)
         {
             transformMatrix.restore();
-        
+
             contextViewSaves--;
         }
         else
@@ -2787,7 +2787,7 @@ function Drawer2D(onSubmit, options)
             throw "Danger! The number of cached context states is at zero (Drawer2D).";
         }
     };
-    
+
     let resetView = () =>
     {
         // Restore until at the initial state,
@@ -2795,15 +2795,15 @@ function Drawer2D(onSubmit, options)
         {
             restoreContextView();
         }
-        
+
         // Then save so we can restore it again.
         saveContextView();
     };
-    
+
     //  Allow snapshots of the canvas to be stored and traversed
     // -- an implementation of undo and redo.
-    
-    // Filters the undo stack, removing 
+
+    // Filters the undo stack, removing
     let filterUndoStack = () =>
     {
         if (undoStack.length > MAX_UNDO)
@@ -2811,26 +2811,26 @@ function Drawer2D(onSubmit, options)
             // If the undo stack is longer than expected,
             //trim it.
             let newStack = [];
-            
+
             for (let i = undoStack.length - MAX_UNDO; i < undoStack.length; i++)
             {
                 newStack.push(undoStack[i]);
             }
-            
+
             // Swap the stacks.
             undoStack = newStack;
         }
     };
-    
+
     // Cache a snapshot. Note that with the current implementation,
     //no compression is done and tainted canvases cannot be cached.
     let cacheState = (pushToRedoStack) =>
     {
         let imageToCache = new Image();
-        
+
         let loaded = false;
         let onLoad = () => {};
-        
+
         // Add the image to the undo stack after
         //it has loaded.
         imageToCache.addEventListener("load", () =>
@@ -2843,121 +2843,121 @@ function Drawer2D(onSubmit, options)
             {
                 undoStack.push(imageToCache);
             }
-            
+
             // Filter the undo stack.
             filterUndoStack();
-            
+
             // Note that the image has loaded.
             loaded = true;
-            
+
             // Notify any listeners.
             onLoad(imageToCache);
         });
-        
+
         // Set its source.
         imageToCache.src = imageCanvas.toDataURL("img/png");
-        
+
         // Note the last cache time.
         lastUndoTime = (new Date()).getTime();
-        
+
         let result = new Promise((resolve, reject) =>
         {
             onLoad = (imageToCache) => resolve({ image: imageToCache, dataURL: imageToCache.src });
-            
+
             if (loaded)
             {
                 onLoad(imageToCache);
             }
         });
-        
+
         return result;
     };
-    
+
     let performUndo = () =>
     {
         // Can we actually undo?
         if (undoStack.length == 0)
         {
             undoTab.hide();
-        
+
             return;
         }
-        
+
         // Take a state from the stack.
         let currentState = undoStack.pop();
-        
+
         // Push it onto the redo stack.
         cacheState(true);
-        
+
         // Show the redo tab.
         redoTab.show();
-        
+
         clearCanvas(imageCtx);
-        
+
         // Draw it onto the canvas.
         imageCtx.drawImage(currentState, 0, 0);
-        
+
         render();
     };
-    
+
     let performRedo = () =>
     {
         if (redoStack.length == 0)
         {
             redoTab.hide();
-            
+
             return;
         }
-        
+
         let newState = redoStack.pop();
-        
+
         undoStack.push(newState);
         undoTab.show();
-        
+
         clearCanvas(imageCtx);
         imageCtx.drawImage(newState, 0, 0);
-        
+
         render();
     };
-    
+
     // Push state to the undo stack, if necessary.
     let cacheStateIfNecessary = () =>
     {
         let nowTime = (new Date()).getTime();
-        
+
         if (nowTime - lastUndoTime >= UNDO_TIME_DELTA && actionsSinceUndo >= UNDO_MIN_ACTIONS)
         {
             cacheState().then(() =>
             {
                 redoStack = []; // Reset the redo stack.
-                
+
                 // Hide the redo menu.
                 redoTab.hide();
                 undoTab.show(); // And show the undo tab.
             });
-            
+
             // Reset the number of actions since the last undo.
             actionsSinceUndo = 0;
         }
     };
-    
+
     // Permit view-resetting by taking an initial snapshot of
     //the state of the context.
     saveContextView();
     cacheState();
-    
+
     var clearCanvas = (currentCtx) =>
     {
         currentCtx = currentCtx || ctx;
-        
+
         currentCtx.save();
-        
+
         currentCtx.setTransform(1, 0, 0, 1, 0, 0);
         currentCtx.clearRect(0, 0, currentCtx.canvas.width, currentCtx.canvas.height);
-        
+
         currentCtx.restore();
     };
-    
+
     var resizePixBuffer = () =>
     {
         if (canvas.width !== canvas.clientWidth || canvas.height !== canvas.clientHeight)
@@ -2966,26 +2966,26 @@ function Drawer2D(onSubmit, options)
             canvas.height = canvas.clientHeight;
         }
     };
-    
+
     var render = () =>
     {
         resizePixBuffer();
-        
+
         clearCanvas();
-        
-        ctx.setTransform(transformMatrix.getAt(0, 0), transformMatrix.getAt(0, 1), 
+
+        ctx.setTransform(transformMatrix.getAt(0, 0), transformMatrix.getAt(0, 1),
                          transformMatrix.getAt(1, 0), transformMatrix.getAt(1, 1),
                          transformMatrix.getAt(2, 0), transformMatrix.getAt(2, 1));
-        
+
         ctx.strokeRect(-1, -1, imageCanvas.width + 1, imageCanvas.height + 1);
         ctx.drawImage(imageCanvas, 0, 0);
     };
-    
+
     // Create context menus.
     let fileMenu = new SubWindowTab("File");
     let editMenu = new SubWindowTab("Edit");
     let toolMenu = new SubWindowTab("Tools");
-    
+
     // Add the commands.
     if (onSubmit)
     {
@@ -2994,32 +2994,32 @@ function Drawer2D(onSubmit, options)
             cacheState().then((data) =>
             {
                 const { image, dataURL } = data;
-                
+
                 onSubmit.call(me, image, dataURL);
                 me.mainSubWindow.close();
             });
         });
     }
-    
+
     fileMenu.addCommand("Exit", () =>
     {
         me.mainSubWindow.close();
     });
-    
+
     // Edit menu.
     var undoTab = editMenu.addCommand("Undo", () =>
     {
         performUndo();
     });
-    
+
     var redoTab = editMenu.addCommand("Redo", () =>
     {
         performRedo();
     });
-    
+
     // Hide the redo tab initially.
     redoTab.hide();
-    
+
     let selectTool = function(tool)
     {
         if (me.currentTool &&
@@ -3027,44 +3027,44 @@ function Drawer2D(onSubmit, options)
         {
             me.currentTool.onDeInit();
         }
-        
+
         me.currentTool = tool;
-        
+
         if (tool.onInit)
         {
             tool.onInit();
         }
     };
-    
+
     // View Menu.
     let showControlTab, controlsWindow;
     showControlTab = toolMenu.addCommand("Show Controls Window", () =>
     {
         showControlTab.hide();
-        
+
         controlsWindow = SubWindowHelper.create({ title: "Tools", noResize: true, alwaysOnTop: true });
-        
+
         let handleToolButton = (toolName, tool) =>
         {
             let newButton = HTMLHelper.addButton(toolName, controlsWindow, () =>
             {
                 selectTool(tool);
             });
-            
+
             newButton.style.display = "block";
         };
-        
+
         for (let label in me.tools)
         {
             handleToolButton(label, me.tools[label]);
         }
-        
+
         controlsWindow.setOnCloseListener(() =>
         {
             showControlTab.show();
         });
     });
-    
+
     // Tool menu.
     let handleToolCommand = (toolName, tool) =>
     {
@@ -3073,12 +3073,12 @@ function Drawer2D(onSubmit, options)
             selectTool(tool);
         });
     };
-    
+
     for (let label in me.tools)
     {
         handleToolCommand(label, me.tools[label]);
     }
-    
+
     // Tools might want to de-init/free themselves.
     //Set an onClose listener.
     me.mainSubWindow.setOnCloseListener(() =>
@@ -3088,30 +3088,30 @@ function Drawer2D(onSubmit, options)
             // Notify the current tool.
             me.currentTool.onDeInit();
         }
-        
+
         // If the controls window is open, close it.
         if (controlsWindow)
         {
             controlsWindow.close();
         }
     });
-    
+
     // Add context menus!
     me.mainSubWindow.addTab(fileMenu);
     me.mainSubWindow.addTab(editMenu);
     me.mainSubWindow.addTab(toolMenu);
-    
+
     // Add the canvas.
     me.mainSubWindow.appendChild(canvas);
-    
+
     let pointerDown = false, lastX, lastY;
     let previousTool = undefined;
 
     // Allow focusing the canvas.
     canvas.setAttribute("tabindex", 0);
-    
+
     // Configure events.
-    
+
     let pointerStartX, pointerStartY, inverseTransform, changesMade;
     JSHelper.Events.registerPointerEvent("down", canvas, function(event)
     {
@@ -3124,67 +3124,67 @@ function Drawer2D(onSubmit, options)
             previousTool = me.currentTool; // If so, be prepared to change back at the end of the event.
             me.currentTool = me.tools["View Panner"];
         }
-    
+
         let bbox = canvas.getBoundingClientRect();
-        
+
         pointerStartX = event.clientX - bbox.left;
         pointerStartY = event.clientY - bbox.top;
-        
+
         let currentPositionArray = [pointerStartX, pointerStartY, 1];
         inverseTransform = transformMatrix.getInverse();
         MatHelper.transformPoint(currentPositionArray, inverseTransform);
-        
+
         me.currentTool.handlePointerDown(ctx, imageCtx, currentPositionArray[0], currentPositionArray[1], 0, 0);
-    
+
         render();
         pointerDown = true;
-        
+
         changesMade = false;
-        
+
         lastX = pointerStartX;
         lastY = pointerStartY;
     }, false);
-    
+
     JSHelper.Events.registerPointerEvent("move", canvas, function(event)
     {
         if (pointerDown)
         {
             event.preventDefault();
-        
+
             let bbox = canvas.getBoundingClientRect();
             let x = event.clientX - bbox.left;
             let y = event.clientY - bbox.top;
-            
-                
+
+
             let currentPositionArray = [x, y, 1];
             inverseTransform = transformMatrix.getInverse();
             MatHelper.transformPoint(currentPositionArray, inverseTransform);
-            
+
             changesMade = me.currentTool.handlePointerMove(ctx, imageCtx, currentPositionArray[0], currentPositionArray[1], x - lastX, y - lastY, (event.pressure || 0) + 0.1) || changesMade;
-            
+
             render();
-            
+
             lastX = x;
             lastY = y;
         }
     }, false);
-    
+
     JSHelper.Events.registerPointerEvent("stop", canvas, function(event)
     {
         pointerDown = false;
-        
+
         event.preventDefault();
-    
+
         let bbox = canvas.getBoundingClientRect();
         let x = event.clientX - bbox.left;
         let y = event.clientY - bbox.top;
-        
+
         me.currentTool.handlePointerUp(ctx, imageCtx, x, y, x - pointerStartX, y - pointerStartY);
 
         if (changesMade)
         {
             actionsSinceUndo++;
-            
+
             cacheStateIfNecessary();
         }
 
@@ -3217,7 +3217,7 @@ function Drawer2D(onSubmit, options)
 
     canvas.addEventListener("keypress", async (event) =>
     {
-        if (event.key == "w" 
+        if (event.key == "w"
                 || event.key == "a" || event.key == "d" || event.key == "s")
         {
             let dx = 0, dy = 0;
@@ -3272,14 +3272,14 @@ function Drawer2D(onSubmit, options)
 
         render();
     });
-    
+
     // Any async setup.
     (async () =>
     {
         // Wait for the window to resize.
         //TODO Remove magic variable.
         await JSHelper.waitFor(500);
-        
+
         render();
     })();
 }
@@ -3287,7 +3287,7 @@ function Drawer2D(onSubmit, options)
 // Define tools to be used with the Drawer2D.
 var Drawer2DHelper = {}; // Make a pseudo-namespace.
 
-Drawer2DHelper.typeHelper = { CLASS_BASE_TOOL: true, CLASS_BASE_PEN: true, 
+Drawer2DHelper.typeHelper = { CLASS_BASE_TOOL: true, CLASS_BASE_PEN: true,
                               CLASS_VIEW_PANNER: true, CLASS_VIEW_ZOOMER: true };
 
 // Define base functions.
@@ -3300,13 +3300,13 @@ Drawer2DHelper.BaseTool = function()
         // Dummy function. Override this.
         throw "HandlePointerDown must be overridden (BaseTool of Drawer2DHelper).";
     };
-    
+
     this.handlePointerMove = (displayCtx, drawCtx, x, y, dx, dy) =>
     {
         throw "HandlePointerMove was not overridden! It MUST be.";
     };
-    
-    // Note: Here, dx and dy are the TOTAL DELTA X/Y, from 
+
+    // Note: Here, dx and dy are the TOTAL DELTA X/Y, from
     //pointer down to pointer up, while this is not the case
     //for the other events.
     this.handlePointerUp = (displayCtx, drawCtx, x, y, dx, dy) =>
@@ -3318,20 +3318,20 @@ Drawer2DHelper.BaseTool = function()
 Drawer2DHelper.BasePen = function(width, color)
 {
     this.__proto__ = new Drawer2DHelper.BaseTool();
-    
+
     this.CLASS_LIST.push(Drawer2DHelper.typeHelper.CLASS_BASE_PEN);
 
     var me = this;
-    
+
     me.width = width || 5;
     me.color = color || "rgba(0, 0, 0, 0.8)";
-    
+
     this.setColor = (newColor) =>
     {
         me.color = color;
     };
-    
-    let lastX, lastY, vx = 0, vy = 0, 
+
+    let lastX, lastY, vx = 0, vy = 0,
             smoothingIterations = 10, lastTime,
             lastWeight = 0.2,
             towardsCursorRate = 0.6,
@@ -3341,67 +3341,67 @@ Drawer2DHelper.BasePen = function(width, color)
     {
         drawCtx.beginPath();
         drawCtx.moveTo(x, y);
-        
+
         lastX = x;
         lastY = y;
-        
+
         currentX = x;
         currentY = y;
-        
+
         vx = 0;
         vy = 0;
-        
+
         lastTime = new Date().getTime();
     };
-    
+
     this.handlePointerMove = (displayCtx, drawCtx, x, y, dx, dy, pressure) =>
     {
         let nowTime = (new Date()).getTime();
         let dt = Math.max(nowTime - lastTime, 1);
-        
+
         dt = Math.min(dt, 100);
-        
+
         drawCtx.save();
-        
+
         drawCtx.lineWidth = me.width * (pressure) * 2.0; // Pressure is at 0.5 by default.
         drawCtx.strokeStyle = me.color;
         drawCtx.lineCap = "round";
         drawCtx.lineJoin = "round";
-        
+
         let oldVx = vx;
         let oldVy = vy;
         let currentMultiplier = 0;
-        
+
         for (let i = 0; i < smoothingIterations; i++)
         {
             let distanceFromCursor = Math.sqrt(Math.pow(x - currentX, 2) + Math.pow(y - currentY, 2));
-            
+
             currentMultiplier = Math.min(1, lastWeight * (2 - i / smoothingIterations));
-            
+
             vx = oldVx * currentMultiplier + ((x - lastX) * (1 - currentMultiplier) / dt + (x - currentX) / dt * towardsCursorRate) * i / smoothingIterations;
             vy = oldVy * currentMultiplier + ((y - lastY) * (1 - currentMultiplier) / dt + (y - currentY) / dt * towardsCursorRate) * i / smoothingIterations;
-            
+
             currentX += vx * dt / smoothingIterations;
             currentY += vy * dt / smoothingIterations;
-            
+
             drawCtx.lineTo(currentX, currentY);
         }
-        
+
         drawCtx.stroke();
 
         drawCtx.restore();
-        
+
         drawCtx.beginPath();
         drawCtx.moveTo(currentX, currentY);
-        
+
         lastX = x;
         lastY = y;
-        
+
         lastTime = nowTime;
-        
+
         return true; // The view was changed.
     };
-    
+
     this.handlePointerUp = (displayCtx, drawCtx, x, y, dx, dy) =>
     {
         // Do nothing.
@@ -3411,17 +3411,17 @@ Drawer2DHelper.BasePen = function(width, color)
 Drawer2DHelper.CustomizablePen = function(initialWidth, initialColor)
 {
     const me = this;
-    
+
     Drawer2DHelper.BasePen.call(this, initialWidth, initialColor);
-    
+
     this.configWindow;
-    
+
     // When this tool is selected.
     this.onInit = () =>
     {
         // Create the config window.
         me.configWindow = SubWindowHelper.create({ title: "Configure Tool", minWidth: "400px", noResize: true, alwaysOnTop: true });
-        
+
         me.colorInput = HTMLHelper.addColorChooser(me.color, // Initial color,
                                                    me.configWindow,
                                                    (newVector, newHTMLColor) =>
@@ -3433,22 +3433,22 @@ Drawer2DHelper.CustomizablePen = function(initialWidth, initialColor)
             let newInput = tabGroup.addTab("Width", (container) =>
             {
                 container.innerHTML = "";
-                
+
                 let widthControl = HTMLHelper.addInput("Width", me.width, "range", container,
                         (newWidth) =>
                 {
                     me.width = newWidth;
                 });
-                
+
                 widthControl.min = 1;
                 widthControl.max = 60;
                 widthControl.step = 3;
             });
         });
-        
+
         me.colorInput.style.width = "50vw";
     };
-    
+
     this.onDeInit = () =>
     {
         me.configWindow.close();
@@ -3458,27 +3458,27 @@ Drawer2DHelper.CustomizablePen = function(initialWidth, initialColor)
 Drawer2DHelper.Eraser = function()
 {
     const me = this;
-    
+
     Drawer2DHelper.BaseTool.apply(this, arguments);
-    
+
     this.handlePointerDown = function(displayCtx, drawCtx, x, y, dx, dy)
     {
         drawCtx.beginPath();
         drawCtx.moveTo(x, y);
     };
-    
+
     this.handlePointerMove = function(displayCtx, drawCtx, x, y, dx, dy)
     {
         drawCtx.lineTo(x, y);
-        
+
         drawCtx.save();
         drawCtx.clip();
         drawCtx.clearRect(0, 0, drawCtx.canvas.width, drawCtx.canvas.height);
         drawCtx.restore();
-        
+
         return true; // Changes were made!
     };
-    
+
     this.handlePointerUp = function(displayCtx, drawCtx, x, y, dx, dy)
     {
         drawCtx.beginPath();
@@ -3488,23 +3488,23 @@ Drawer2DHelper.Eraser = function()
 Drawer2DHelper.ViewPanner = function(matrixToManipulate)
 {
     var me = this;
-    
+
     Drawer2DHelper.BaseTool.apply(this, arguments);
-    
+
     this.CLASS_LIST.push(Drawer2DHelper.typeHelper.CLASS_VIEW_PANNER);
-    
+
     this.mat = matrixToManipulate;
-    
+
     this.handlePointerDown = (displayCtx, drawCtx, x, y, dx, dy) =>
     {
         // Do nothing.
     };
-    
+
     this.handlePointerMove = (displayCtx, drawCtx, x, y, dx, dy) =>
     {
         me.mat.translate([dx, dy, 1]);
     };
-    
+
     this.handlePointerUp = (displayCtx, drawCtx, x, y, dx, dy) =>
     {
         // Do nothing.
@@ -3514,18 +3514,18 @@ Drawer2DHelper.ViewPanner = function(matrixToManipulate)
 Drawer2DHelper.ViewZoomer = function(matrixToManipulate)
 {
     var me = this;
-    
+
     this.__proto__ = new Drawer2DHelper.BaseTool();
     this.CLASS_LIST.push(Drawer2DHelper.typeHelper.CLASS_VIEW_ZOOMER);
-    
+
     this.mat = matrixToManipulate;
-    
-    
+
+
     this.handlePointerDown = (displayCtx, drawCtx, x, y, dx, dy) =>
     {
         // Do nothing.
     };
-    
+
     this.handlePointerMove = (displayCtx, drawCtx, x, y, dx, dy) =>
     {
         me.performZoom(drawCtx, dx, dy);
@@ -3535,14 +3535,14 @@ Drawer2DHelper.ViewZoomer = function(matrixToManipulate)
     {
         let minPosition = [0, 0, 0];
         let maxPosition = [drawCtx.canvas.width, drawCtx.canvas.height, 0];
-        
+
         let onScreenW = maxPosition[0] - minPosition[0];
         let onScreenH = maxPosition[1] - minPosition[1];
-    
+
         me.mat.translate([-onScreenW / 2, -onScreenH / 2, 0]);
         me.mat.scalarMul(1 + Math.atan(dx + dy) / 9);
         me.mat.translate([onScreenW / 2, onScreenH / 2, 0]);
-        
+
         // Bug fix: The HTML5 canvas does not support
         //changing the bottom row of the Mat33. Change
         //the JavaScript matrix to reflect this.
@@ -3550,7 +3550,7 @@ Drawer2DHelper.ViewZoomer = function(matrixToManipulate)
         me.mat.setAt(1, 2, 0);
         me.mat.setAt(0, 2, 0);
     };
-    
+
     this.handlePointerUp = (displayCtx, drawCtx, x, y, dx, dy) =>
     {
         // Do nothing.
@@ -3571,7 +3571,7 @@ function Transition(updateFunction, duration, doneFunction, beforeStart)
     var endProgress = 1;
     var running = false;
     var temporaryOnComplete = () => {};
-    
+
     var progressCalculator = function(duration, deltaT)
     {
         if (duration === 0)
@@ -3583,7 +3583,7 @@ function Transition(updateFunction, duration, doneFunction, beforeStart)
             return Math.max(0, Math.min(1, deltaT / duration));
         }
     };
-    
+
     var animate = function()
     {
         if (halt)
@@ -3592,14 +3592,14 @@ function Transition(updateFunction, duration, doneFunction, beforeStart)
             running = false;
             return;
         }
-    
+
         currentTime = (new Date()).getTime();
         deltaT = currentTime - startTime;
-        
+
         progress = progressCalculator(duration, deltaT);
-        
+
         updateFunction.call(me, progress);
-        
+
         if (progress * endProgressMultiplier < endProgress * endProgressMultiplier)
         {
             running = true;
@@ -3608,28 +3608,28 @@ function Transition(updateFunction, duration, doneFunction, beforeStart)
         else
         {
             running = false;
-            
+
             doneFunction.call(me);
             temporaryOnComplete.call(me);
         }
     };
-    
+
     this.start = function()
     {
         halt = false;
         startTime = (new Date()).getTime();
-        
+
         if (beforeStart)
         {
             beforeStart.apply(me, arguments);
         }
-        
+
         // If not already running, start!
         if (!running)
         {
             animate();
         }
-        
+
         // Return a promise!
         let result = new Promise((resolve, reject) =>
         {
@@ -3637,18 +3637,18 @@ function Transition(updateFunction, duration, doneFunction, beforeStart)
             //to the resolve function.
             temporaryOnComplete = resolve;
         });
-        
+
         return result;
     };
-    
+
     this.cancel = function()
     {
         halt = true;
-        
+
         // Clear the temporary oncomplete.
         temporaryOnComplete = undefined;
     };
-    
+
     // Make the animation run in reverse by reversing
     //the progress!
     this.reverse = function()
@@ -3658,7 +3658,7 @@ function Transition(updateFunction, duration, doneFunction, beforeStart)
         {
             return 1 - oldProgressCalculator(duration, deltaT);
         };
-        
+
         endProgressMultiplier *= -1;
         endProgress = 1 - endProgress;
     };
@@ -3714,21 +3714,21 @@ SyntaxHelper.fileExtensionToHighlighterMap =
     py: SyntaxHelper.highlighters.python
 };
 
-SyntaxHelper.getStillOpenBrackets = function(text, 
+SyntaxHelper.getStillOpenBrackets = function(text,
         bracketOpenChar, bracketCloseChar, countOpenBefore,
         quoteChars, inQuote)
 {
     var result = countOpenBefore || 0;
     var currentChar;
-    
+
     var inQuote = inQuote || false;
-    
+
     quoteChars = quoteChars || {};
-    
+
     for (let i = 0; i < text.length; i++)
     {
         currentChar = text.charAt(i);
-        
+
         if (currentChar === bracketOpenChar && !inQuote)
         {
             result ++;
@@ -3742,80 +3742,80 @@ SyntaxHelper.getStillOpenBrackets = function(text,
             inQuote = !inQuote;
         }
     }
-    
+
     return result;
 };
 
 function SyntaxChecker()
 {
     const me = this;
-    
+
     this.state = {};
-    
+
     this.quoteChars =
     {
         "'": true,
         '\"': true,
         '`': true
     };
-    
+
     this.navigationHelper =
     {
         levelCheckChars: [["[", "]"],
                           ["{", "}"],
                           ["(", ")"]],
-                          
+
         // Note: THIS MUST BE CALLED FOR EVERY LINE,
         //in order of the line's number -- lineNo should
-        //increase by 1 each call.       
+        //increase by 1 each call.
         recordLevel: (state, text, lineNo) =>
         {
             if (!state.subZero)
             {
                 state.subZero = {};
             }
-            
+
             if (state.lastLineWithBracketCheck === lineNo)
             {
                 console.log ("Error: state.lastLineWithBracketCheck === lineNo === " + lineNo);
-                
+
                 return;
             }
-            
+
             state.lastLineWithBracketCheck = lineNo;
-            
+
             var startLabel, endLabel;
-        
+
             for (var i in me.navigationHelper.levelCheckChars)
             {
                 startLabel = me.navigationHelper.levelCheckChars[i][0];
                 endLabel = me.navigationHelper.levelCheckChars[i][1];
-                
+
                 if (state["openBrackets" + startLabel] === undefined)
                 {
                     state["openBrackets" + startLabel] = [];
                 }
-                
-                state["openBrackets" + startLabel][lineNo] = ( 
-                  SyntaxHelper.getStillOpenBrackets(text, 
-                    startLabel, 
-                    endLabel, 
+
+                state["openBrackets" + startLabel][lineNo] = (
+                  SyntaxHelper.getStillOpenBrackets(text,
+                    startLabel,
+                    endLabel,
                     state["openBrackets" + startLabel][lineNo - 1] || 0,
                     me.quoteChars ));
-                    
+
                 state["openBrackets" + startLabel].length = lineNo + 1;
-                    
+
                 if (state["openBrackets" + startLabel] < 0)
                 {
                     state.subZero[lineNo] = [startLabel, state["openBrackets"]];
                 }
             }
         },
-        
+
         getLastLineBelowLevel: (state, level, levelCheckChar) =>
         {
             var levelRecords = state["openBrackets" + levelCheckChar];
-            
+
             for (let i = levelRecords.length - 1; i >= 0; i++)
             {
                 if (levelRecords[i] < level)
@@ -3823,50 +3823,50 @@ function SyntaxChecker()
                     return i;
                 }
             }
-            
+
             return -1; // If -1 is returned, no lines were below
                        //the requested level.
         },
-        
+
         getBracketsBelowOrAboveLevelOnLine: (state, lineNumber, level, belowLevel) =>
         {
             var currentGroupingCharacter, currentLevel;
             var count = {}; // Accumulates the number of open brackets on a specific line.
-            
+
             // For/in for flexibility.
             for (var label in me.navigationHelper.levelCheckChars)
             {
                 currentGroupingCharacter = me.navigationHelper.levelCheckChars[label][0];
-                
+
                 currentLevel = state["openBrackets" + currentGroupingCharacter][lineNumber];
-                
+
                 if (count[currentGroupingCharacter] === undefined)
                 {
                     count[currentGroupingCharacter] = 0;
                 }
-                
+
                 if (state["openBrackets" + currentGroupingCharacter][lineNumber] < level && belowLevel
-                    || 
+                    ||
                     state["openBrackets" + currentGroupingCharacter][lineNumber] > level && !belowLevel)
                 {
                     count[currentGroupingCharacter] = 1;
                 }
             }
-            
+
             return count;
         },
-        
+
         getBracketsBelowLevelOnLine: (state, lineNumber, level) =>
         {
             return me.navigationHelper.getBracketsBelowOrAboveLevelOnLine(state, lineNumber, level, true);
         },
-        
+
         getBracketsAboveLevelOnLine: (state, lineNumber, level) =>
         {
             return me.navigationHelper.getBracketsBelowOrAboveLevelOnLine(state, lineNumber, level, false);
         }
     };
-    
+
     this.errorCheckers =
     {
         unendedString: (state, text) =>
@@ -3875,11 +3875,11 @@ function SyntaxChecker()
                 lastChar    = "";
             var inSingleQuote = false;
             var inDoubleQuote = false;
-            
+
             for (var i = 0; i < text.length; i++)
             {
                 currentChar = text.charAt(i);
-                
+
                 if (currentChar === "'"
                     && lastChar !== '\\'
                      && !inDoubleQuote)
@@ -3892,57 +3892,57 @@ function SyntaxChecker()
                 {
                     inDoubleQuote = !inDoubleQuote;
                 }
-                
+
                 lastChar = currentChar;
             }
-            
+
             return inSingleQuote || inDoubleQuote;
         },
-        
+
         // Note that lineNo is the line number, where no
         //is a poor abbrievation for number. You might
         //want to rename this.
         bracketLevelError: (state, text, lineNo, isLastLine) =>
         {
             me.navigationHelper.recordLevel(state, text, lineNo);
-            
+
             let message = undefined;
-            
+
             // If any brackets have a level lesser than zero:
             var bracketsBelowZero = me.navigationHelper.getBracketsBelowLevelOnLine(state, lineNo, 0);
-            
+
             if (JSON.stringify(bracketsBelowZero) != JSON.stringify(state.lastLineBelowZero || {}))
             {
                 if (message === undefined)
                 {
                     message = "";
                 }
-            
+
                 var totalBelowZero = 0;
-                
+
                 for (var bracket in bracketsBelowZero)
                 {
                     totalBelowZero += bracketsBelowZero[bracket];
-                    
+
                     if (bracketsBelowZero[bracket] > 0)
                     {
                         message += "The bracket level for " + bracket + " is below zero. ";
                     }
                 }
-                
+
                 state.lastLineBelowZero = bracketsBelowZero;
             }
-            
+
             if (isLastLine)
             {
                 var bracketsAboveZero = me.navigationHelper.getBracketsAboveLevelOnLine(state, lineNo, 0);
-                
+
                 var totalAboveZero = 0;
-                
+
                 for (var bracket in bracketsAboveZero)
                 {
                     totalAboveZero += bracketsAboveZero[bracket];
-                    
+
                     if (bracketsAboveZero[bracket])
                     {
                         message = message || "";
@@ -3950,11 +3950,11 @@ function SyntaxChecker()
                     }
                 }
             }
-            
+
             return message;
         }
     };
-    
+
     this.checkFunctions =
     {
         "Line Level Check": me.errorCheckers.bracketLevelError
@@ -3965,7 +3965,7 @@ function SyntaxChecker()
         me.state = {};
         me.state.problems = [];
     };
-    
+
     this.setBaseProblems = function(baseProblems)
     {
         me.state.problems = baseProblems;
@@ -3974,16 +3974,16 @@ function SyntaxChecker()
     this.checkLine = function(lineText, lineNumber, lastLine, lineLabels)
     {
         var currentMessage = undefined;
-        
+
         if (lineText === undefined)
         {
             return;
         }
-        
+
         for (var key in me.checkFunctions)
         {
             currentMessage = me.checkFunctions[key](me.state, lineText, lineNumber, lastLine || false);
-            
+
             if (currentMessage)
             {
                 me.state.problems.push(
@@ -3996,12 +3996,12 @@ function SyntaxChecker()
             }
         }
     };
-    
+
     this.checkFinalLine = function(lineText, lineNumber, lineLabels)
     {
         me.checkLine(lineText, lineNumber, true);
     };
-    
+
     this.getProblems = function()
     {
         return me.state.problems;
@@ -4210,19 +4210,19 @@ function SyntaxSelector(initialHighlightScheme)
                         if (currentIndex > 0 && content.charAt(currentIndex - 1) === "\\")
                         {
                             shouldContinue = false;
-                            
+
                             let walkbackIndex = 1, count = 0;
-                            
+
                             do
                             {
                                 currentChar = content.charAt(currentIndex - walkbackIndex);
-                                
+
                                 count++;
-                                
+
                                 walkbackIndex++;
                             }
                             while (currentChar === "\\" && currentIndex - walkbackIndex >= 0);
-                            
+
                             if (count % 2 === 0) // === because count++ also happens for first non backslash character.
                             {
                                 continue;
@@ -4730,7 +4730,7 @@ function SyntaxTracker(currentLine, previousLine, nextLine, syntaxSelector)
         else if (!awaitingTimeout)
         {
 
-            setTimeout(() => 
+            setTimeout(() =>
             {
                 me.refreshHighliting();
 
@@ -5112,7 +5112,7 @@ let PYTHON_CONSOLE_GLOBAL_ID_COUNTER = 0; // Lets python access an associated ed
 function PythonConsole()
 {
     // Create UI.
-    let consoleWindow = EditorHelper.openWindowedEditor("%%% PY", undefined, 
+    let consoleWindow = EditorHelper.openWindowedEditor("%%% PY", undefined,
     {
         title: "Python Console",
         configureWindows: (runWindow, importExportWindow, keyboardWindow, viewerWindow) =>
@@ -5130,16 +5130,16 @@ function PythonConsole()
     const PROMPT_TEXT = ">>> ";
     const AUTO_INDENT_INDENT_CHARS = "    ";
     const EDITOR_GLOBAL_ID = "_PythonConsoleObject" + PYTHON_CONSOLE_GLOBAL_ID_COUNTER++;
-    
+
     // Make it accessible.
     self[EDITOR_GLOBAL_ID] = this;
-    
+
     // Get the background worker.
     const pythonWorker = PYTHON_WORKER;
-    
+
     // Note that this is a python console.
     consoleWindow.editControl.setDefaultHighlightScheme("py");
-    
+
     // Handle events from python.
     if (pythonWorker) // The pythonWorker does not seem to work in all browsers...
                       // If it hasn't been defined, don't use it.
@@ -5147,7 +5147,7 @@ function PythonConsole()
         pythonWorker.onmessage = (event) =>
         {
             const { results, errors } = event.data;
-            
+
             if (onMessageListeners.length > 0)
             {
                 // Notify the first.
@@ -5159,7 +5159,7 @@ function PythonConsole()
                 {
                     (onMessageListeners[0])(errors);
                 }
-                
+
                 onMessageListeners = onMessageListeners.splice(1);
             }
             else
@@ -5168,14 +5168,14 @@ function PythonConsole()
                 console.warn(errors);
             }
         };
-        
+
         pythonWorker.onerror = (event) =>
         {
             if (onMessageListeners.length > 0)
             {
                 onMessageListeners[0]({ filename: event.filename, line: event.lineno,
                                                       message: event.message });
-                
+
                 onMessageListeners = onMessageListeners.splice(1);
             }
             else
@@ -5184,10 +5184,10 @@ function PythonConsole()
             }
         };
     }
-    
+
     let onMessageListeners = []; //  A stack of everyone waiting for
                                  // a response from Python.
-    
+
     // Register a listener for events from the python
     //worker. Paramater doNotRejectErrors represents
     //whether to "throw" an exception by calling reject
@@ -5199,17 +5199,17 @@ function PythonConsole()
             onMessageListeners.push((results, failures) =>
             {
                 resolve(results);
-                
+
                 if (failures && !doNotRejectErrors)
                 {
                     reject(failures);
                 }
             });
         });
-        
+
         return result;
     };
-    
+
     let runPython = (code) =>
     {
         // Can we use the worker?
@@ -5219,7 +5219,7 @@ function PythonConsole()
             {
                 python: code
             });
-            
+
             return nextResponsePromise();
         } // If not,
         else
@@ -5227,17 +5227,17 @@ function PythonConsole()
             return pyodide.runPythonAsync(code);
         }
     };
-    
+
     window.runPython = runPython;
-    
+
     let handlePyResult = async function()
     {
         let stdoutContent = await runPython("sys.stdout.getvalue()");
         let stderrContent = await runPython("sys.stderr.getvalue()");
-        
+
         await runPython("sys.stdout.truncate(0)\nsys.stdout.seek(0)");
         await runPython("sys.stderr.truncate(0)\nsys.stderr.seek(0)");
-        
+
         if (stdoutContent)
         {
             consoleWindow.displayContent(stdoutContent, (line) =>
@@ -5246,16 +5246,16 @@ function PythonConsole()
                 {
                     return;
                 }
-                
+
                 line.setColorFunction = (index) =>
                 {
                     return STDOUT_COLOR;
                 };
-                
+
                 line.editable = false;
             });
         }
-        
+
         if (stderrContent)
         {
             consoleWindow.displayContent(stderrContent, (line) =>
@@ -5264,22 +5264,22 @@ function PythonConsole()
                 {
                     return;
                 }
-                
+
                 line.setColorFunction = (index) =>
                 {
                     return STDERR_COLOR;
                 };
-                
+
                 line.editable = false;
             });
         }
-    
+
         requestAnimationFrame(() =>
         {
             consoleWindow.render();
         });
     };
-    
+
     let indentContinuedLine = (newPromptText, previousPromptText) =>
     {
         // Indent.
@@ -5294,29 +5294,29 @@ function PythonConsole()
                 break;
             }
         }
-        
+
         // Did the previous line end in a colon?
         if (previousPromptText.trim().endsWith(":"))
         {
             newPromptText += AUTO_INDENT_INDENT_CHARS;
         }
-        
+
         // Did the previous line end in spaces?
         if (previousPromptText.endsWith(AUTO_INDENT_INDENT_CHARS))
         {
             newPromptText = CONTINUED_LINE_PROMPT_TEXT;
         }
-        
+
         return newPromptText;
     };
-    
+
     let promptLine = undefined;
     let createPrompt = (promptText) =>
-    {    
+    {
         promptText = promptText || PROMPT_TEXT;
-        
+
         let newLine = consoleWindow.editControl.appendLine(promptText);
-        
+
         newLine.setColorFunction = (index) =>
         {
             if (index < promptText.length)
@@ -5324,12 +5324,12 @@ function PythonConsole()
                 return promptColor;
             }
         };
-        
+
         newLine.focus();
         consoleWindow.scrollToFocus();
         promptLine = newLine;
-        
-        
+
+
         newLine.onentercommand = () =>
         {
             try
@@ -5339,25 +5339,25 @@ function PythonConsole()
                     if (promptLine)
                     {
                         promptLine.text = newLine.text;
-                        
+
                         // Postpone focusing -- the
-                        //enter command might still be 
+                        //enter command might still be
                         //being processed.
                         requestAnimationFrame(() =>
                         {
                             promptLine.focus();
-                            
+
                             consoleWindow.scrollToFocus();
-                            
+
                             consoleWindow.render();
                         });
                     }
                 };
-                
+
                 newLine.editable = false;
-                
+
                 let codeToRun = newLine.text.substring(promptText.length);
-                
+
                 pythonConsoleConnection.push(codeToRun).then(
                 (result) =>
                 {
@@ -5371,23 +5371,23 @@ function PythonConsole()
                     else
                     {
                         let newPrompt = createPrompt(CONTINUED_LINE_PROMPT_TEXT);
-                        
+
                         newPrompt.text = indentContinuedLine(newPrompt.text, codeToRun);
                     }
                 }).catch((error) =>
                 {
                     error = error + "";
                     runPython("sys.stderr.write('''" + error.split("'''").join(",") + "''')");
-                    
+
                     let onComplete = () =>
                     {
-                    
+
                         handlePyResult().then(() =>
                         {
                             createPrompt(PROMPT_TEXT);
                         });
                     };
-                    
+
                     // Push more code to the console. This completes
                     //the command for which an error was thrown.
                     pythonConsoleConnection.push("print('...')").then(onComplete).catch(onComplete);
@@ -5396,27 +5396,27 @@ function PythonConsole()
             catch(e)
             {
                 consoleWindow.displayContent("" + e);
-                
+
                 createPrompt(promptText);
             }
         };
-        
+
         // Display changes.
         requestAnimationFrame(() =>
         {
             // Move the cursor.
             newLine.cursorPosition = newLine.text.length;
-            
+
             // Render.
             consoleWindow.render();
         });
-        
+
         // Return the line.
         return newLine;
     };
-    
+
     // Run python.
-    pythonConsoleConnection = 
+    pythonConsoleConnection =
     {
         push: (code) =>
         {
@@ -5433,7 +5433,7 @@ function PythonConsole()
                         }
                     );
                 });
-                
+
                 return nextResponsePromise();
             }
             else
@@ -5453,12 +5453,12 @@ function PythonConsole()
             }
         }
     };
-    
+
     this.codeRefresh = function()
     {
         handlePyResult();
     };
-    
+
     languagePluginLoader.then(() =>
     {
         runPython(
@@ -5471,51 +5471,51 @@ sys.stderr = io.StringIO()
 
 def _formattedPrint(inputObject, currentDepth = 0):
     MAX_LINE_LEN = 100 # Wrap lines at 100 chars
-    
+
     indent = " " * currentDepth
-    
+
     output = str(inputObject)
-    
+
     # Wrap the output at MAX_LINE_LEN characters.
     lines = output.split("\\n")
     wrappedOutput = ""
-    
+
     wordSeparators = [' ', ',', '.', '/']
-    
+
     for i in lines:
         curLine = str(i)
-        
+
         while len(curLine) > MAX_LINE_LEN:
             # Does it have an ending space?
             breakIndex = -1
-            
+
             fullLine = curLine
             curLine = curLine[0:MAX_LINE_LEN]
-            
+
             # Try to make breakIndex not -1.
             for sep in wordSeparators:
                 if breakIndex != -1:
                     break
                 breakIndex = curLine.rfind(sep)
-            
+
             if breakIndex == -1:
                 breakIndex = MAX_LINE_LEN
-            
+
             wrappedOutput += curLine[0:breakIndex] + "\\n"
             curLine = fullLine[breakIndex:]
-        
+
         wrappedOutput += curLine + "\\n"
-    
+
     # Print the wrapped output, excluding the final line-break.
-    print (wrappedOutput[0:len(wrappedOutput) - 1])    
+    print (wrappedOutput[0:len(wrappedOutput) - 1])
 
 # When the editor detects a returned promise...
 def _Console_promiseFinished${EDITOR_GLOBAL_ID}(objectName, message):
     from js import ${EDITOR_GLOBAL_ID}
-    
+
     print (objectName)
     _formattedPrint(message, 1) # Show the message
-    
+
     # Refresh the editor.
     ${EDITOR_GLOBAL_ID}.codeRefresh();
 
@@ -5525,17 +5525,17 @@ def _Console_promiseFinished${EDITOR_GLOBAL_ID}(objectName, message):
 class Console${EDITOR_GLOBAL_ID}(code.InteractiveConsole):
     def runcode(self, code):
         from js import pyodide
-        
+
         out = pyodide.runPython("\\n".join(self.buffer))
-      
+
         if out != None:
             _formattedPrint(out)
-            
+
             # Is it a promise?
             if "then" in dir(out):
                 try:
                     out.then(
-                            lambda message: 
+                            lambda message:
                                 _Console_promiseFinished${EDITOR_GLOBAL_ID}
                                                     ("%s: " % out, message)
                             )
@@ -5606,7 +5606,7 @@ license.MAXLINES = 1000 # As of the time of this writing, input() displays
             handlePyResult().then(() =>
             {
                 consoleWindow.editControl.appendLine("");
-                
+
                 requestAnimationFrame(() =>
                 {
                     createPrompt();
@@ -5628,7 +5628,7 @@ function ProgressEstimator(runFunction)
     this.addedConstant = 0;
     this.progressLoopRunning = false;
     this.inRecord = false;
-    
+
     // RunningTime is a function, like n => n*n or n => lg(n).
     //This is like theta/omicron notation, except can be more exact
     //if a +n, or +c term is included.
@@ -5636,13 +5636,13 @@ function ProgressEstimator(runFunction)
     {
         this.runFunction = runningTime;
     };
-    
+
     this.startRecord = function()
     {
         this.startTime = (new Date()).getTime();
         this.inRecord = true;
     };
-    
+
     this.stopProgressLoopIfRunning = function()
     {
         if (this.progressLoopRunning)
@@ -5650,30 +5650,30 @@ function ProgressEstimator(runFunction)
             this.shouldStopProgressLoop = true;
         }
     };
-    
+
     // ArgumentLength should fullfill the parameter
     //given in the run function.
     this.stopRecord = function(argumentLength)
     {
         let endTime = (new Date()).getTime();
         let deltaTime = endTime - this.startTime;
-        
+
         this.inRecord = false;
-        
+
         this.stopProgressLoopIfRunning();
-        
+
         // If no arguments were given,
         //use this as an opportunity
         //to determine the added constant.
         if (argumentLength === 0)
         {
             this.addedConstant = deltaTime;
-            
+
             return;
         }
-        
+
         let singleSampleEstimate = deltaTime / this.runFunction(argumentLength);
-        
+
         // If the estimated constant is zero, and this
         //constant is nonzero, set it. It assumes
         //the more recent estimate is more accurate than the previous
@@ -5689,54 +5689,54 @@ function ProgressEstimator(runFunction)
             this.estimatedConstant = singleSampleEstimate;
         }
     };
-    
+
     // The prediction must have been started with startRecord.
     this.predictProgress = function(argumentsLength)
     {
         let endTime = (new Date()).getTime();
         let deltaTime = endTime - this.startTime;
-        
+
         let totalTime = (this.estimatedConstant * this.runFunction(argumentsLength) + this.addedConstant);
         let currentTime = deltaTime;
-        
+
         let result = 1;
-        
+
         if (totalTime !== 0)
         {
             result = currentTime / totalTime;
         }
-        
+
         return result;
     };
-    
+
     // Keep predicting progress in a loop, until
     //the record is stopped.
     this.predictProgressLoop = function(argumentCount, onUpdate)
     {
         this.progressLoopRunning = true;
         this.shouldStopProgressLoop = false;
-        
+
         // Start a new record if one has
         //not already been started.
         if (!this.inRecord)
         {
             this.startRecord();
         }
-        
+
         let me = this;
-        
+
         let loop = function()
         {
             if (!me.progressLoopRunning)
             {
                 return;
             }
-            
+
             onUpdate(me.predictProgress(argumentCount));
-            
+
             requestAnimationFrame(loop);
         };
-        
+
         loop();
     };
 }
@@ -5757,13 +5757,13 @@ const EDITOR_SOURCE = "<!DOCTYPE " + "html>\n"
                      `
                      <!--
                         Note: This source listing includes only
-                        INLINE script blocks. If this is the 
+                        INLINE script blocks. If this is the
                         chunked version of the editor, these
                         will not be visible in this
                         listing.
                      \-->
                      `
-                     + 
+                     +
                      document.documentElement.outerHTML;
 
 var DEFAULT_SPELLCHECK_WORDS = // Define some default words for the spellchecker.
@@ -5799,7 +5799,7 @@ function EditControl(ctx)
 
     this.removed = [];
     this.stateSaves = [];
-    
+
     this.undoStack = [];
     this.redoStack = [];
 
@@ -5811,43 +5811,43 @@ function EditControl(ctx)
     {
         me.syntaxSelector.setDefaultHighlightScheme(key);
     };
-    
+
     // Returns an object that can be used to
     //modify the editor's lines.
     this.getLineHelper = function()
     {
-        var result = 
+        var result =
         {
             insert: (index, text, mockCreationTime) =>
             {
                 var newLine = me.addLine(index, text);
-                
+
                 newLine.creationTime = mockCreationTime;
-                
+
                 if (mockCreationTime !== undefined)
                 {
                     newLine.setModifiedTime(mockCreationTime);
                 }
-                
+
                 return newLine;
             },
-            
+
             insertLineObject: (index, lineObject) =>
             {
                 me.addRawLine(index, lineObject);
             },
-            
+
             update: (index, text, mockUpdateTime) =>
             {
                 var selectedLine = me.lines[index];
-                
+
                 if (selectedLine === undefined)
                 {
                     throw "The requested line does not exist (LineHelper.update)!";
                 }
-                
+
                 selectedLine.text = text + "";
-                
+
                 // If requested, update the given line.
                 if (mockUpdateTime !== undefined)
                 {
@@ -5855,11 +5855,11 @@ function EditControl(ctx)
                     {
                         selectedLine.creationTime = mockUpdateTime;
                     }
-                    
+
                     selectedLine.setModifiedTime(mockUpdateTime);
                 }
             },
-            
+
             remove: (index) =>
             {
                 if (me.lines[index])
@@ -5868,10 +5868,10 @@ function EditControl(ctx)
                 }
             }
         };
-        
+
         return result;
     };
-    
+
     // So a sandboxed control can be passed to
     //other objects.
     const lineHelper = me.getLineHelper();
@@ -5886,49 +5886,49 @@ function EditControl(ctx)
             {
                 me.undoStack.shift(-me.undoStack.length / 4); // TODO This is O(n).
             }
-            
+
             me.undoStack.push(change);
-            
+
             // Clear the redo stack.
             me.redoStack = [];
         }
     };
-    
+
     // Performs a single undo (e.g. one character insert).
     this.performUndo = function()
     {
         let change = me.undoStack.pop();
-        
+
         if (change)
         {
             let redoChange = change(lineHelper);
-            
+
             // If the change provides a redo option...
             if (redoChange)
             {
                 me.redoStack.push(redoChange);
             }
-            
+
             // This could have removed some lines.
             me.removeLinesFlaggedForRemoval();
         }
     };
-    
+
     // A single redo!
     this.performRedo = function()
     {
         let change = me.redoStack.pop();
-        
+
         if (change)
         {
             let undoChange = change(lineHelper);
-            
+
             // If the redo provides an undo...
             if (undoChange)
             {
                 me.undoStack.push(undoChange);
             }
-            
+
             // Check: Did this remove lines?
             me.removeLinesFlaggedForRemoval();
         }
@@ -5947,12 +5947,12 @@ function EditControl(ctx)
     this.saveState = function(doNotAddToStack, excludeText)
     {
         var saveState = {};
-        
+
         if (!excludeText)
         {
             saveState.content = me.getText(); // TODO: Make this faster.
         }
-        
+
         saveState.viewOffset = me.viewOffset * 1;
         saveState.editable = me.editable;
         saveState.highlighter = me.syntaxSelector.getDefaultHighlighter();
@@ -5963,10 +5963,10 @@ function EditControl(ctx)
         {
             me.stateSaves.push(saveState);
         }
-        
+
         return saveState;
     };
-    
+
     // Clears and saves state. Permits caching of lines,
     //rather than the entire content of the document.
     this.saveStateAndClear = function()
@@ -5983,7 +5983,7 @@ function EditControl(ctx)
         if (lastState !== undefined)
         {
             me.clear();
-            
+
             if (lastState.content)
             {
                 me.displayContent(lastState.content);
@@ -5992,7 +5992,7 @@ function EditControl(ctx)
             {
                 me.lines = lastState.lines;
             }
-            
+
             me.viewOffset = lastState.viewOffset;
             me.editable = lastState.editable;
             me.syntaxSelector.setDefaultHighlighter(lastState.highlighter);
@@ -6036,12 +6036,12 @@ function EditControl(ctx)
             next = i + 1 < me.lines.length ? me.lines[i + 1] : undefined;
 
             undoFn = me.lines[i].handleKey(key, previous, next, i, ignoreSpecial);
-            
+
             if (undoFn != undefined)
             {
                 allUndoFns.push(undoFn);
             }
-            
+
             previous = me.lines[i];
         };
 
@@ -6051,26 +6051,26 @@ function EditControl(ctx)
         {
             me.lines[i].afterHandleKey(i);
         }
-        
+
         if (allUndoFns.length > 0)
         {
             me.noteChange(function undoFn(...args)
             {
                 let redoFns = [];
-            
+
                 // Note changes.
                 for (i = 0; i < allUndoFns.length; i++)// - 1; i >= 0; i--)
                 {
                     redoFns.push(allUndoFns[i].apply(this, args));
                 }
-                
+
                 return (function redoFn(...redoArgs)
                 {
                     for (i = redoFns.length - 1; i >= 0; i--)
                     {
                         redoFns[i].apply(this, redoArgs);
                     }
-                
+
                     return undoFn;
                 });
             });
@@ -6098,7 +6098,7 @@ function EditControl(ctx)
         // even if empty.
         if (me.lines.length === 0)
         {
-            me.appendLine(""); // 
+            me.appendLine(""); //
             me.focusFirstLine(); // Focus the only line.
         }
     };
@@ -6112,7 +6112,7 @@ function EditControl(ctx)
             me.lines[i].handleClick(i, point, i + viewOffset);
         }
     };
-    
+
     this.addRawLine = function(index, lineObject)
     {
         if (index < me.lines.length)
@@ -6128,12 +6128,12 @@ function EditControl(ctx)
     this.addLine = function(index, content)
     {
         me.ctx.font = me.font;
-        
+
         var newLine = new Line(me.ctx, me, me.x, me.y + index * me.lineH, me.lineH, index);
         newLine.text = content;
-        
+
         me.addRawLine(index, newLine);
-        
+
         newLine.updateModifiedTime();
 
         return newLine;
@@ -6188,7 +6188,7 @@ function EditControl(ctx)
             {
                 await JSHelper.waitFor(0.2); // Wait, then render. We could be transitioning in.
             }
-            
+
             me.ctx.canvas.height = me.ctx.canvas.clientHeight || 300; // If still zero, make a guess!
             me.ctx.canvas.width = me.ctx.canvas.clientWidth || 500;
         }
@@ -6463,7 +6463,7 @@ function EditControl(ctx)
         for (var i = 0; i < textLines.length; i++)
         {
             newLine = me.addLine(me.lines.length, textLines[i]);
-            
+
             if (processLine)
             {
                 processLine(newLine);
@@ -6503,7 +6503,7 @@ function EditControl(ctx)
         return result;
     };
 
-    // Like getDisplayedLines, but returns 
+    // Like getDisplayedLines, but returns
     // the text of the lines on display,
     // rather than the line objects themselves.
     this.getDisplayedText = async function()
@@ -6518,7 +6518,7 @@ function EditControl(ctx)
 
         return result.join('\n');
     };
-    
+
     this.getDelta = function(savedState)
     {
         // TODO: Finish this.
@@ -6527,7 +6527,7 @@ function EditControl(ctx)
         //a map from line IDs to changes to these lines.
         var lastDelta = savedState.delta || new Delta();
         var newDelta = new Delta(lastDelta);
-        
+
         // When a delta is added to a line, it is merged with
         //previous deltas.
         for (var i = 0; i < me.lines.length; i++)
@@ -6541,19 +6541,19 @@ function EditControl(ctx)
                 newDelta.updateLine(me.lines[i]);
             }
         }
-        
+
         // Check for removals.
         // Binary search for the starting index.
         var startIndex = ListHelper.binarySearch(me.removed, (listItem) =>
         {
             return listItem[0] - lastDelta.getCreationTime();
         }, true);
-        
+
         for (var i = startIndex; i < me.removed.length; i++)
         {
             newDelta.removeLine(me.removed[i][1], me.removed[i]);
         }
-        
+
         return newDelta;
     };
 
@@ -6686,7 +6686,7 @@ function EditControl(ctx)
         if (me.viewOffset < oldViewOffset)
         {
             let refreshRate = 20;
-            
+
             var refreshLineLoop = function()
             {
                 for (var i = 0; i < refreshRate; i++)
@@ -6694,10 +6694,10 @@ function EditControl(ctx)
                     if (currentRefreshLine > currentEndLine + 1 || currentRefreshLine > me.lines.length)
                     {
                         currentRefreshLine = -1;
-                        
+
                         return;
                     }
-                    
+
                     if (me.lines[currentRefreshLine])
                     {
                         me.lines[currentRefreshLine].refreshHighlitingIfNeeded(currentRefreshLine, forceEach, true); // Ignore timeouts.
@@ -6705,24 +6705,24 @@ function EditControl(ctx)
 
                     currentRefreshLine++;
                 }
-                
+
                 requestAnimationFrame(refreshLineLoop);
             };
-            
+
             let newEndLine = Math.min(me.lines.length, -me.viewOffset);
-            
+
             let newStartPosition = Math.max(0, -oldViewOffset);
-            
+
             if (newStartPosition > newEndLine)
             {
                 return;
             }
-            
+
             if (currentRefreshLine === -1)
             {
                 currentRefreshLine = newStartPosition;
                 currentEndLine = newEndLine;
-                
+
                 refreshLineLoop();
             }
             else
@@ -6774,7 +6774,7 @@ function EditControl(ctx)
         me.x = Math.min(me.x, me.ctx.canvas.width/2);
 
         me.refreshPassedLines(oldViewOffset);
-        
+
         return me.viewOffset === oldViewOffset;
     };
 
@@ -6785,9 +6785,9 @@ function EditControl(ctx)
     firstLine.select();
 }
 
-// Note: textExportParentElement can also be a textarea. If so, 
+// Note: textExportParentElement can also be a textarea. If so,
 //       then it is used as the import/export zone.
-function Editor(textViewerParentElement, keyboardParentElement, 
+function Editor(textViewerParentElement, keyboardParentElement,
     textExportParentElement, runFrameParentElement, onRun, syncTextcontrol)
 {
     const CLICK_MAX_DISTANCE_MOVE = 10;
@@ -6946,9 +6946,9 @@ function Editor(textViewerParentElement, keyboardParentElement,
         else
         {
             me.clear();
-            
+
             me.displayContent(saveString.substring(1)); // Non-JSON saves are prefixed. Remove this prefix.
-            
+
             me.editControl.render();
         }
     };
@@ -7160,7 +7160,7 @@ Path: ${ me.saveDir }
       {
         e.preventDefault();
       }
-      
+
       try
       {
         var bbox = me.keyCanvas.getBoundingClientRect();
@@ -7232,7 +7232,7 @@ Path: ${ me.saveDir }
     JSHelper.Events.registerPointerEvent("stop", me.keyCanvas, function(e)
     {
         pointerDown = false;
-        
+
         e.preventDefault();
 
         me.editCanvas.focus();
@@ -7269,7 +7269,7 @@ Path: ${ me.saveDir }
         e.preventDefault();
 
         me.editCanvas.focus();
-        
+
         distancePointerTraveled = 0;
 
         return false;
@@ -7295,7 +7295,7 @@ Path: ${ me.saveDir }
 
         me.editControl.moveView(dx * 2, dy * dy * ySign / 2);
         me.editControl.render();
-        
+
         distancePointerTraveled += Math.sqrt(dx * dx + dy * dy);
 
         lastEditPointerLocation = point;
@@ -7306,7 +7306,7 @@ Path: ${ me.saveDir }
     JSHelper.Events.registerPointerEvent("up", this.editCanvas, function(e)
     {
         editPointerDown = false;
-        
+
         if (distancePointerTraveled < CLICK_MAX_DISTANCE_MOVE)
         {
             var bbox = me.editCanvas.getBoundingClientRect();
@@ -7315,7 +7315,7 @@ Path: ${ me.saveDir }
             var y = e.clientY - bbox.top;
 
             me.editControl.handleClick(new Point(x, y));
-            
+
             me.editControl.render();
         }
 
@@ -7352,7 +7352,7 @@ Path: ${ me.saveDir }
     {
         if (!event.shiftKey)
         {
-            
+
             if (event.key === "ArrowDown" || event.key === "ArrowUp" || event.key === "ArrowLeft"
                     || event.key === "ArrowRight" || event.key === "Backspace" || event.key === "Tab"
                     || event.key === "Escape")
@@ -7370,7 +7370,7 @@ Path: ${ me.saveDir }
                     {
                         me.editControl.deselect();
                     }
-                    
+
                     if (indentCount === 0 && event.key !== "Escape")
                     {
                         me.editControl.handleKey(event.key);
@@ -7431,14 +7431,14 @@ Path: ${ me.saveDir }
             event.preventDefault();
         }
 
-        
+
         if (event.key === "Enter")
         {
             me.editControl.handleKey(event.key);
 
             me.editControl.render();
             event.preventDefault();
-        } 
+        }
         else if (event.key === "Delete")
         {
             me.editControl.handleKey("ArrowRight")
@@ -7542,11 +7542,11 @@ Path: ${ me.saveDir }
     const WHEEL_PIXEL_MODE = 0;
     const WHEEL_LINE_MODE = 1;
     const WHEEL_PAGE_MODE = 2;
-    
+
     var handleWheel = (event) =>
     {
         var dy = event.deltaY;
-        var lineHeight = me.editControl.lineH; 
+        var lineHeight = me.editControl.lineH;
 
         if (dy !== 0 && lineHeight > 0)
         {
@@ -7561,10 +7561,10 @@ Path: ${ me.saveDir }
 
             // Scroll the view, not the page.
             dy *= -1;
-            
+
             var didNotMove = me.editControl.moveView(0, dy);
             var lineDeltaCount = Math.floor(Math.abs(dy / lineHeight));
-            
+
             if (!didNotMove || lineDeltaCount < 1)
             {
                 event.preventDefault();
@@ -7608,7 +7608,7 @@ Path: ${ me.saveDir }
                 if (line.hasFocus)
                 {
                     selEnd = text.length + line.cursorPosition;
-                    
+
                     if (selStart == -1)
                     {
                         selStart = selEnd;
@@ -7630,7 +7630,7 @@ Path: ${ me.saveDir }
                 {
                     break;
                 }
-                
+
                 if (inSelection)
                 {
                     selEnd = text.length + line.selRange[1];
@@ -7697,7 +7697,7 @@ Path: ${ me.saveDir }
                     }
 
                     line.hasFocus = false;
-                    line.selRange = 
+                    line.selRange =
                     [
                         Math.max(0, selStart - index),
                         Math.min(line.text.length, selEnd - index)
@@ -7753,7 +7753,7 @@ Path: ${ me.saveDir }
                 };
             }
         };
-        
+
         // Show output...
         if (contentToRun !== undefined)
         {
@@ -7770,7 +7770,7 @@ Path: ${ me.saveDir }
 
         let scriptLine;
         let createScriptLine;
-        
+
         const run = async (newCommand) =>
         {
             const result = await EditorHelper.__runOutOfContext(newCommand);
@@ -7792,10 +7792,10 @@ Path: ${ me.saveDir }
             if (scriptLine)
             {
                 scriptLine.editable = false;
-                
+
                 const oldScriptLine = scriptLine;
-                scriptLine.onentercommand = () => 
-                { 
+                scriptLine.onentercommand = () =>
+                {
                     // If removed...
                     if (scriptLine.flaggedForRemoval)
                     {
@@ -7804,7 +7804,7 @@ Path: ${ me.saveDir }
 
                     scriptLine.text = oldScriptLine.text;
                     const cursorPos = oldScriptLine.cursorPosition;
-                    
+
                     scriptLine.focus();
                     scriptLine.cursorPosition = cursorPos;
 
@@ -7826,14 +7826,14 @@ Path: ${ me.saveDir }
         };
 
         createScriptLine();
-        
+
         requestAnimationFrame(() =>
         {
             if (doneLine)
             {
                 doneLine.focus();
             }
-            
+
             me.editControl.render();
         });
 
@@ -7846,7 +7846,7 @@ Path: ${ me.saveDir }
             };
         }
 
-        const controls = 
+        const controls =
         {
             run: async (command) =>
             {
@@ -7867,9 +7867,9 @@ Path: ${ me.saveDir }
         if (inCurrentPage) // If we could access device internals, we still allow running in
         {                  // the current context. Give a warning.
             var contentToRun = me.editControl.getText();
-            
+
             me.editControl.saveStateAndClear();
-            
+
             me.editControl.appendLine("Danger!").editable = false;
             me.editControl.appendLine(" * Make sure you trust this script! Running untrusted scripts").editable = false;
             me.editControl.appendLine("   ON THE SAME PAGE AS THIS EDITOR can comprimise the security").editable = false;
@@ -7878,16 +7878,16 @@ Path: ${ me.saveDir }
             me.editControl.appendLine("   \"eval\". If your program is not JavaScript or you don't").editable = false;
             me.editControl.appendLine("   know what this means, DO NOT RUN YOUR PROGRAM.").editable = false;
             me.editControl.appendLine("Do you really want to run this program as a SCRIPT in the current page?").editable = false;
-            
+
             const yesLine = me.editControl.appendLine("YES");
             const noLine = me.editControl.appendLine("NO");
-            
+
             yesLine.editable = false;
             noLine.editable = false;
-            
+
             requestAnimationFrame(() =>
             {
-                if (!window.app) 
+                if (!window.app)
                 {
                     yesLine.focus();
                 }
@@ -7895,24 +7895,24 @@ Path: ${ me.saveDir }
                 {                // make it harder to click "yes."
                     noLine.focus();
                 }
-                
+
                 me.editControl.render();
             });
-            
+
             yesLine.onentercommand = async () =>
             {
                 await me.openInteractiveConsole(contentToRun);
             };
-            
+
             noLine.onentercommand = () =>
             {
                 me.editControl.restoreState();
                 // ... and do nothing more ...
             };
-            
+
             return; // Don't also run in the iframe...
         }
-    
+
         if (me.runFrame.style.display === "block")
         {
             me.runFrame.style.display = "none";
@@ -7972,14 +7972,14 @@ Path: ${ me.saveDir }
         if (viewingAdvancedOptions)
         {
             viewingAdvancedOptions = false;
-            
+
             me.editControl.restoreState();
-            
+
             return;
         }
-        
+
         me.editControl.saveStateAndClear();
-        
+
         viewingAdvancedOptions = true;
 
         var titleLine = me.editControl.appendLine("Advanced Options:");
@@ -7998,10 +7998,10 @@ Path: ${ me.saveDir }
 
         var setPathToSpellingDictionary = window.app ? me.editControl.appendLine("Set Path to Spellcheck Dictionary") : null;
         var runSpellCheck = me.editControl.appendLine("Check Spelling");
-        
+
         var checkSyntax = me.editControl.appendLine("Check Syntax");
         checkSyntax.editable = false;
-        
+
         var wrapLongLines    = me.editControl.appendLine("Wrap Long Lines (Method A)");
         wrapLongLines.editable = false;
 
@@ -8087,25 +8087,25 @@ Path: ${ me.saveDir }
                 me.editControl.font = lineText.substring(lineText.indexOf(": ") + 2);
             }
         };
-        
+
         checkSyntax.onentercommand = function()
         {
             exitAdvancedOptions();
-            
+
             me.toggleSyntaxCheck();
         };
-        
+
         wrapLongLines.onentercommand = function()
         {
             exitAdvancedOptions();
-            
+
             me.wrapLongLines();
         };
-        
+
         wrapTextInput.onentercommand = function()
         {
             exitAdvancedOptions();
-            
+
             me.wrapTextWithLineBreaks();
         };
 
@@ -8149,7 +8149,7 @@ Path: ${ me.saveDir }
             };
         }
     };
-    
+
     var checkingSyntax = false;
     this.toggleSyntaxCheck = function()
     {
@@ -8161,53 +8161,53 @@ Path: ${ me.saveDir }
         {
             var text = me.editControl.getText().split("\n");
             var syntaxChecker = new SyntaxChecker();
-        
+
             me.editControl.saveStateAndClear();
-            
+
             var exitLine = me.editControl.appendLine("Exit");
             exitLine.focus();
-            
+
             exitLine.onentercommand = function()
             {
                 me.toggleSyntaxCheck();
             };
-            
+
             syntaxChecker.reset();
-            
+
             //console.log(text);
-            
+
             for (var lineNumber = 0; lineNumber < text.length - 1; lineNumber++)
             {
                 syntaxChecker.checkLine(text[lineNumber], lineNumber, false, {});
             }
-            
+
             if (text.length - 1 >= 0)
             {
                 syntaxChecker.checkFinalLine(text[text.length - 1], text.length - 1, {});
             }
-            
+
             var problems = syntaxChecker.getProblems();
-            
+
             var handleProblem = (problem) =>
             {
                 var newLine = me.editControl.appendLine(problem.lineNumber + ": " + (problem.message || problem.check + " failed. No message."));
-                
+
                 newLine.onentercommand = function()
                 {
                     me.toggleSyntaxCheck();
                     me.editControl.lines[problem.lineNumber].focus();
                 };
             };
-            
+
             for (var i = 0; i < problems.length; i++)
             {
                 handleProblem(problems[i]);
             }
         }
-        
+
         checkingSyntax = !checkingSyntax;
     };
-    
+
     me.wrappingLongLines = false;
     this.wrapLongLines = function() // A method added, lost, and re-added.
     {
@@ -8215,14 +8215,14 @@ Path: ${ me.saveDir }
         {
             me.editControl.restoreState();
             me.wrappingLongLines = false;
-            
+
             return;
         }
-        
+
         me.wrappingLongLines = true;
-        
+
         let toWrap = me.editControl.getText();
-        
+
         me.editControl.saveStateAndClear();
 
         let quoteOptionText = "Quote ('\") Option: ";
@@ -8231,7 +8231,7 @@ Path: ${ me.saveDir }
         let quoteOptions = ["BREAK", "BREAK_AND_CONCAT", "DO_NOT_BREAK"];
         let autoIndent  = true;
         let quoteOptionIndex = 0;
-        
+
         let quoteActions =
         {
             "BREAK": (line, index) =>
@@ -8247,7 +8247,7 @@ Path: ${ me.saveDir }
                 return "";
             }
         };
-        
+
         const wrapText = (initialText) =>
         {
             let result = "";
@@ -8257,25 +8257,25 @@ Path: ${ me.saveDir }
             let currentChar;
             let indentCount = 0;
             let indent = "";
-            
+
             for (let i = 0; i < initialText.length; i++)
             {
                 currentChar = initialText.charAt(i);
                 lineLength++;
-                
+
                 if (currentChar == " " && lineLength === indentCount + 1
                         && autoIndent)
                 {
                     indentCount ++;
                     indent += " ";
                 }
-                
+
                 if (inQuoteType === currentChar)
                 {
                     inQuoteType = undefined;
                     result += currentWord + currentChar;
                     currentWord = "";
-                    
+
                     continue;
                 }
                 else if ((currentChar == "'" || currentChar == '"') && inQuoteType === undefined)
@@ -8292,13 +8292,13 @@ Path: ${ me.saveDir }
                     result += currentWord;
                     currentWord = "";
                 }
-                
+
                 currentWord += currentChar;
-                
+
                 if (lineLength + currentWord.length > maximumLength)
                 {
                     let newLineLength = 0, newPart;
-                    
+
                     if (inQuoteType === undefined)
                     {
                         newPart = indent + currentWord;
@@ -8307,12 +8307,12 @@ Path: ${ me.saveDir }
                     }
                     else
                     {
-                        newPart = quoteActions[quoteOptions[quoteOptionIndex]](result, i, 
+                        newPart = quoteActions[quoteOptions[quoteOptionIndex]](result, i,
                                         inQuoteType, indent) + currentWord;
                         result += newPart;
-                        
+
                         let breakIndex = newPart.indexOf("\n");
-                        
+
                         if (breakIndex >= 0)
                         {
                             newLineLength = newPart.length - breakIndex;
@@ -8322,12 +8322,12 @@ Path: ${ me.saveDir }
                             newLineLength = lineLength + newPart.length;
                         }
                     }
-                    
+
                     currentWord = "";
                     lineLength  = newLineLength;
                 }
             }
-            
+
             return result + currentWord;
         };
 
@@ -8336,48 +8336,48 @@ Path: ${ me.saveDir }
         let indentOption      = me.editControl.appendLine("Auto-indent: ON");
         let cancelLine        = me.editControl.appendLine("   CANCEL   ");
         let submitLine        = me.editControl.appendLine("   SUBMIT   ");
-        
+
         submitLine.editable = false;
         cancelLine.editable = false;
         indentOption.editable = false;
         quoteOption.editable = false;
-        
+
         maximumLengthLine.onentercommand = function()
         {
             const newLengthPart = maximumLengthLine.text.substring(maximumLengthText.length);
             maximumLength = MathHelper.forceParseInt(newLengthPart);
         };
-        
+
         quoteOption.onentercommand = function()
         {
             quoteOptionIndex++;
             quoteOptionIndex %= quoteOptions.length;
-            
+
             quoteOption.text = quoteOptionText + quoteOptions[quoteOptionIndex];
         };
-        
+
         indentOption.onentercommand = function()
         {
             autoIndent = !autoIndent;
             indentOption.text = "Auto-indent: " + (autoIndent ? "ON" : "OFF");
         };
-        
+
         submitLine.onentercommand = function()
         {
             me.wrappingLongLines = false;
-            
+
             me.editControl.restoreState();
             me.editControl.clear(true);
-            
+
             let wrapped = wrapText(toWrap);
-            
+
             me.editControl.displayContent(wrapped);
         };
 
         cancelLine.onentercommand = function()
         {
             me.wrappingLongLines = false;
-            
+
             me.editControl.restoreState();
         };
 
@@ -8399,118 +8399,118 @@ Path: ${ me.saveDir }
         else
         { /* Otherwise, show the dialog! */
             showingWrapDialog = true;
-            
+
             var allText = me.editControl.getText();
             me.editControl.saveStateAndClear();
-            
+
             // Constants
             const maxLineLengthText = "Maximum Line Length:";
             const breakWordText = "Break Word:";
-            
+
             const MIN_WORD_INDEX_FRACTION = 1/8;
             const MIN_WORD_INDEX_VALUE_ALTERNATE = 6; // If minimum length is disabled...
             const WORD_SEP_CHARACTERS = {};
-            
+
             // Generate WORD_SEP_CHARACTERS...
             const wordSepCharsList = " .?;[]{}<>\\%^\t=,-+!*".split("");
-            
+
             for (const character of wordSepCharsList)
             {
                 WORD_SEP_CHARACTERS[character] = character; // Map each character to itself so we can
                                                             // use "in"...
             }
-            
+
             // Flags
             let maximumLengthEnabled = true;
             let breakWords = true;
-            
+
             // Notes.
             var selectionNote = me.editControl.appendLine("** This will be applied to all lines in the document. **");
             selectionNote.editable = false;
-            
+
             // Inputs.
             var maximumLengthEnabledInput = me.editControl.appendLine(maxLineLengthText + " (ENABLED)");
             maximumLengthEnabledInput.editable = false;
-            
+
             var maximumLineLengthInput = me.editControl.appendLine("100");
-            
+
             me.editControl.appendLine("").focus();
-            
+
             var breakWordInput = me.editControl.appendLine(breakWordText + " (ENABLED)");
-            
-            var wrapBeforeRegexInput = me.editControl.appendLine("Add Break Before Regex: []");  
+
+            var wrapBeforeRegexInput = me.editControl.appendLine("Add Break Before Regex: []");
             var wrapAfterRegexInput = me.editControl.appendLine("Add Break After Regex: []");
-            
+
             var submitLine = me.editControl.appendLine("Wrap");
             submitLine.editable = false;
-            
+
             var cancelLine = me.editControl.appendLine("Cancel");
-            
-            requestAnimationFrame(() => 
-            { 
-                cancelLine.focus(); 
+
+            requestAnimationFrame(() =>
+            {
+                cancelLine.focus();
                 me.editControl.render();
             }); // Focus after propagation of enter.
-            
+
             cancelLine.editable = false;
-            
+
             // Logic
             cancelLine.onentercommand = function()
             {
                 me.editControl.restoreState();
                 showingWrapDialog = false;
             };
-            
+
             maximumLengthEnabledInput.onentercommand = function()
             {
                 maximumLengthEnabled = !maximumLengthEnabled;
-                
+
                 let enabledDisabledText = "(ENABLED)";
-                
+
                 if (!maximumLengthEnabled)
                 {
                     enabledDisabledText = "(DISABLED)";
                 }
-                
+
                 maximumLengthEnabledInput.text = maxLineLengthText + enabledDisabledText;
             };
-            
+
             breakWordInput.onentercommand = function()
             {
                 breakWords = !breakWords;
-                
+
                 let enabledDisabledText = "(ENABLED)";
-                
+
                 if (!breakWords)
                 {
                     enabledDisabledText = "(DISABLED)";
                 }
-                
+
                 breakWordInput.text = breakWordText + enabledDisabledText;
             };
-            
+
             submitLine.onentercommand = function()
             {
                 var parseNumber = (MathHelper ? MathHelper.forceParseInt : parseInt);
-                
+
                 var getRegexInputText = (inputLine) =>
                 {
                     let lineText = inputLine.text;
                     let colonIndex = lineText.indexOf(":");
-                    
+
                     if (colonIndex < 0)
                     {
                         throw "Error! getRegexInputText called on invalid line!";
                     }
-                    
+
                     let regexText = lineText.substring(colonIndex + 1);
                     return regexText;
                 };
-                
+
                 var maxLength = parseNumber(maximumLineLengthInput.text);
                 var wrapBefore = new RegExp(getRegexInputText(wrapBeforeRegexInput));
                 var wrapAfter = new RegExp(getRegexInputText(wrapAfterRegexInput));
-                
+
                 // Loop setup.
                 var lines = allText.split("\n");
                 var processingStack = [];
@@ -8519,7 +8519,7 @@ Path: ${ me.saveDir }
                 var wrapPoint, preWrapPoint, postWrapPoint, wrapCurrentLine;
                 var currentLine;
                 var i = 0;
-                
+
                 // While still lines to process...
                 while (i < lines.length || processingStack.length > 0)
                 {
@@ -8528,42 +8528,42 @@ Path: ${ me.saveDir }
                         processingStack.push(lines[i]);
                         i ++;
                     }
-                    
+
                     currentLine = processingStack.pop();
-                    
+
                     wrapPoint = currentLine.length;
                     wrapCurrentLine = false;
-                    
+
                     if (maximumLengthEnabled && wrapPoint > maxLength)
                     {
                         wrapPoint = maxLength;
                         wrapCurrentLine = true;
                     }
-                    
+
                     wrapBeforeTestPoint = currentLine.search(wrapBefore);
                     wrapAfterTestPoint = currentLine.search(wrapAfter);
-                    
+
                     if (wrapBeforeTestPoint >= 0 && wrapBeforeTestPoint < wrapPoint) // Found?
                     {
                         wrapPoint = wrapBeforeTestPoint;
                         wrapCurrentLine = true;
                     }
-                    
+
                     if (wrapAfterTestPoint >= 0 && wrapAfterTestPoint + 1 < wrapPoint)
                     {
                         wrapPoint = wrapAfterTestPoint + 1; // Add one so as to wrap after.
                         wrapCurrentLine = true;
                     }
-                    
+
                     if (!breakWords && wrapCurrentLine)
                     {
                         let j = wrapPoint;
                         let minIndex = // Give up on finding the start of a word at this index.
                             Math.max(MIN_WORD_INDEX_VALUE_ALTERNATE, // Make sure we don't start at zero...
-                                maximumLengthEnabled ? maxLength * MIN_WORD_INDEX_FRACTION 
-                                    : MIN_WORD_INDEX_VALUE_ALTERNATE); // If we can't use maximum length... 
+                                maximumLengthEnabled ? maxLength * MIN_WORD_INDEX_FRACTION
+                                    : MIN_WORD_INDEX_VALUE_ALTERNATE); // If we can't use maximum length...
                                                                        // just use the minimum break index.
-                        
+
                         // Backtrack to last suitable character.
                         for (; j >= minIndex; j --)
                         {
@@ -8572,15 +8572,15 @@ Path: ${ me.saveDir }
                                 break; // Stop & use this j.
                             }
                         }
-                        
+
                         wrapPoint = j; // Break at this j instead.
                     }
-                    
+
                     preWrapPoint = currentLine.substring(0, wrapPoint);
                     postWrapPoint = currentLine.substring(wrapPoint);
-                    
+
                     filteredLines.push(preWrapPoint);
-                    
+
                     if (postWrapPoint.length > 0 && wrapCurrentLine)
                     {
                         if (wrapPoint > 0)
@@ -8593,9 +8593,9 @@ Path: ${ me.saveDir }
                         }
                     }
                 } // End while.
-                
+
                 var newText = filteredLines.join("\n");
-                
+
                 // Reset & display.
                 me.editControl.restoreState();
                 me.editControl.clear();
@@ -8714,13 +8714,13 @@ Path: ${ me.saveDir }
             let iterations = 1, foundWord, suggestions = [];
             let centerIndex = findWord(word, undefined, undefined, undefined, undefined, true);
             let currentIndex = centerIndex;
-            
+
             checkedWords = checkedWords || {};
 
             while (suggestions.length < 4 && currentIndex >= 0 && currentIndex < filteredWords.length)
             {
                 foundWord = filteredWords[currentIndex];
-                
+
                 if (foundWord && !checkedWords[foundWord])
                 {
                     suggestions.push(foundWord);
@@ -8728,7 +8728,7 @@ Path: ${ me.saveDir }
                 }
 
                 iterations++;
-                
+
                 if (iterations % 2 === 0)
                 {
                     currentIndex = centerIndex + iterations / 2;
@@ -8742,7 +8742,7 @@ Path: ${ me.saveDir }
             if (word.length > 3 && suggestions.length < 16)
             {
                 let newWord = word.substring(1);
-                
+
                 suggestions = suggestions.concat(getSuggestions(newWord, checkedWords));
             }
 
@@ -9350,45 +9350,45 @@ EditorHelper.openWindowedEditor = (initialText, onComplete, options) =>
 
     runWindow.enableFlex();
 
-    let editor = new Editor(viewerWindow.content, keyboardWindow.content, 
+    let editor = new Editor(viewerWindow.content, keyboardWindow.content,
         importExportWindow.content, runWindow.content, options.onRun || function(source)
     {
         runWindow.toTheFore();
     });
-    
+
     viewerWindow.setOnCloseListener(() =>
     {
         runWindow.close();
         importExportWindow.close();
         keyboardWindow.close();
-        
+
         if (onComplete)
         {
             onComplete(editor.editControl.getText());
         }
     });
-    
+
     if (initialText)
     {
         editor.clear();
-        
+
         editor.displayContent(initialText);
-        
+
         editor.editControl.render();
     }
-    
+
     if (options.configureWindows)
     {
         options.configureWindows(runWindow, importExportWindow, keyboardWindow, viewerWindow);
     }
-    
+
     return editor;
 }
 
 // Replace a textarea with a tabbed editor.
 EditorHelper.replaceWithEditor = (elem, options) =>
 {
-    options = options || 
+    options = options ||
     {
         height: 400,
         font: undefined, // use the default...
@@ -9425,7 +9425,7 @@ EditorHelper.replaceWithEditor = (elem, options) =>
     // Keyboard...
     const keyboardParent = document.createElement("div");
     let oldKeyboardWindow = undefined;
-    
+
     let currentTabName = undefined;
 
     const tabView = HTMLHelper.addTabGroup(
@@ -9434,7 +9434,7 @@ EditorHelper.replaceWithEditor = (elem, options) =>
         "Editor": editorParent,
         "Preview": previewElem
     }, container, options.defaultTab || "Editor");
-    
+
     const editor = new Editor(editorElem, keyboardParent, elem, previewElem, () =>
     {
         if (currentTabName !== "Preview" && !options.noPreview)
@@ -9482,9 +9482,9 @@ EditorHelper.replaceWithEditor = (elem, options) =>
         }
 
         let keyboardWindow = SubWindowHelper.create(
-        { 
-            title: "Keyboard", 
-            alwaysOnTop: true, 
+        {
+            title: "Keyboard",
+            alwaysOnTop: true,
             noResize: true,
             withPage: true
         });
@@ -9537,7 +9537,7 @@ EditorHelper.replaceWithEditor = (elem, options) =>
             {
                 updateElemText();
             }
-            else if ((newTabName === "Editor" || newTabName === "Preview") 
+            else if ((newTabName === "Editor" || newTabName === "Preview")
                     && currentTabName === "Textbox")
             {
                 updateEditorText();
@@ -9561,7 +9561,7 @@ EditorHelper.replaceWithEditor = (elem, options) =>
                 {
                     updateEditorText();
                 }
-                
+
                 editor.updateRunFrame();
             }
 
@@ -9605,7 +9605,7 @@ const CloudHelper = {};
 
 // An enum of supported services that can be wrapped by
 //CloudHelper.
-CloudHelper.Service = 
+CloudHelper.Service =
 {
     FIRESTORE: 1,
     FIREBASE_STORAGE: 2
@@ -9615,14 +9615,14 @@ CloudHelper.Service =
 CloudHelper.SERVICE_NOTIFY_PREFIX = "CloudHelperService";
 
 // Data specific to services like Firestore.
-CloudHelper.ServiceData = 
+CloudHelper.ServiceData =
 {
-    Firebase: 
+    Firebase:
     {
         initApp: (firebase, apiData) =>
         {
             const localData = CloudHelper.ServiceData.Firebase;
-            
+
             // Have we initialized the app?
             if (!localData.firebase)
             {
@@ -9635,9 +9635,9 @@ CloudHelper.ServiceData =
 };
 
 // A map database modules.
-CloudHelper.WrappedDBs = 
+CloudHelper.WrappedDBs =
 {
-    
+
 };
 
 // The name of the primary database.
@@ -9654,29 +9654,29 @@ CloudHelper.initDB = (database, options) =>
     if (!database)
     {
         console.warn("Unable to access database (CloudHelper.initDB). Exiting early.");
-        
+
         return;
     }
-    
+
     options = options || {};
-    
+
     options.dbName = options.dbName || CloudHelper.PRIMARY_DB_NAME;
-    
+
     const firebaseApp = options.resources.includes(CloudHelper.Service.FIRESTORE)
                         || options.resources.includes(CloudHelper.Service.FIREBASE_STORAGE);
-    
+
     if (firebaseApp)
     {
         // Initialize the app if this has not yet been done.
         CloudHelper.ServiceData.Firebase.initApp(database, options.apiData);
     }
-    
+
     // Switch on the type of each service.
     for (let i = 0; i < options.resources.length; i++)
     {
         // Any data passed along to listeners.
         let relevantData = undefined;
-        
+
         switch (options.resources[i])
         {
             case CloudHelper.Service.FIRESTORE:
@@ -9684,16 +9684,16 @@ CloudHelper.initDB = (database, options) =>
                 if (!CloudHelper.ServiceData.Firestore)
                 {
                     CloudHelper.ServiceData.Firestore = {};
-                    
+
                     let firestoreData = CloudHelper.ServiceData.Firestore;
-                    
+
                     // Initialize the database.
                     firestoreData.db = database.firestore();
-                    
+
                     // Set the primary database.
-                    CloudHelper.WrappedDBs[options.dbName] 
+                    CloudHelper.WrappedDBs[options.dbName]
                         = new CloudHelper.FirestoreWrappedDB(firestoreData.db);
-                        
+
                     // Pass the database to listeners.
                     relevantData = firestoreData.db;
                 }
@@ -9702,12 +9702,12 @@ CloudHelper.initDB = (database, options) =>
                 if (!CloudHelper.ServiceData.FirebaseStorage)
                 {
                     CloudHelper.ServiceData.FirebaseStorage = {};
-                    
+
                     let storageData = CloudHelper.ServiceData.FirebaseStorage;
-                    
+
                     // Get a reference to the service.
                     storageData.storage = database.storage();
-                    
+
                     // Pass it to listeners.
                     relevantData = storageData.storage;
                 }
@@ -9715,7 +9715,7 @@ CloudHelper.initDB = (database, options) =>
             default:
                 console.error("Unknown service given to initDB: " + options.resources[i]);
         }
-        
+
         JSHelper.Notifier.notify(CloudHelper.SERVICE_NOTIFY_PREFIX + options.resources[i], relevantData);
     }
 };
@@ -9761,10 +9761,10 @@ CloudHelper.FirestoreWrappedDB = function(db)
             return new CloudHelper.FirestoreWrappedDoc(me.db.doc(key));
         }
     };
-    
+
     this.get = function(key)
     {
-        
+
     };
 };
 
@@ -9793,7 +9793,7 @@ CloudHelper.FirestoreWrappedDoc = function(doc)
 "use strict";
 
 /**
- *  A simple WebGL-based rendering object. Danger! At present, 
+ *  A simple WebGL-based rendering object. Danger! At present,
  * each construction of a render creates a new WebGL context. Most browsers
  * limit the number of accessible contexts, so try to limit the instances of Renderer.
  * For example, rather than constructing Renderer directly, consider using
@@ -9887,7 +9887,7 @@ function Renderer(baseCanvas)
     {
         return this.state[key];
     };
-    
+
     // Save stack for all uniforms.
     let uniformSaveStack = [];
 
@@ -9899,15 +9899,15 @@ function Renderer(baseCanvas)
 
     me.zMin = 1;
     me.zMax = 4000;
-    
+
     me.lastClear = [0, 0, 0, 1];
 
     me.outputCanvas = baseCanvas || document.createElement("canvas");
     me.gl = me.outputCanvas.getContext("webgl");
-    
+
     // Enable extensions.
     const vaoExtension = me.gl.getExtension("OES_vertex_array_object");
-    
+
     if (!vaoExtension)
     {
         throw "VAO Extension not supported!";
@@ -9916,7 +9916,7 @@ function Renderer(baseCanvas)
     me.backgroundCanvas = document.createElement("canvas");
     me.backgroundCtx = me.backgroundCanvas.getContext("2d");
 
-    me.uniforms = 
+    me.uniforms =
     {
        "u_shine": {},
        "u_worldMatrix": {},
@@ -9981,7 +9981,7 @@ function Renderer(baseCanvas)
     }
     `;
 
-    const fragmentShaderSource = 
+    const fragmentShaderSource =
     `
     precision highp float;
 
@@ -10021,7 +10021,7 @@ function Renderer(baseCanvas)
         vec3 normal = normalize(v_normal);
         vec3 toLight = normalize(v_toLight);
         vec3 toCamera = normalize(v_toCamera);
-        
+
         vec3 halfVector = normalize(toLight + toCamera); // The vector between the light and camera.
                                                          //This vector's angle from the camera determines
                                                          //the specular lighting amount.
@@ -10132,7 +10132,7 @@ function Renderer(baseCanvas)
     {
         const vertexShader = compileShader(vertexShaderSource, me.gl.VERTEX_SHADER);
         const fragmentShader = compileShader(fragmentShaderSource, me.gl.FRAGMENT_SHADER);
-        
+
         const program = linkProgram(vertexShader, fragmentShader);
 
         me.program = program;
@@ -10154,7 +10154,7 @@ function Renderer(baseCanvas)
         }
     };
 
-    // Update a uniform's value. Note: If the 
+    // Update a uniform's value. Note: If the
     //uniform does not exist, this can throw an error.
     const updateUniform = (name, newValue) =>
     {
@@ -10212,7 +10212,7 @@ function Renderer(baseCanvas)
 
         handleUniform("u_worldMatrix", generalMatrixSetFunction,
                 me.worldMatrix, matrixTransformInput);
-        
+
         handleUniform("u_cameraMatrix", generalMatrixSetFunction,
                 me.cameraMatrix, matrixTransformInput);
 
@@ -10233,14 +10233,14 @@ function Renderer(baseCanvas)
         handleUniform("u_mousePosition", vector2SetFunction, new Vector3(-100, -100), vector2TransformInput); // Initially offscreen.
         handleUniform("u_objectId", (location, value) => gl.uniform1f(location, value));
         handleUniform("u_fogDecay", (location, value) => gl.uniform1f(location, value), 10000.0); // Set the default fog amount.
-        
+
         handleUniform("u_fogColor", (location, values) =>
         {
             me.setClearColor([values[0], values[1], values[2], me.lastClear[3] || 1.0]);
-            
+
             vector3SetFunction(location, values);
         }, new Vector3(0, 0, 0), vector3TransformInput);
-        
+
         handleUniform("u_tint", vector3SetFunction, new Vector3(0, 0, 0), vector3TransformInput);
 
         gl.enable(gl.DEPTH_TEST);
@@ -10252,7 +10252,7 @@ function Renderer(baseCanvas)
 
         me.setCameraPosition(0, 0, 405);
         me.setLookAtLocation(12, 0, 10);
-        
+
 
         me.updateCamera();
     };
@@ -10322,7 +10322,7 @@ function Renderer(baseCanvas)
     {
         updateUniform(me.uniforms.u_tint, newTint);
     };
-    
+
     // Set the shinyness of objects displayed!
     me.setShine = (newShine) =>
     {
@@ -10334,7 +10334,7 @@ function Renderer(baseCanvas)
     {
         updateUniform(me.uniforms.u_fogColor, newColor);
     };
-    
+
     // Sets the clear color, but NOT the fog color.
     //Takes an array of components [r, g, b, a].
     me.setClearColor = (newColor) =>
@@ -10372,7 +10372,7 @@ function Renderer(baseCanvas)
 
     /*
         Get information about the objects interacting with
-        the mouse. 
+        the mouse.
         Pre: setMousePosition was called before the last
             render.
         Post: Some information about the mouse's position
@@ -10474,28 +10474,28 @@ function Renderer(baseCanvas)
 
         me.updateCameraUniform();
     };
-    
+
     // Update the camera, but JUST THE UNIFORM.
     me.updateCameraUniform = () =>
     {
         updateUniform(me.uniforms.u_cameraMatrix, me.cameraMatrix);
     };
-    
+
     // Push the state of all uniforms associated with
     //the renderer onto a stack.
     me.saveUniforms = function()
     {
         let saveEntry = {};
-        
+
         // Put each value into the save object.
         for(var uniformName in me.uniforms)
         {
             saveEntry[uniformName] = me.uniforms[uniformName].value;
         }
-        
+
         // Push the save object.
         uniformSaveStack.push(saveEntry);
-        
+
         // If the uniform save stack is getting long, post a warning.
         // For now, warn at 50,000 entries.
         if (uniformSaveStack.length > 50000)
@@ -10503,7 +10503,7 @@ function Renderer(baseCanvas)
             console.warn("The uniform save stack is getting long... Potential leak.");
         }
     };
-    
+
     // Pop the last saved state containing all uniforms
     //from the relevant stack. This should be FAST and not
     //perform any unneeded updates.
@@ -10513,7 +10513,7 @@ function Renderer(baseCanvas)
         if (uniformSaveStack.length > 0)
         {
             let lastEntry = uniformSaveStack.pop();
-            
+
             // Update every uniform.
             for (var uniformName in lastEntry)
             {
@@ -10537,7 +10537,7 @@ function Renderer(baseCanvas)
 
             var aspect = gl.drawingBufferHeight / gl.drawingBufferWidth;
             var fovY = me.fovY / 180.0 * Math.PI;
-            
+
             me.viewMatrix = Mat44Helper.frustumViewMatrix(aspect, fovY, me.zMin, me.zMax);
             gl.viewport(0, 0, gl.drawingBufferWidth, gl.drawingBufferHeight);
 
@@ -10565,7 +10565,7 @@ function Renderer(baseCanvas)
 
         me.gl.drawArrays(me.gl.TRIANGLES, 0, objectData.numTriangles);
     };
-    
+
     // Get the canvas to which this renderer outputs.
     //Note: This can be dangerous if the renderer
     //is shared with other clients. Intended for use
@@ -10605,7 +10605,7 @@ RendererHelper.getRenderer = () =>
     {
         RendererHelper.renderer = new Renderer();
     }
-    
+
     return RendererHelper.renderer;
 };
 
@@ -10621,7 +10621,7 @@ RendererHelper.getRapidRenderer = (canvas, canvasId) =>
 {
     let result = (canvasId !== undefined && RendererHelper.rapidRenderers[canvasId])
                     ? RendererHelper.rapidRenderers[canvasId]
-                    : new Renderer(canvas); 
+                    : new Renderer(canvas);
 
     if (canvasId !== undefined && !RendererHelper.rapidRenderers[canvasId])
     {
@@ -11323,7 +11323,7 @@ function JavaHighlightScheme(originalHighlighter)
         end: {}
     };
 
-    
+
     this.labelSearchRegexes.start[SyntaxHelper.COMMENT_MULTI_LINE] = new RegExp("\\\/\\\*", "g");
     this.labelSearchRegexes.start[SyntaxHelper.COMMENT] = new RegExp("\\\/\\\/", "g");
     this.labelSearchRegexes.start[SyntaxHelper.STRING] = new RegExp("[\\\"]", "g");
@@ -12126,7 +12126,7 @@ var ModelHelper = {};
  Compute normals for a given set of verticies. Normals
  will be set to the average of all at the edge of each
  face.
- 
+
  As in interfaces used to connect to WebGL, the stride
  is the number of components of verticies to be considered
   at a time. NOTE: THIS MUST BE GREATER THAN OR EQUAL TO NINE.
@@ -12143,10 +12143,10 @@ ModelHelper.computeNormals = function(verticies, tolerance, stride, offset)
     {
         tolerance = 1.0;
     }
-    
+
     stride = stride || 9;
     offset = offset || 0;
-    
+
     // Check for out-of-bounds offset/stride.
     if (stride < 9 || stride > verticies.length)
     {
@@ -12156,23 +12156,23 @@ ModelHelper.computeNormals = function(verticies, tolerance, stride, offset)
     {
         throw "Invalid offset of " + offset + ". Offset must be >= 0 and <= verticies.length. Verticies.length is " + verticies.length;
     }
-    
+
     // Get a 3D point from the verticies
-    //array at an index. A Vector3 is 
+    //array at an index. A Vector3 is
     //used rather than a Point to allow
     //usage of subtract.
     var getPoint = function(index)
     {
         var result = new Vector3(verticies[index], verticies[index + 1], verticies[index + 2]);
-        
+
         return result;
     };
-    
+
     var getMapKey = function(point)
     {
         return point.asRounded(3).toString();
     };
-    
+
     // Note the existence of a normal at a given point.
     var noteNormalExistence = function(point, normal)
     {
@@ -12181,19 +12181,19 @@ ModelHelper.computeNormals = function(verticies, tolerance, stride, offset)
         {
             return;
         }
-        
+
         var mapKey = getMapKey(point);
-        
+
         // If this is the first time the vertex has been recorded in the map,
         //create the array.
         if (coordinateToNormalMap[mapKey] == undefined)
         {
             coordinateToNormalMap[mapKey] = [];
         }
-        
+
         coordinateToNormalMap[mapKey].push(normal);
     };
-    
+
     // Get the averaged normal for a point.
     //If the dot product's absolute value is
     //greater than the tolerance, do not average.
@@ -12206,12 +12206,12 @@ ModelHelper.computeNormals = function(verticies, tolerance, stride, offset)
         {
             return normal;
         }
-        
+
         // Otherwise, find similar normals within |cos(dtheta)| <= tolerance.
         var mapKey = getMapKey(point);
         var surroundingNormals = coordinateToNormalMap[mapKey] || [];
         var normalsToAverage = [];
-        
+
         for (var i = 0; i < surroundingNormals.length; i++)
         {
             if (surroundingNormals[i] !== normal && normal.dot(surroundingNormals[i]) >= tolerance)
@@ -12219,72 +12219,72 @@ ModelHelper.computeNormals = function(verticies, tolerance, stride, offset)
                 normalsToAverage.push(surroundingNormals[i]);
             }
         }
-        
+
         var result = normal;
-        
+
         // Average all acceptable normals.
         //Note that division does not occur
-        //until after the summation, leaving 
+        //until after the summation, leaving
         //result inaccurate until normalization
         //occurs. Normalization has been added.
         for (var j = 0; j < normalsToAverage.length; j++)
         {
             result.addAndSet(normalsToAverage[j]);
         }
-        
+
         result.normalize();
-        
+
         return result;
     };
-    
+
     // Compute the normal vector for a single point
     //on a triangle.
     var getNormal = function(triangleStart, considerIndexStart)
     {
         // Find the current point.
         var current = getPoint(considerIndexStart);
-        
+
         // Find the two points.
         var triangleVertexIndex = (considerIndexStart - triangleStart) / elementsPerVertex;
-        
+
         //console.log("Vertex: " + triangleVertexIndex);
-        
+
         // Determine the indicies of the other points.
         var other1Index = ((triangleVertexIndex + 1) % 3) * elementsPerVertex + triangleStart;
         var other2Index = ((triangleVertexIndex + 2) % 3) * elementsPerVertex + triangleStart;
-        
+
         // Actually access and store the points.
         var other1 = getPoint(other1Index);
         var other2 = getPoint(other2Index);
-        
+
         // Find the vectors from the current point to the other two.
         var to1 = current.subtract(other1);
         var to2 = current.subtract(other2);
-        
+
         // Cross to1 and to2 to find a vector perpindicular to
         //both. TODO Ensure this vector is in the correct direction.
         var normal = to1.cross(to2);
-        
+
         // Normalize the normal.
         normal.normalize();
-        
-        //console.log(considerIndexStart + ", " + other1Index + ", " + other2Index 
+
+        //console.log(considerIndexStart + ", " + other1Index + ", " + other2Index
         //        + " => (" + to1.toString() + "; " + to2.toString() + ") => " + normal.toString());
-        
+
         // Note the normal's existance.
         noteNormalExistence(current, normal);
-        
+
         return normal;
     };
-    
+
     // Prepare output.
     var normals = [];
     var elementsPerVertex = Math.floor(stride / 3);
     var componentIndex = 0;
-    
+
     // We need to be able to average the normals at each point...
     var coordinateToNormalMap = {};
-    
+
     // Ensure we stop computation of normals before an error
     //involving array indicies occurs.
     for (var i = offset; i < verticies.length; i += stride)
@@ -12294,13 +12294,13 @@ ModelHelper.computeNormals = function(verticies, tolerance, stride, offset)
             normals.push(getNormal(i, componentIndex + i));
         }
     }
-    
+
     // If tolerance is not one,
     if (tolerance !== 1.0)
     {
         var unaveragedNormals = normals;
         var averagedNormals = [];
-        
+
         // Average normals, if necessary.
         for (var i = 0; i < unaveragedNormals.length; i++)
         {
@@ -12308,15 +12308,15 @@ ModelHelper.computeNormals = function(verticies, tolerance, stride, offset)
             (
                 getAveragedNormal
                 (
-                    getPoint(i * elementsPerVertex), 
+                    getPoint(i * elementsPerVertex),
                     unaveragedNormals[i]
                 )
             );
         }
-        
+
         normals = averagedNormals;
     }
-    
+
     return normals;
 };
 
@@ -12327,14 +12327,14 @@ ModelHelper.computeNormals = function(verticies, tolerance, stride, offset)
 ModelHelper.vectorArrayToFloat32Array = function(vectorArray)
 {
     var result = [];
-    
+
     for (var i = 0; i < vectorArray.length; i++)
     {
         result.push(vectorArray[i].x);
         result.push(vectorArray[i].y);
         result.push(vectorArray[i].z);
     }
-    
+
     return new Float32Array(result);
 };
 
@@ -12347,7 +12347,7 @@ ModelHelper.vectorArrayToFloat32Array = function(vectorArray)
 ModelHelper.connectVerticies = function(verticies)
 {
     var result = [];
-    
+
     // Fix a point's location on the result.
     //Appends point to result.
     var fixPoint = function(point)
@@ -12356,38 +12356,38 @@ ModelHelper.connectVerticies = function(verticies)
         result.push(point.y);
         result.push(point.z);
     };
-    
+
     var connectQuad = function(point1, point2, point3, point4)
     {
         fixPoint(point1);
         fixPoint(point3);
         fixPoint(point2);
-        
+
         fixPoint(point2);
         fixPoint(point3);
         fixPoint(point4);
     };
-    
+
     var previousRowIndex = verticies.length - 1;
     var j;
-    
+
     var currentRow, previousRow;
-    
+
     // For every row of verticies,
     for (let i = 0; i < verticies.length; i++)
     {
         currentRow = verticies[i];
         previousRow = verticies[previousRowIndex];
-        
+
         // Connect the two rows.
         for (j = 0; j < currentRow.length - 1; j ++)
         {
             connectQuad(previousRow[j], previousRow[j + 1], currentRow[j], currentRow[j + 1]);
         }
-        
+
         previousRowIndex = i;
     }
-    
+
     return result;
 };
 
@@ -12399,45 +12399,45 @@ ModelHelper.silhouetteToVerticies = function(silhouettePoints, startAngle, endAn
 {
     // Default values.
     divisions = divisions || 8;
-    
+
     // The rotation matrix.
     var rotationMatrix = new Mat44();
     rotationMatrix.toIdentity();
     rotationMatrix.rotateY(startAngle);
-    
+
     //console.log(rotationMatrix.toString());
-    
+
     var deltaTheta = (endAngle - startAngle) / divisions;
     //console.log("dtheta: " + deltaTheta);
-    
-    
+
+
     var verticies = [];
     var currentRow = [];
-    
+
     var i, currentPoint;
-    
+
     for (var theta = startAngle; theta <= endAngle; theta += deltaTheta)
     {
         currentRow = [];
-        
+
         for (i = 0; i < silhouettePoints.length; i++)
         {
             // Make a copy of the point to prevent modification of the
             //silhouette itself.
             currentPoint = new Vector3(silhouettePoints[i].x || 0, silhouettePoints[i].y || 0, silhouettePoints[i].z || 0);
-            
+
             currentPoint.transformBy(rotationMatrix);
-            
+
             currentRow.push(currentPoint);
         }
-        
+
         verticies.push(currentRow);
-        
+
         rotationMatrix.rotateY(deltaTheta);
     }
-    
+
     let connectedResult = ModelHelper.connectVerticies(verticies);
-    
+
     return connectedResult;
 };
 
@@ -12449,29 +12449,29 @@ ModelHelper.extrude = function(silhouette, extrudeDirection, noCap, capResolutio
     var partitions = []; // Not the best variable name...
     var subCaps = [];
     var part, j;
-    
+
     var currentPosition;
     var averagePosition = { x: 0, y: 0, z: 0 };
-    
+
     if (!noCap)
     {
         let leftmostExtreme = 0;
-        
+
         subCaps.push([]);
-    
+
         for (var i = 0; i < silhouette.length; i++)
         {
             averagePosition.x += silhouette[i].x || 0;
             averagePosition.y += silhouette[i].y || 0;
             averagePosition.z += silhouette[i].z || 0;
         }
-        
+
         averagePosition.x /= silhouette.length;
         averagePosition.y /= silhouette.length;
         averagePosition.z /= silhouette.length;
-        
+
         averagePosition = new Vector3(averagePosition.x, averagePosition.y, averagePosition.z);
-        
+
         if (capResolution !== 0)
         {
             var centeredCurrent;
@@ -12479,47 +12479,47 @@ ModelHelper.extrude = function(silhouette, extrudeDirection, noCap, capResolutio
             {
                 centeredCurrent = new Vector3(silhouette[i].x || 0, silhouette[i].y || 0, silhouette[i].z || 0);
                 centeredCurrent.subtractAndSet(averagePosition);
-                
+
                 if (centeredCurrent.x < leftmostExtreme || i === 0)
                 {
                     leftmostExtreme = centeredCurrent.x;
                 }
-                
+
                 subCaps[0].push(centeredCurrent);
             }
-            
+
             var newSubCap = [];
             var wantedX;
             var totalDeltaX = -leftmostExtreme;
             var multiplier = 1;
-            
+
             // For every resolution level,
             for (i = 1; i < capResolution && leftmostExtreme < 0; i++)
             {
                 wantedX = totalDeltaX / capResolution * i;
                 multiplier = Math.abs(wantedX / leftmostExtreme);
-                
+
                 newSubCap = [];
-                
+
                 // For every sub-point,
                 for (j = 0; j < subCaps[i - 1].length; j++)
                 {
                     newSubCap.push(subCaps[i - 1][j].multiplyScalar(multiplier));
                 }
-                
+
                 subCaps.push(newSubCap);
-                
+
                 leftmostExtreme *= multiplier;
             }
         }
     }
-    
+
     for (var i = 0; i < silhouette.length; i++)
     {
         currentPosition = new Vector3(silhouette[i].x || 0, silhouette[i].y || 0, silhouette[i].z || 0);
-        
+
         part = [];
-        
+
         if (!noCap && capResolution === 0)
         {
             part.push(averagePosition);
@@ -12530,13 +12530,13 @@ ModelHelper.extrude = function(silhouette, extrudeDirection, noCap, capResolutio
             {
                 part.push(averagePosition.add(subCaps[j][i]));
             }
-            
+
             part.push(averagePosition);
         }
-        
+
         part.push(currentPosition);
         part.push(currentPosition.add(extrudeDirection));
-        
+
         if (!noCap && capResolution === 0)
         {
             part.push(averagePosition.add(extrudeDirection));
@@ -12547,15 +12547,15 @@ ModelHelper.extrude = function(silhouette, extrudeDirection, noCap, capResolutio
             {
                 part.push(averagePosition.add(extrudeDirection).add(subCaps[j][i]));
             }
-            
+
             part.push(averagePosition.add(extrudeDirection));
         }
-        
+
         partitions.push(part);
     }
-    
+
     let result = ModelHelper.connectVerticies(partitions);
-    
+
     return result;
 };
 
@@ -12594,7 +12594,7 @@ ModelHelper.getTexCoords = (verticies, componentsPerVertex) =>
         let x = verticies[startIndex],
             y = verticies[startIndex + 1],
             z = 0; // Default to the plane for which z = 0.
-        
+
         // If a z-component could exist, find it.
         if (componentsPerVertex >= 3)
         {
@@ -12608,14 +12608,14 @@ ModelHelper.getTexCoords = (verticies, componentsPerVertex) =>
     const handleTriangle = (startIndex) =>
     {
         // Determine the triangle's corners.
-        const corners = 
+        const corners =
         [
             getVertex(startIndex),
             getVertex(startIndex + componentsPerVertex),
             getVertex(startIndex + componentsPerVertex * 2)
         ];
 
-        // Turn these vectors from the origin into 
+        // Turn these vectors from the origin into
         //vectors from the first vertex.
         corners[1] = corners[1].subtract(corners[0]);
         corners[2] = corners[2].subtract(corners[0]);
@@ -12702,7 +12702,7 @@ ModelHelper.Objects = {};
 /**
  *    Registers an object from an STL ASCII file.
  * Format Ref: https://en.wikipedia.org/wiki/STL_(file_format)
- * 
+ *
  */
 ModelHelper.Objects.registerFromSTL = function(key, stlText)
 {
@@ -12711,18 +12711,18 @@ ModelHelper.Objects.registerFromSTL = function(key, stlText)
     {
         throw "Invalid STL header.";
     }
-    
+
     let verticies = [];
     let normals = [];
-    
+
     let recomputeNormals = false;
-    
+
     // Tokenizes a line.
     let tokenize = (lineContent) =>
     {
         let result = [];
         let parts = lineContent.split(" ");
-        
+
         for (let i = 0; i < parts.length; i++)
         {
             if (parts[i].length > 0)
@@ -12730,10 +12730,10 @@ ModelHelper.Objects.registerFromSTL = function(key, stlText)
                 result.push(parts[i]);
             }
         }
-        
+
         return result;
     };
-    
+
     // Get a vector from an array of strings.
     //Note: All elements should be parsable floats.
     //If not, an error may occur (from parseFloat).
@@ -12744,35 +12744,35 @@ ModelHelper.Objects.registerFromSTL = function(key, stlText)
         let xComponent = fromArray[startIndex],
             yComponent = fromArray[startIndex + 1],
             zComponent = fromArray[startIndex + 2];
-            
+
         let result = new Vector3(parseFloat(xComponent),
                                  parseFloat(yComponent),
                                  parseFloat(zComponent));
-        
+
         return result;
     };
-    
+
     let state = {};
     state.inSolid = true;
     state.inFacet = false;
     state.inFacetLoop = false;
     state.specifiedNormal = undefined;
-    
+
     let parseLine = (lineContent, lineNumber) =>
     {
         const segments = tokenize(lineContent);
-        
+
         if (segments.length === 0)
         {
             return;
         }
-        
+
         let key = segments[0];
-        
+
         if (key === "facet" && !state.inFacet)
         {
             state.inFacet = true;
-            
+
             // Does the file specify a normal?
             if (segments.length > 4 && segments[1] === "normal")
             {
@@ -12786,35 +12786,35 @@ ModelHelper.Objects.registerFromSTL = function(key, stlText)
                 state.specifiedNormal = undefined;
             }
         }
-        
+
         // Check for the beginning of a facet loop.
         if (key === "outer" && state.inFacet
                 && segments.length > 1 && segments[1] == "loop")
         {
             state.inFacetLoop = true;
         }
-        
+
         // Check for the end of a facet loop.
         if (key === "endloop")
         {
             state.inFacetLoop = false;
         }
-        
+
         // Check for the end of a facet.
         if (key === "endfacet")
         {
             state.inFacet = false;
         }
-        
+
         // If a vertex and in a facet loop,
         //AND we can get the next three tokens...
         if (key === "vertex" && state.inFacetLoop && segments.length > 3)
         {
             // Get the coordinates of the verticies.
             let vertex = getVector(segments, 1);
-            
+
             verticies = verticies.concat(vertex.toArray());
-            
+
             let newNormal = [];
             if (state.specifiedNormal)
             {
@@ -12824,26 +12824,26 @@ ModelHelper.Objects.registerFromSTL = function(key, stlText)
             {
                 recomputeNormals = true;
             }
-            
+
             normals = normals.concat(newNormal);
         }
     };
-    
+
     // Parse every line.
     const lines = stlText.split("\n");
-    
+
     for (let i = 0; i < lines.length; i++)
     {
         parseLine(lines[i], i);
     }
-    
+
     // If recomputing normals, do so.
     if (recomputeNormals)
     {
         normals = ModelHelper.computeNormals(verticies, 0.2); // 0.2 is the tolerance for normal-
                                                               //averaging.
     }
-    
+
     return ModelHelper.Objects.register(key, verticies, normals);
 };
 
@@ -12860,7 +12860,7 @@ ModelHelper.Objects.register = function(key, verticies, normals, texCoords, norm
     {
         return;
     }
-    
+
     let newObject = {};
 
     newObject.privateInfo = { verticies: verticies, normals: normals, texCoords: texCoords,
@@ -12890,7 +12890,7 @@ ModelHelper.Objects.register = function(key, verticies, normals, texCoords, norm
 
         return newObject.privateInfo.texCoords;
     };
-    
+
     newObject.getVertexColors = () =>
     {
         if (!vertexColors)
@@ -12903,10 +12903,10 @@ ModelHelper.Objects.register = function(key, verticies, normals, texCoords, norm
                          0.5, 0.6, // Minimum green, maximum green.
                          0.5, 0.6); // Min blue, max blue.
         }
-        
+
         return newObject.privateInfo.vertexColors;
     };
-    
+
     // A wrapper around getVerticies, getNormals, and
     //getTexCoords. Returns a single JS object
     //containing these data. Danger: May cause
@@ -12914,12 +12914,12 @@ ModelHelper.Objects.register = function(key, verticies, normals, texCoords, norm
     newObject.getData = () =>
     {
         let result = {};
-        
+
         result.verticies = newObject.getVerticies();
         result.texCoords = newObject.getTexCoords();
         result.normals = newObject.getNormals();
         result.vertexColors = newObject.getVertexColors();
-        
+
         return result;
     };
 
@@ -12962,82 +12962,82 @@ ModelHelper.Objects.remove = function(objectKey)
 //objects should be registered in a different file.
 //This cube allows potential functions to work
 //without extra includes (e.g. allowing
-//ModelHelper.Objects.get to default to 
+//ModelHelper.Objects.get to default to
 //a cube).
-ModelHelper.Objects.register("Cube", 
+ModelHelper.Objects.register("Cube",
 [
     // Face 1
     50, 50, 0,
     50, 0, 0,
     0, 0, 0,
-    
+
     50, 50, 0,
     0, 0, 0,
     0, 50, 0,
-    
+
     // Face 2
     50, 0, 50,
     50, 50, 50,
     0, 50, 50,
-    
+
     50, 0, 50,
     0, 50, 50,
     0, 0, 50,
-    
+
     // Face 3
     0, 50, 0,
     0, 0, 0,
     0, 0, 50,
-            
+
     0, 50, 0,
     0, 0, 50,
     0, 50, 50,
-    
+
     // Face 4
     50, 0, 0,
     50, 50, 0,
     50, 50, 50,
-    
+
     50, 0, 0,
     50, 50, 50,
     50, 0, 50,
-    
+
     // Face 5
     50, 50, 50,
     50, 50, 0,
     0, 50, 0,
-    
+
     50, 50, 50,
     0, 50, 0,
     0, 50, 50,
-    
+
     // Face 6
     50, 0, 50,
     0, 0, 50,
     0, 0, 0,
-    
+
     50, 0, 50,
-    0, 0, 0, 
+    0, 0, 0,
     50, 0, 0
 ], undefined,
 (
     // Get a cube's normals!
     //Note: Copied from Objects.js
-    //in the older version of this WebGL 
+    //in the older version of this WebGL
     //support library.
     function (verticiesCount)
     {
         var locations = [];
         var points = [];
         var j;
-        
+
         var face = 0;
 
         for(var i = 0; i < verticiesCount / 2; i++)
         {
             face = i;
-            
-            points = 
+
+            points =
             [
                 [0, 0],
                 [0, 1],
@@ -13046,7 +13046,7 @@ ModelHelper.Objects.register("Cube",
                 [1, 1],
                 [1, 0]
             ];
-            
+
             for(j = 0; j < points.length; j++)
             {
                 if(face === 0 || face === 2)
@@ -13061,7 +13061,7 @@ ModelHelper.Objects.register("Cube",
                 }
             }
         }
-        
+
         return locations;
     }
 )(36));
@@ -13180,17 +13180,17 @@ function SimpleGame(options)
 function ConfigurationHandler(type)
 {
     var me = this;
-    
+
     this.get = function()
     {
         return me.type;
     };
-    
+
     this.setType = function(newType)
     {
         me.type = newType;
     };
-    
+
     this.GET = 0;
     this.SET = 1;
     this.GET_INPUT_TYPE = 2;
@@ -13207,7 +13207,7 @@ function ModelerPoint2D(x, y)
                    //is kept. Please note the warning
                    //about the "sloppyness [sic.]" of this
                    //script.
-    
+
     this.x = x;
     this.y = y;
     this.r = 10;
@@ -13218,20 +13218,20 @@ function ModelerPoint2D(x, y)
     this.connectingLineStyle = "#000000";
     this.outlineStyle = "#000000";
     this.isControlPoint = false;
-    
+
     this.getIsControlPoint = function()
     {
         return this.isControlPoint;
     };
-    
+
     this.render = function(ctx, lastPoint, transformMatrix)
     {
         var position = this.getPosition(transformMatrix);
-        
+
         var x = position[0];
         var y = position[1];
         var lineToPoint = null;
-        
+
         // Line from previous to this.
         //Don't do this for control points, unless a different point was
         //set.
@@ -13243,32 +13243,32 @@ function ModelerPoint2D(x, y)
         {
             lineToPoint = this.lineToPoint;
         }
-        
+
         if (lineToPoint)
         {
             ctx.beginPath();
-            
+
             var lastPosition = lineToPoint.getPosition(transformMatrix);
-            
+
             ctx.moveTo(x, y);
             ctx.lineTo(lastPosition[0], lastPosition[1]);
-            
+
             ctx.strokeStyle = this.connectingLineStyle;
-            
+
             ctx.stroke();
         }
-        
+
         // Circle.
-        
+
         ctx.strokeStyle = this.outlineStyle;
-        
+
         ctx.beginPath();
         ctx.arc(x, y, this.r, 0, Math.PI * 2, true);
-        
+
         ctx.stroke();
-        
+
         // Selection-based coloring.
-        
+
         if (!this.selected)
         {
             ctx.fillStyle = this.color;
@@ -13277,32 +13277,32 @@ function ModelerPoint2D(x, y)
         {
             ctx.fillStyle = "rgba(200, 200, 200, 0.85)";
         }
-        
+
         ctx.fill();
     };
-    
+
     this.select = function()
     {
         this.selected = true;
     };
-    
+
     this.deselect = function()
     {
         this.selected = false;
     };
-    
+
     this.getConfigureOptions = function()
     {
-        var result = 
+        var result =
         {
             "X Position": function(command, xPosition)
             {
                 var commandType = command.get();
-                
+
                 if (commandType === command.SET)
                 {
                     var newX;
-                    
+
                     try
                     {
                         newX = parseFloat(xPosition);
@@ -13310,10 +13310,10 @@ function ModelerPoint2D(x, y)
                     catch(e)
                     {
                         console.error("Error! " + e);
-                        
+
                         return false;
                     }
-                    
+
                     me.moveTo(newX, me.y);
                 }
                 else if (commandType === command.GET)
@@ -13325,15 +13325,15 @@ function ModelerPoint2D(x, y)
                     return "number";
                 }
             },
-            
+
             "Y Position": function(command, yPosition)
             {
                 var commandType = command.get();
-                
+
                 if (commandType === command.SET)
                 {
                     var newY;
-                    
+
                     try
                     {
                         newY = parseFloat(yPosition);
@@ -13341,10 +13341,10 @@ function ModelerPoint2D(x, y)
                     catch(e)
                     {
                         console.error("Error! " + e);
-                        
+
                         return false;
                     }
-                    
+
                     me.moveTo(me.x, newY);
                 }
                 else if (commandType === command.GET)
@@ -13357,35 +13357,35 @@ function ModelerPoint2D(x, y)
                 }
             }
         };
-        
+
         return result;
     };
-    
+
     this.destroy = function()
     {
         this.selected = false;
         this.toDestroy = true;
     };
-    
+
     this.translate = function(dx, dy)
     {
         this.x += dx;
         this.y += dy;
-        
+
         if (this.translateListener)
         {
             this.translateListener(this, dx, dy);
         }
     };
-    
+
     this.moveTo = function(x, y)
     {
         var dx = x - me.x;
         var dy = y - me.y;
-        
+
         me.translate(dx, dy);
     };
-    
+
     // Returns the screen position, not [me.x, me.y].
     //Returns an array of [screen x, screen y, element
     //used to help matrix math work].
@@ -13393,10 +13393,10 @@ function ModelerPoint2D(x, y)
     {
         var xyArray = [this.x, this.y, 1];
         MatHelper.transformPoint(xyArray, transformMatrix);
-        
+
         return xyArray;
     };
-    
+
     // Checks whether this object has collided with
     //a circle at (x1, y1) with radius = r1, but first
     //transforming this object such that its x and y are
@@ -13407,7 +13407,7 @@ function ModelerPoint2D(x, y)
         var position = this.getPosition(transform);
         var x2 = position[0];
         var y2 = position[1];
-        
+
         return Math.sqrt(Math.pow(x2 - x1, 2) + Math.pow(y2 - y1, 2)) <= r1 + this.r;
     };
 }
@@ -13415,33 +13415,33 @@ function ModelerPoint2D(x, y)
 function BezierCurveControl(addPointFunction, points)
 {
     var me = this;
-    
+
     this.controlPoints = points || [];
     this.curvePoints = [];
     this.addPoint = addPointFunction || function(point) {}; // Allows the addition of new points to be noted by the controlling application.
-    
+
     var shade = Math.floor((Math.random() * 206 + 50) / 2) * 2; // Choose a random point color, to make this curve's control points distinguishable from another's.
     var controlPointColor = "rgba(" + shade + ", " + shade / 2 + ", " + Math.floor(shade * Math.random() * 1.1) + ", 0.9)";
-    
+
     this.resolution = 8;
-    
+
     this.lockPoints3And5 = true;
-    
+
     var movePointToLine = function(pointToMove, lineEnd, lineCenter)
     {
         var dx = lineCenter.x - lineEnd.x;
         var dy = lineCenter.y - lineEnd.y;
-        
+
         pointToMove.x = lineCenter.x + dx;
         pointToMove.y = lineCenter.y + dy;
     };
-    
-    this.curveConfigureOptions = 
+
+    this.curveConfigureOptions =
     {
         "Lock 3rd and 5th points: ": function(command, value)
         {
             var commandType = command.get();
-            
+
             if (commandType === command.SET)
             {
                 me.lockPoints3And5 = value;
@@ -13458,11 +13458,11 @@ function BezierCurveControl(addPointFunction, points)
         "Set Resolution: ": function(command, value)
         {
             var commandType = command.get();
-            
+
             if (commandType === command.SET)
             {
                 me.resolution = value;
-                
+
                 me.remakeCurve();
             }
             else if (commandType === command.GET)
@@ -13475,14 +13475,14 @@ function BezierCurveControl(addPointFunction, points)
             }
         }
     };
-    
+
     if (this.controlPoints.length < 7)
     {
         var addToEndPoint;
-        
+
         var curveRadius = 100;
         var lastPoint = undefined;
-        
+
         var makeControlPoint = function(i)
         {
             var newPoint = new ModelerPoint2D(0, 0);
@@ -13491,17 +13491,17 @@ function BezierCurveControl(addPointFunction, points)
             newPoint.focusPriority = true;
             newPoint.isControlPoint = true;
             newPoint.lineToPoint = lastPoint;  // Set the point to connect to the previous control point.
-            
+
             // Move the point to a reasonable location.
             newPoint.translate((Math.cos(i) * curveRadius + curveRadius/2) * Math.random(), (Math.sin(i) * curveRadius + curveRadius / 2) * Math.random());
-            
+
             // Override the translation listener.
             newPoint.translateListener = function(point, dx, dy)
             {
                 if (me.lockPoints3And5)
                 {
                     // Lock the 3rd and 5th points.
-                    if (i == 2 || i == 4) 
+                    if (i == 2 || i == 4)
                     {
                         movePointToLine(me.controlPoints[i === 2 ? 4 : 2], me.controlPoints[i], me.controlPoints[3]);
                     } // Move the 3rd and 5th points with the 4th.
@@ -13510,71 +13510,71 @@ function BezierCurveControl(addPointFunction, points)
                         me.controlPoints[2].translate(dx, dy);
                     }
                 }
-                
+
                 // If the function to make the curve has been defined,
                 if (me.remakeCurve)
                 {
                     me.remakeCurve();
                 }
             };
-            
+
             newPoint.getConfigureOptions = function()
             {
                 return me.curveConfigureOptions;
             };
-            
+
             newPoint.setAddPointFunction = function(newAddPointFunction)
             {
                 me.addPoint = newAddPointFunction;
             };
-            
+
             lastPoint = newPoint;
-            
+
             return newPoint;
         };
-        
+
         // Add missing points...
         for (var i = this.controlPoints.length; i < 7; i++)
         {
             addToEndPoint = makeControlPoint(i);
-            
+
             this.addPoint(addToEndPoint);
             this.controlPoints.push(addToEndPoint);
         }
-        
+
         // Move the 3rd and 5th points to locations accross the center
         //from each other to create a smooth curve.
         movePointToLine(me.controlPoints[2], me.controlPoints[4], me.controlPoints[3]);
     }
-    
+
     // Refrence: https://webgl2fundamentals.org/webgl/lessons/webgl-3d-geometry-lathe.html
     var getBezierCurvePoint = function(p1, p2, p3, p4, t)
     {
         var invT = 1 - t;
         var pointX = t*t*t * p1.x + 3 * t*t * invT * p2.x + 3 * t * invT * invT * p3.x + invT * invT * invT * p4.x;
         var pointY = t*t*t * p1.y + 3 * t*t * invT * p2.y + 3 * t * invT * invT * p3.y + invT * invT * invT * p4.y;
-        
+
         return [pointX, pointY];
     };
-    
+
     this.makeBezierCurve = function(p1, p2, p3, p4)
     {
         var newPoint, position, lastPoint = undefined;
-        
+
         if (me.resolution === 0)
         {
             me.resolution = 99;
         }
-        
+
         var dt = 1 / me.resolution;
-        
+
         for (var t = 1; t >= 0; t -= dt)
         {
             position = getBezierCurvePoint(p1, p2, p3, p4, t);
-        
+
             newPoint = new ModelerPoint2D(position[0], position[1]);
             me.curvePoints.push(newPoint);
-            
+
             newPoint.translateListener = function(point, dx, dy)
             {
                 // Remove the control points on translation of a sub-point.
@@ -13583,27 +13583,27 @@ function BezierCurveControl(addPointFunction, points)
                     me.controlPoints[i].destroy();
                 }
             };
-            
+
             this.addPoint(newPoint);
-            
+
             if (lastPoint != undefined)
             {
                 dt = Math.sqrt(Math.pow((lastPoint.x - newPoint.x) / dt, 2) + Math.pow((lastPoint.y - newPoint.y) / dt, 2));
-                
+
                 if (dt <= 1)
                 {
                     dt = me.resolution / 5;
                 }
-                
+
                 dt = 1 / dt;
-                
+
                 dt = Math.max(dt, 1 / me.resolution);
             }
-            
+
             lastPoint = newPoint;
         }
     };
-    
+
     this.remakeCurve = function()
     {
         // Flag all curve points for deletion.
@@ -13611,48 +13611,48 @@ function BezierCurveControl(addPointFunction, points)
         {
             me.curvePoints[i].destroy();
         }
-        
+
         // Clear the curve points array.
         me.curvePoints = [];
-        
+
         // Make the curve...
         me.makeBezierCurve(me.controlPoints[0], me.controlPoints[1], me.controlPoints[2], me.controlPoints[3]);
         me.makeBezierCurve(me.controlPoints[3], me.controlPoints[4], me.controlPoints[5], me.controlPoints[6]);
     };
-    
+
     this.remakeCurve();
 }
 
 function Modeler2D(onSubmit, initialPoints, undoBuffer, redoBuffer)
 {
     var me = this;
-    
+
     const INITIAL_WIDTH = 300;
     const INITIAL_HEIGHT = 150;
-    
-    this.subWindow = SubWindowHelper.create({ title: "Modeler 2D", content: "", 
+
+    this.subWindow = SubWindowHelper.create({ title: "Modeler 2D", content: "",
             minWidth: INITIAL_WIDTH, minHeight: INITIAL_HEIGHT });
-            
+
     this.subWindow.enableFlex(); // Causes the canvas to grow to fill the window.
-    
+
     var canvas = document.createElement("canvas");
     canvas.style.width = "calc(100% - 5px)";
     canvas.style.height = "auto";
     canvas.style.margin = "0px";
     this.subWindow.content.style.padding = "0px";
-    
+
     var ctx = canvas.getContext("2d");
-    
+
     var pointerActions = { PAN: "PAN", EDIT_POINTS: "EDIT_POINTS" };
-    
+
     var points = initialPoints || [ new ModelerPoint2D(10, 10), new ModelerPoint2D(20, 20) ];
-    
-    
+
+
     if (initialPoints)
     {
         for (var i = 0; i < initialPoints.length; i++)
         {
-            // If the point has actions that might lead to 
+            // If the point has actions that might lead to
             //the creation of new points,
             if (initialPoints[i].setAddPointFunction)
             {
@@ -13663,28 +13663,28 @@ function Modeler2D(onSubmit, initialPoints, undoBuffer, redoBuffer)
             }
         }
     }
-    
+
     var previousStates = undoBuffer || [];
     var redoStates = redoBuffer || [];
-    
+
     var shouldQuit = false;
     var action = pointerActions.PAN;
     var selectedPoints = [];
     var transformMatrix = Mat33Helper.getTranslateMatrix(INITIAL_WIDTH / 2, INITIAL_HEIGHT / 2);
-    
+
     var zoomRate = 2;
-    
+
     var fileMenu = new SubWindowTab("File");
     var editMenu = new SubWindowTab("Edit");
     var selectionMenu = new SubWindowTab("Selection");
     var helpMenu = new SubWindowTab("Help");
-    
+
     if (onSubmit)
     {
         fileMenu.addCommand("Submit", function()
         {
             var submitPoints = [];
-            
+
             for (var i = 0; i < points.length; i++)
             {
                 if (!points[i].getIsControlPoint())
@@ -13692,54 +13692,54 @@ function Modeler2D(onSubmit, initialPoints, undoBuffer, redoBuffer)
                     submitPoints.push(new Point(points[i].x, points[i].y));
                 }
             }
-            
+
             onSubmit(submitPoints, points, previousStates, redoStates);
-            
+
             shouldQuit = true;
             me.subWindow.destroy();
         });
     }
-    
-    fileMenu.addCommand("Exit", function() 
+
+    fileMenu.addCommand("Exit", function()
     {
         me.subWindow.destroy();
         shouldQuit = true;
     });
-    
+
     // When the sub-window is closed...
     me.subWindow.setOnCloseListener(function()
     {
         shouldQuit = true; // Stop the animation loop.
     });
-    
+
     var changePointerControl = function(tab)
     {
         if (action === pointerActions.EDIT_POINTS)
         {
             action = pointerActions.PAN;
-            
+
             tab.setLabel("Edit Points");
         }
         else
         {
             action = pointerActions.EDIT_POINTS;
-            
+
             tab.setLabel("Pan");
         }
     };
-    
+
     var editPointsTab = editMenu.addCommand("Edit Points", function(tab)
     {
         changePointerControl(tab);
     });
-    
+
     var deleteSelection = function()
     {
         // Allow undoing this...
         allowSoftUndo({ deletedThings: true });
-    
+
         var newPoints = [];
-        
+
         for (var i = 0; i < points.length; i++)
         {
             if (!points[i].selected)
@@ -13751,138 +13751,138 @@ function Modeler2D(onSubmit, initialPoints, undoBuffer, redoBuffer)
                 points[i].destroy();
             }
         }
-        
+
         points = newPoints;
         selectedPoints = [];
     };
-    
+
     editMenu.addCommand("Sort Points", function(tab)
     {
         allowSoftUndo({ changedPointsOrder: true });
-        
+
         points.sort(function(a, b)
         {
             return a.y - b.y;
         });
     });
-    
+
     var zoomIn = function()
     {
         transformMatrix.zoomCenter(zoomRate, canvas.width, canvas.height);
     };
-    
+
     editMenu.addCommand("Zoom +", function()
     {
         zoomIn();
     });
-    
+
     var zoomOut = function()
     {
         transformMatrix.zoomCenter(1 / zoomRate, canvas.width, canvas.height);
     };
-    
+
     editMenu.addCommand("Zoom -", function()
     {
         zoomOut();
     });
-    
+
     editMenu.addCommand("Reset View", function()
     {
         transformMatrix = Mat33Helper.getTranslateMatrix(0, 0);
     });
-    
+
     var addCurve = function()
     {
         allowSoftUndo({ addedThings: true });
-        
+
         new BezierCurveControl(function(point)
         {
             points.push(point);
         });
     };
-    
-    editMenu.addCommand("Add Curve", function() 
+
+    editMenu.addCommand("Add Curve", function()
     {
         addCurve();
     });
-    
+
     var selectAll = function()
     {
         for (var i = 0; i < points.length; i++)
         {
             points[i].select();
-            
+
             selectedPoints.push(points[i]);
         }
     };
-    
+
     selectionMenu.addCommand("Select All", function(tab)
     {
         selectAll();
     });
-    
+
     selectionMenu.addCommand("Delete Selection", function(tab)
     {
         deleteSelection();
     });
-    
+
     var configureSelection = function(allowConfigureMultiple)
     {
         var handlePoint = function(i, point)
         {
             var selectionWindow = SubWindowHelper.create({ title: "Point " + i, content: "" });
             HTMLHelper.addHeader("Point " + i, selectionWindow, "h2");
-            
+
             var pointConfigureContent = point.getConfigureOptions();
-            
+
             var handleConfigureKey = function(key)
             {
                 var configFunction = pointConfigureContent[key];
                 var option = new ConfigurationHandler();
-                
+
                 option.setType(option.GET_INPUT_TYPE);
                 var inputType = configFunction(option);
-                
+
                 option.setType(option.GET);
                 var inputInitialContent = configFunction(option);
-                
+
                 HTMLHelper.addBR(selectionWindow);
                 HTMLHelper.addLabel(key, selectionWindow);
-                
+
                 HTMLHelper.addInput(key, inputInitialContent, inputType, selectionWindow, function(inputValue)
                 {
                     option.setType(option.SET);
                     configFunction(option, inputValue);
                 });
-                
+
                 HTMLHelper.addHR(selectionWindow);
             };
-            
+
             for (var key in pointConfigureContent)
             {
                 handleConfigureKey(key);
             }
         };
-        
+
         for (var i = 0; i < selectedPoints.length; i++)
         {
             handlePoint(i, selectedPoints[i]);
-                
+
             if (!allowConfigureMultiple)
             {
                 break;
             }
         }
     };
-    
+
     selectionMenu.addCommand("Configure Selection", function(tab)
     {
         configureSelection(true);
     });
-    
+
     helpMenu.addCommand("Keyboard Shortcuts", function(tab)
     {
-        var keyShortcutInfo = 
+        var keyShortcutInfo =
         `
         Keyboard Shortcuts:
         =====================
@@ -13893,38 +13893,38 @@ function Modeler2D(onSubmit, initialPoints, undoBuffer, redoBuffer)
         c: Add curve.
         - OR _: Zoom out.
         + OR =: Zoom in.
-        
+
         Shift + Tab: Move another window to the fore.
         Shift + F4: Close the window in the fore.
         `;
-        
+
         SubWindowHelper.alert("Keyboard Shortcuts", keyShortcutInfo);
     });
-    
+
     helpMenu.addCommand("About", function(tab)
     {
         var aboutInformation = window.ABOUT_PROGRAM || "...";
-        
+
         SubWindowHelper.alert("About", aboutInformation);
     });
-    
+
     // Undo
     var getPointsCopy = function()
     {
         var copy = [];
-        
+
         for (var i = 0; i < points.length; i++)
         {
             copy.push(points[i]);
         }
-        
+
         return copy;
     };
-    
+
     const maxUndo = 12;
-    
+
     var redoCommand;
-    
+
     var allowSoftUndo = function (data)
     {
         // So long as things have changed significantly...
@@ -13934,26 +13934,26 @@ function Modeler2D(onSubmit, initialPoints, undoBuffer, redoBuffer)
         {
             return;
         }
-        
+
         previousStates.push(getPointsCopy());
-        
+
         console.log(previousStates[previousStates.length - 1].length);
         softUndo.show();
-        
+
         // Hide redo options.
         if (!data.redid)
         {
             redoStates = [];
             redoCommand.hide();
         }
-        
+
         if (previousStates.length > maxUndo)
         {
             // TODO Replace this with a faster (not in n) method.
             previousStates = previousStates.slice(previousStates.length - maxUndo);
         }
     };
-    
+
     var softUndo = helpMenu.addCommand("Soft Undo", function(tab)
     {
         if (previousStates.length === 1)
@@ -13964,31 +13964,31 @@ function Modeler2D(onSubmit, initialPoints, undoBuffer, redoBuffer)
         {
             return;
         }
-        
+
         var revertTo = previousStates.pop();
-        
+
         if ((redoStates.length >= 1 && !ArrayHelper.equals(redoStates[redoStates.length - 1], points))
                 || redoStates.length === 0)
         {
             redoStates.push(getPointsCopy());
         }
-        
+
         points = revertTo;
-        
+
         // Unmark all points to be destoryed.
         for (var i = 0; i < points.length; i++)
         {
             points[i].toDestroy = false;
         }
-        
+
         redoCommand.show();
     });
-    
+
     if (previousStates.length === 0)
     {
         softUndo.hide();
     }
-    
+
     redoCommand = helpMenu.addCommand("Redo", function(tab)
     {
         if (redoStates.length === 1)
@@ -14000,95 +14000,95 @@ function Modeler2D(onSubmit, initialPoints, undoBuffer, redoBuffer)
             tab.hide();
             return;
         }
-        
-        
+
+
         var lastRedo = redoStates.pop();
         console.log(lastRedo);
-        
+
         allowSoftUndo({ redid: true });
-        
+
         points = lastRedo;
-    }); 
-    
+    });
+
     if (redoStates.length === 0)
     {
         redoCommand.hide();
     }
-    
+
     me.subWindow.addTab(fileMenu);
     me.subWindow.addTab(editMenu);
     me.subWindow.addTab(selectionMenu);
     me.subWindow.addTab(helpMenu);
-    
+
     me.subWindow.appendChild(canvas);
-    
+
     var drawAxis = function()
     {
         var yAxisPoint1 = new Point(0, 600, 1);
         var yAxisPoint2 = new Point(0, -600, 1);
-        
+
         yAxisPoint1.transformBy(transformMatrix);
         yAxisPoint2.transformBy(transformMatrix);
-        
+
         ctx.save();
         ctx.strokeStyle = "red";
-        
+
         ctx.beginPath();
-        
+
         ctx.moveTo(yAxisPoint1.x, yAxisPoint1.y);
         ctx.lineTo(yAxisPoint2.x, yAxisPoint2.y);
-        
+
         //console.log(yAxisPoint1.toString() + ", " + yAxisPoint2.toString());
-        
+
         ctx.stroke();
-        
+
         ctx.restore();
     };
-    
+
     this.render = function()
     {
         var lastPoint = undefined;
         var lastNonControlPoint = undefined;
-        
+
         ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
-        
+
         // Draw a coordinate axis.
         drawAxis();
-        
+
         var mustDestroyPoints = false;
-        
+
         for (var i = 0; i < points.length; i++)
         {
             if (points[i].toDestroy)
             {
                 mustDestroyPoints = true;
-                
+
                 continue;
             }
-            
+
             // Only give the point to be rendered the last non-
             //control point to prevent lines being drawn between
             //control and non-control points.
             points[i].render(ctx, lastNonControlPoint, transformMatrix);
-            
+
             lastPoint = points[i];
-            
+
             if (!lastPoint.getIsControlPoint())
             {
                 lastNonControlPoint = lastPoint;
             }
         }
-        
+
         // If at least one point was flagged for destruction,
         //remove all that are flagged for destruction.
         if (mustDestroyPoints)
         {
             // Allow undo.
             let deletedControlPoint = false;
-            
+
             // Check the list of all points.
             var newPoints = [];
-            
+
             for (var i = 0; i < points.length; i++)
             {
                 if (!points[i].toDestroy)
@@ -14100,10 +14100,10 @@ function Modeler2D(onSubmit, initialPoints, undoBuffer, redoBuffer)
                     deletedControlPoint = true;
                 }
             }
-            
+
             // Check the selection.
             var newSelection = [];
-            
+
             for (var i = 0; i < selectedPoints.length; i++)
             {
                 if (!selectedPoints[i].toDestroy)
@@ -14115,18 +14115,18 @@ function Modeler2D(onSubmit, initialPoints, undoBuffer, redoBuffer)
                     deletedControlPoint = true;
                 }
             }
-            
+
             // Allow undo.
             if (deletedControlPoint)
             {
                 allowSoftUndo({ deletedThings: true });
             }
-            
+
             points = newPoints;
             selectedPoints = newSelection;
         }
     };
-    
+
     this.animate = function()
     {
         if (canvas.width !== canvas.clientWidth || canvas.height !== canvas.clientHeight)
@@ -14134,25 +14134,25 @@ function Modeler2D(onSubmit, initialPoints, undoBuffer, redoBuffer)
             canvas.width = canvas.clientWidth;
             canvas.height = canvas.clientHeight;
         }
-        
+
         me.render();
-        
+
         if (!shouldQuit)
         {
             requestAnimationFrame(me.animate);
         }
     };
-    
+
     this.animate();
-    
+
     canvas.style.touchAction = "none"; // Prevents default (scrolling/shortcut) action
                                        //on touch of the canvas.
-    
+
     var selectPointsAtLocation = function(x, y, selectMultiple)
     {
         var canSelectMore = true;
         var lastFocus = undefined;
-        
+
         for (var i = points.length - 1; i >= 0; i--)
         {
             if (points[i].checkCollision(x, y, 1, transformMatrix) && (!selectMultiple || !points[i].selected) && (canSelectMore || points[i].focusPriority))
@@ -14162,10 +14162,10 @@ function Modeler2D(onSubmit, initialPoints, undoBuffer, redoBuffer)
                     lastFocus.deselect();
                     selectedPoints.pop();
                 }
-                
+
                 selectedPoints.push(points[i]);
                 points[i].select();
-                
+
                 if (!selectMultiple)
                 {
                     canSelectMore = false;
@@ -14178,44 +14178,44 @@ function Modeler2D(onSubmit, initialPoints, undoBuffer, redoBuffer)
             }
         }
     };
-    
+
     var pointerDown = false;
     var lastX, lastY;
     var inverseTransform = undefined;
     var shiftKeyPressed = false;
-    
+
     // Arrow key control options.
     var arrowKeySpeed = 7;
     var lastArrowKeyPressTime = (new Date()).getTime();
     var newActionWaitTime = 1000;
-    
+
     var startSelectedAction = function(x, y)
-    {   
+    {
         lastX = x;
         lastY = y;
-        
+
         // Clear selection if no shift.
         if (!shiftKeyPressed)
         {
             selectedPoints = [];
         }
-        
+
         selectPointsAtLocation(x, y, shiftKeyPressed);
-        
+
         if (action === pointerActions.EDIT_POINTS)
         {
             inverseTransform = transformMatrix.getInverse();
         }
-        
+
         // On right click...
         if (event.button === 2)
         {
             configureSelection(false); // Do NOT configure multiple.
-            
+
             event.preventDefault(); // Don't display the browser's right-click menu.
         }
     };
-    
+
     var doSelectedAction = function(x, y)
     {
         // Nothing can be done without a direction!
@@ -14223,14 +14223,14 @@ function Modeler2D(onSubmit, initialPoints, undoBuffer, redoBuffer)
         {
             lastX = x;
             lastY = y;
-            
+
             return;
         }
-        
+
         var dx = x - lastX;
         var dy = y - lastY;
-        
-        // Do different things based on the user- 
+
+        // Do different things based on the user-
         //selected action. This might get large...
         //consider switching to a switch statement.
         if (action === pointerActions.PAN)
@@ -14243,50 +14243,50 @@ function Modeler2D(onSubmit, initialPoints, undoBuffer, redoBuffer)
             //the contents of the arrays it is given,
             //format the points and transform them
             //so that the x and y - components are
-            //in WORLD SPACE -- they match the 
+            //in WORLD SPACE -- they match the
             //transformed space of the points on
             //the screen.
             var currentXYArray = [x, y, 1];
             var lastXYArray = [lastX, lastY, 1];
-            
+
             MatHelper.transformPoint(currentXYArray, inverseTransform);
             MatHelper.transformPoint(lastXYArray, inverseTransform);
-            
+
             var dxScaled = currentXYArray[0] - lastXYArray[0];
             var dyScaled = currentXYArray[1] - lastXYArray[1];
-            
+
             //allowSoftUndo({ dx: dxScaled, dy: dyScaled, selection: ArrayHelper.softCopy(selectedPoints) });
-            
+
             for (var i = 0; i < selectedPoints.length; i++)
             {
                 selectedPoints[i].translate(dxScaled, dyScaled);
             }
         }
-        
+
         lastX = x;
         lastY = y;
     };
-    
+
     // Make the canvas focusable (so it can recieve
     //key press input).
     canvas.setAttribute("tabindex", 0);
-    
+
     // Listen for keys used to execute commands.
     canvas.addEventListener("keydown", function(event)
     {
         var nowTime = (new Date()).getTime();
-        var arrowKeyPressed = event.key === "ArrowRight" || 
+        var arrowKeyPressed = event.key === "ArrowRight" ||
                 event.key === "ArrowLeft" ||
                 event.key === "ArrowUp" ||
                 event.key === "ArrowDown";
-        
+
         if (arrowKeyPressed && nowTime - lastArrowKeyPressTime > newActionWaitTime)
         {
             startSelectedAction(lastX, lastY);
-            
+
             lastArrowKeyPressTime = nowTime;
         }
-        
+
         if (event.key === "Shift")
         {
             shiftKeyPressed = true;
@@ -14316,11 +14316,11 @@ function Modeler2D(onSubmit, initialPoints, undoBuffer, redoBuffer)
             doSelectedAction(lastX, (lastY || 0) + arrowKeySpeed);
         }
     }, true);
-    
+
     canvas.addEventListener("keypress", function(event)
     {
         console.log(event.key);
-        
+
         if (event.key === "-" || event.key === "_")
         {
             zoomOut();
@@ -14342,7 +14342,7 @@ function Modeler2D(onSubmit, initialPoints, undoBuffer, redoBuffer)
             addCurve();
         }
     }, true);
-    
+
     canvas.addEventListener("keyup", function(event)
     {
         if (event.key === "Shift")
@@ -14350,20 +14350,20 @@ function Modeler2D(onSubmit, initialPoints, undoBuffer, redoBuffer)
             shiftKeyPressed = false;
         }
     }, true);
-    
+
     JSHelper.Events.registerPointerEvent("down", canvas, function(event)
     {
         var bbox = canvas.getBoundingClientRect();
         var x = event.clientX - bbox.left,
             y = event.clientY - bbox.top;
-        
+
         startSelectedAction(x, y, shiftKeyPressed);
-        
+
         pointerDown = true;
-        
+
         return true;
     }, false);
-    
+
     JSHelper.Events.registerPointerEvent("move", canvas, function(event)
     {
         if (pointerDown)
@@ -14371,33 +14371,33 @@ function Modeler2D(onSubmit, initialPoints, undoBuffer, redoBuffer)
             var bbox = canvas.getBoundingClientRect();
             var x = event.clientX - bbox.left,
                 y = event.clientY - bbox.top;
-            
+
             doSelectedAction(x, y);
         }
-    
+
         return true;
     }, false);
-    
+
     JSHelper.Events.registerPointerEvent("stop", canvas, function()
     {
         pointerDown = false;
         return true;
     }, false);
-    
+
     JSHelper.Events.registerPointerEvent("up", function(event)
     {
         pointerDown = false;
-        
+
         // Don't display the browser's right-click
         //menu.
         if (event.button === 2)
         {
             event.preventDefault();
         }
-        
+
         return true;
     }, false);
-    
+
     // Don't show the default right-click menu.
     canvas.addEventListener("contextmenu", function(event)
     {
@@ -14693,22 +14693,22 @@ AreaHelper.runSATCollisionTest2D = function(shapes, axis)
     {
         var projection, pointIndex;
         var leftermostTest, rightermostTest;
-        
+
         for (pointIndex = 0; pointIndex < shapes[testShapeIndex].length; pointIndex++)
         {
             projection = axis.dot(shapes[testShapeIndex][pointIndex]);
-            
+
             if (pointIndex === 0 || projection < leftermostTest)
             {
                 leftermostTest = projection;
             }
-            
+
             if (pointIndex === 0 || projection > rightermostTest)
             {
                 rightermostTest = projection;
             }
         }
-        
+
         // For all shapes,
         for (shapeIndex = 0; shapeIndex < shapes.length; shapeIndex ++)
         {
@@ -14716,12 +14716,12 @@ AreaHelper.runSATCollisionTest2D = function(shapes, axis)
             {
                 continue;
             }
-        
+
             // Project each point onto the axis.
             for (pointIndex = 0; pointIndex < shapes[shapeIndex].length; pointIndex++)
             {
                 projection = axis.dot(shapes[shapeIndex][pointIndex]);
-                
+
                 // If the point is within the test area,
                 if (projection > leftermostTest && projection < rightermostTest)
                 {
@@ -14730,7 +14730,7 @@ AreaHelper.runSATCollisionTest2D = function(shapes, axis)
                 }
             }
         }
-        
+
         // There were no collisions on this axis.
         return false;
     };
@@ -14739,30 +14739,30 @@ AreaHelper.runSATCollisionTest2D = function(shapes, axis)
     for (var shapeIndex = 0, l = shapes.length; shapeIndex < l; shapeIndex ++)
     {
         currentShape = shapes[shapeIndex];
-    
+
         // For every point on the shape,
         for (pointIndex = 0, shapeLength = currentShape.length; pointIndex < shapeLength; pointIndex++)
         {
             testIndex = (pointIndex + 1) % shapeLength;
-            
+
             // An edge cannot be created from two of the same points!
             if (testIndex === pointIndex)
             {
                 break;
             }
-        
+
             // Compute the edge vector for the current point.
             edge = currentShape[pointIndex].subtract(currentShape[pointIndex + 1]);
-            
+
             // Zero-vectors have no direction, and so cannot be normalized.
             if (edge.x == 0 && edge.y == 0)
             {
                 break;
             }
-            
+
             // The axis to project onto is perpindicular to that edge.
             axis = edge.perpindicular2D().normalize2D();
-            
+
             // Project onto that axis.
             if (!testAxis(axis, shapeIndex))
             {
@@ -14770,7 +14770,7 @@ AreaHelper.runSATCollisionTest2D = function(shapes, axis)
             }
         }
     }
-    
+
     // A collision occurred.
     return true;
 };
@@ -14959,7 +14959,7 @@ function Keyboard(ctx, keyPressed)
         var distributePadding = (keyCount) =>
         {
             const extraSpace = Math.max(me.maxX, ctx.canvas.width) - x;
-            const padding = extraSpace / keyCount; 
+            const padding = extraSpace / keyCount;
 
             // Nothing to distribute
             if (extraSpace <= 0)
@@ -15053,15 +15053,15 @@ function Keyboard(ctx, keyPressed)
 function WorldObject()
 {
     const me = this;
-    
+
     me.transformMat = new Mat44();
     me.transformMat.toIdentity(); // Select the identity, rather than the
                                   //zero matrix.
-                                  
+
     me.textureCanvas = undefined;
-    
+
     var registeredModel = undefined;
-    
+
     // By default, throw. This method should return
     //refrences to models. This should be called only once.
     //Do not use this to generate dynamic models.
@@ -15069,30 +15069,30 @@ function WorldObject()
     {
         throw "WorldObject.getModel is abstract and must be implemented.";
     };
-    
+
     // Get the registered version of this object's model.
-    this.getRegisteredModel = (renderer) => 
+    this.getRegisteredModel = (renderer) =>
     {
         if (registeredModel == undefined)
         {
             me.registerModels(renderer);
         }
-    
+
         return registeredModel;
     };
-    
+
     // Intended for the registration of all models with the renderer.
     this.registerModels = (renderer) =>
     {
         registeredModel = renderer.registerObject();
         registeredModel.fromModel(this.getModel());
     };
-    
+
     this.getTransform = () =>
     {
         return me.transformMat;
     };
-    
+
     // The animate method takes a change in time and a renderer
     //The renderer provides useful context information and permits
     //the registration/unregistration of objects.
@@ -15102,9 +15102,9 @@ function WorldObject()
         //be overridden by clients who wish to
         //animate.
     };
-    
+
     this.cleanup = () => {}; // Cleanup from an animate/render.
-    
+
     // Render the world object. This method is intended
     //to be final, or if it is overridden, be called by
     //the method that overrides it.
@@ -15112,31 +15112,31 @@ function WorldObject()
     {
         // Save and restore the world matrix.
         renderer.worldMatrix.save();
-        
+
         // TODO Test this for compliance with both left and
         //right multiplication matricies (e.g. do we need to
         //transpose?).
         renderer.worldMatrix.leftMulAndSet(me.getTransform());
-        
+
         if (me.preRender)
         {
             me.preRender.call(me, renderer);
         }
-        
+
         // Push the world matrix to WebGL.
         renderer.updateWorldMatrix();
-        
+
         // Set textures.
         renderer.setTexture(me.textureCanvas || renderer.getOutputCanvas());
-        
+
         // Bind the object.
         let model = me.getRegisteredModel(renderer);
-        
+
         // Bind the objects buffers and render
         //it.
         model.bindBuffers();
         renderer.render(model);
-        
+
         renderer.worldMatrix.restore();
     };
 }
@@ -15159,50 +15159,50 @@ function WorldBox(options)
                                         //a box in the larger world.
 
     const me = this;
-    
+
     this.objects = [];
     this.unregisteredObjects = [];
     this.destinationCtx = undefined;
     this.renderer = options.renderer;   // A renderer to override the FullWorld's default.
     this.outputResolution = 1;
-    
+
     // When asked to register models,
     //simply do that for all sub-objects.
     this.registerModels = (renderer) =>
     {
         let lastObject;
-        
+
         while (me.unregisteredObjects.length > 0)
         {
             lastObject = me.unregisteredObjects.pop();
-            
+
             // Tell the object to register itself.
             lastObject.registerModels(renderer);
-            
+
             // The last object is now registered.
             me.objects.push(lastObject);
         }
     };
-    
+
     this.setDestinationCanvas = function(canvas)
     {
         me.destinationCtx = canvas.getContext("2d");
     };
-    
+
     // Animate!
     //Pass this call to all sub-objects.
     this.animateChildren = function(renderer, deltaT)
     {
         // Register all unregistered objects.
         this.registerModels(renderer);
-        
+
         // Animate all sub-objects.
         for (var i = 0; i < me.objects.length; i++)
         {
             me.objects[i].animate(renderer, deltaT);
         }
     };
-    
+
     this.cleanupChildren = function(renderer)
     {
         for (var i = 0; i < me.objects.length; i++)
@@ -15210,22 +15210,22 @@ function WorldBox(options)
             me.objects[i].cleanup(renderer);
         }
     };
-    
+
     this.animate = this.animateChildren;
-    
+
     this.cleanup = this.cleanupChildren;
-    
+
     this.render = function(renderer)
     {
         if (me.destinationCtx || me.renderer)
         {
             var canvas = me.destinationCtx ? me.destinationCtx.canvas : me.renderer.getOutputCanvas();
-        
+
             // Update the renderer's size if necessary.
             renderer.updateViewIfNeeded(canvas.clientWidth * me.outputResolution,
                                            canvas.clientHeight * me.outputResolution,
                                            false); // Don't force.
-            
+
             // Update the size of the rendering context if needed.
             if (canvas.width !== canvas.clientWidth || canvas.height !== canvas.clientHeight)
             {
@@ -15233,32 +15233,32 @@ function WorldBox(options)
                 canvas.height = canvas.clientHeight * me.outputResolution || 1;
             }
         }
-        
+
         let currentObject;
-        
+
         renderer.clear();
-    
+
         renderer.saveUniforms();
         renderer.worldMatrix.save();
         renderer.worldMatrix.leftMulAndSet(me.getTransform());
-        
-        // If a function has been implemented that handles 
+
+        // If a function has been implemented that handles
         //the application of renderer settings, call it.
         if (this.preRender)
         {
             this.preRender.call(me, renderer);
         }
-        
+
         // Render every child object.
         for (let i = 0; i < me.objects.length; i++)
         {
             currentObject = me.objects[i];
-            
+
             // Sub-objects might change uniforms.
             //Save and restore them.
             renderer.saveUniforms();
             renderer.worldMatrix.save();
-            
+
             // Render using the default method only if the
             //rendering method hasn't been overridden or unless
             //it requests default rendering.
@@ -15266,31 +15266,31 @@ function WorldBox(options)
             {
                 currentObject.render(renderer);
             }
-            
+
             renderer.restoreUniforms();
             renderer.worldMatrix.restore();
         }
-        
+
         renderer.restoreUniforms();
         renderer.worldMatrix.restore();
-        
+
         if (me.destinationCtx)
         {
             // Clear the destination context.
-            me.destinationCtx.clearRect(0, 0, 
-                    me.destinationCtx.canvas.width, 
+            me.destinationCtx.clearRect(0, 0,
+                    me.destinationCtx.canvas.width,
                     me.destinationCtx.canvas.height);
-            
+
             // Render to the destination context.
             renderer.display(me.destinationCtx);
         }
     };
-    
+
     this.addObject = function(newObject)
     {
         me.unregisteredObjects.push(newObject);
     };
-    
+
     this.registerObject = this.addObject;
 }
 
@@ -15301,57 +15301,57 @@ function WorldBox(options)
 function FullWorld()
 {
     const me = this;
-    
+
     this.worlds = [];
     let stopLoop = false;
     this.renderer = RendererHelper.getRenderer();
     this.lastAnimateTime = (new Date()).getTime(); // TODO Check for potential bug when
-                                                   // animate is called for the first time -- 
+                                                   // animate is called for the first time --
                                                    // if the user creates a FullWorld
                                                    // at program init, there could be a
-                                                   // significant deltaT, messing things up. 
-    
+                                                   // significant deltaT, messing things up.
+
     this.registerWorld = function(world)
     {
         // Add the world.
         me.worlds.push(world);
     };
-    
+
     this.updateWorld = function(world, deltaT)
     {
         let worldRenderer = world.renderer || me.renderer; // Use the world's renderer,
                                                            //if it has one.
-    
+
         worldRenderer.saveUniforms();
-        
+
         world.animate(worldRenderer, deltaT);
         world.render(worldRenderer);
         world.cleanup(worldRenderer);
-        
+
         worldRenderer.restoreUniforms();
     };
-    
+
     this.loopOnce = function()
     {
         const nowTime = (new Date()).getTime();
         const deltaT = nowTime - me.lastAnimateTime;
-        
+
         // Animate and render.
         for (let i = 0; i < me.worlds.length; i++)
         {
             me.updateWorld(me.worlds[i], deltaT);
         }
-        
+
         me.lastAnimateTime = nowTime;
     };
-    
+
     this.loop = function()
     {
         // If not to stop looping,
         if (!stopLoop)
         {
             me.loopOnce();
-        
+
             requestAnimationFrame(() =>
             {
                 me.loop.call(me);
@@ -15362,7 +15362,7 @@ function FullWorld()
             stopLoop = false;
         }
     };
-    
+
     // Notes that we should stop looping.
     this.cancelLoop = function()
     {
@@ -15384,86 +15384,86 @@ function Vector3(x, y, z)
     this.IS_VECTOR = true;
 
     var me = this;
-    
+
     this.x = x;
     this.y = y;
     this.z = z;
-    
+
     /*
     A useful menomic for the cross product:
         | i  j  k  |       | y1 z1 |       | x1 z1 |       | x1 y1 |
     R = | x1 y1 z1 | = i * | y2 z2 | - j * | x2 z2 | + k * | x2 y2 |
-        | x2 y2 z2 |   
-    
+        | x2 y2 z2 |
+
     R = i * (y1 * z2 - z1 * y2) - j * (x1 * z2 - x2 * z1) + k * (x1 * y2 - x2 * y1)
     R = i * (y1 * z2 - z1 * y2) + j * (x2 * z1 - x1 * z2) + k * (x1 * y2 - x2 * y1)
     */
     this.cross = function(other)
     {
         var result = new Vector3(me.y * other.z - me.z * other.y, me.z * other.x - other.z * me.x, me.x * other.y - other.x * me.y);
-        
+
         return result;
     };
-    
+
     this.copy = function()
     {
         var result = new Vector3(me.x, me.y, me.z);
-        
+
         return result;
     };
-    
+
     this.mulScalar = function(scalar)
     {
         var result = new Vector3(me.x * scalar, me.y * scalar, me.z * scalar);
-        
+
         return result;
     };
-    
+
     this.multiplyScalar = this.mulScalar;
-    
+
     this.mulScalarAndSet = function(scalar)
     {
         me.x *= scalar;
         me.y *= scalar;
         me.z *= scalar;
     };
-    
+
     this.multiplyScalarAndSet = this.mulScalarAndSet;
-    
+
     this.add = function(other)
     {
         var result = new Vector3(me.x + other.x, me.y + other.y, me.z + other.z);
-        
+
         return result;
     };
-    
+
     this.addAndSet = function(other)
     {
         me.x += other.x;
         me.y += other.y;
         me.z += other.z;
     };
-    
+
     this.subtract = function(other)
     {
         var result = new Vector3(me.x - other.x, me.y - other.y, me.z - other.z);
-        
+
         return result;
     };
-    
+
     this.subtractAndSet = function(other)
     {
         me.x -= other.x;
         me.y -= other.y;
         me.z -= other.z;
     };
-    
+
     // Demonstration/Informal Proof.
     // Given: v = <x, y>, e**(it) = cos t + i sin t.
     //To rotate by PI/2 radians, multiply v by e**(iPI/2),
     //because cos (t + X) + i sin (t + X) = e**(i(t + X)) = e**(it) * e**(iX).
     //Similarly, e**(iPI/2) = i because cos(PI / 2) = 0 and sin(PI/2) = 1.
-    //Representing v using imaginary numbers, v = x + iy, so, to 
+    //Representing v using imaginary numbers, v = x + iy, so, to
     //rotate by PI/2 radians, v = i * (x + iy) = ix - y, so,
     //v' = <-y, x> = <-v_y, v_x>. This is the same as crossing v
     //with the z-axis.
@@ -15471,49 +15471,49 @@ function Vector3(x, y, z)
     {
         return new Vector3(me.y, -me.x, me.z);
     };
-    
+
     this.dot = function(other)
     {
         return other.x * me.x + other.y * me.y + other.z * me.z;
     };
-    
+
     this.getLength = function()
     {
         return Math.sqrt(me.x * me.x + me.y * me.y + me.z * me.z);
     };
-    
+
     this.getLength2D = function()
     {
         return Math.sqrt(me.x * me.x + me.y * me.y);
     };
-    
+
     this.normalize = function()
     {
         var length = me.getLength();
-        
+
         if (length !== 0)
         {
             me.x /= length;
             me.y /= length;
             me.z /= length;
         }
-        
+
         return me;
     };
-    
+
     this.normalize2D = function()
     {
         var length = me.getLength2D();
-        
+
         if (length !== 0)
         {
             me.x /= length;
             me.y /= length;
         }
-        
+
         return me;
     };
-    
+
     this.toString = function()
     {
         return "<" + me.x + ", " + me.y + ", " + me.z + ">";
@@ -15529,28 +15529,28 @@ function SubWindowGlobals(parent, windowsList)
     this.windowsList = windowsList;
     this.dragElement = document.createElement("div");
     this.minZIndex = 100;
-    
+
     var me = this;
-    
+
     this.sortWindowsList = function()
     {
         /* Sort descending order. */
-        me.windowsList.sort(function(windowA, windowB) 
+        me.windowsList.sort(function(windowA, windowB)
         {
             return windowB.zIndex - windowA.zIndex;
         });
     };
-    
+
     this.getMaxZIndex = function(excludeObject)
     {
         me.sortWindowsList();
-        
+
         var result = this.minZIndex;
-        
+
         if (me.windowsList.length > 0)
         {
             result = me.windowsList[0].zIndex;
-            
+
             if (me.windowsList[0] == excludeObject)
             {
                 if (me.windowsList.length > 1)
@@ -15563,7 +15563,7 @@ function SubWindowGlobals(parent, windowsList)
                 }
             }
         }
-        
+
         return result;
     };
 
@@ -15583,23 +15583,23 @@ function SubWindowGlobals(parent, windowsList)
             hadBelowTop = hadBelowTop || !me.windowsList[i].alwaysOnTop;
         }
     };
-    
+
     this.addWindow = function(newWindow)
     {
         me.windowsList.push(newWindow);
     };
-    
+
     this.removeDestroyed = function()
     {
         me.sortWindowsList();
-        
-        while (me.windowsList.length > 0 
+
+        while (me.windowsList.length > 0
             && me.windowsList[me.windowsList.length - 1].zIndex === -1)
         {
             me.windowsList.pop();
         }
     };
-    
+
     // Listen for shift + F3 to switch between windows.
     me.parent.addEventListener("keydown", function(event)
     {
@@ -15609,9 +15609,9 @@ function SubWindowGlobals(parent, windowsList)
             {
                 // Don't perform default action.
                 event.preventDefault();
-                
+
                 me.sortWindowsList();
-                
+
                 // Select the last window.
                 me.windowsList[me.windowsList.length - 1].toTheFore();
             }
@@ -15619,15 +15619,15 @@ function SubWindowGlobals(parent, windowsList)
             {
                 // Don't perform default action.
                 event.preventDefault();
-                
+
                 me.sortWindowsList();
-                
+
                 // Close the first (focused) window.
                 me.windowsList[0].close();
             }
         }
     }, true);
-    
+
     this.parent.appendChild(this.dragElement);
     this.dragElement.setAttribute("class", "windowDragElement");
     this.dragElement.style.position = "fixed";
@@ -15642,7 +15642,7 @@ function SubWindowGlobals(parent, windowsList)
 function SubWindowTab(label, options)
 {
     options = options || {};
-    
+
     var parent = undefined;
     var me = this;
     var stylePrefix = options.stylePrefix || "base";
@@ -15653,7 +15653,7 @@ function SubWindowTab(label, options)
     this.mainElementCommand.textContent = label;
     this.label = label;
     this.mainElement.appendChild(this.mainElementCommand);
-    
+
     if (!options.command)
     {
         this.menuElement = document.createElement("div");
@@ -15670,7 +15670,7 @@ function SubWindowTab(label, options)
                 me.menuElement.style.display = "none";
             }
         }, true);
-        
+
         this.onClick = function()
         {
             me.menuElement.style.display = "block";
@@ -15682,33 +15682,33 @@ function SubWindowTab(label, options)
     {
         this.onClick = options.command;
     }
-    
+
     this.setLabel = function(newLabel)
     {
         me.mainElementCommand.textContent = newLabel;
         me.label = newLabel;
     };
-    
+
     this.addCommand = function(label, action)
     {
         if (me.menuElement === undefined)
         {
             throw "Cannot add sub-commands to a tab with a pre-set action.";
         }
-        
+
         var subTab;
         subTab = new SubWindowTab(label, { command: function(event) { action(subTab, event); }, stylePrefix: stylePrefix, mainElement: "div" });
         subTab.addToElement(me.menuElement);
-        
+
         return subTab;
     };
-    
+
     this.addToElement = function(element)
     {
         element.appendChild(me.mainElement);
         parent = element;
     };
-    
+
     // Unhides the element.
     this.show = function()
     {
@@ -15717,7 +15717,7 @@ function SubWindowTab(label, options)
         me.mainElement.style.height = "auto";
         me.mainElement.setAttribute("title", "Visible item. " + me.label);
     };
-    
+
     this.hide = function()
     {
         me.mainElement.style.visibility = "hidden";
@@ -15725,7 +15725,7 @@ function SubWindowTab(label, options)
         me.mainElement.style.width = "0px";
         me.mainElement.setAttribute("title", "Hidden item. " + me.label);
     };
-    
+
     this.destroy = function()
     {
         if (me.menuElement)
@@ -15733,7 +15733,7 @@ function SubWindowTab(label, options)
             me.mainElement.removeChild(me.menuElement);
             delete me.menuElement;
         }
-        
+
         if (me.subTabs)
         {
             for (var i = 0; i < me.subTabs.length; i++)
@@ -15741,7 +15741,7 @@ function SubWindowTab(label, options)
                 me.subTabs[i].destroy();
             }
         }
-        
+
         if (parent !== undefined)
         {
             parent.removeChild(me.mainElement);
@@ -15750,10 +15750,10 @@ function SubWindowTab(label, options)
         {
             me.mainElement.outerHTML = "";
         }
-        
+
         delete me.mainElement;
     };
-    
+
     this.mainElementCommand.setAttribute("tabIndex", 2);
     this.mainElementCommand.addEventListener("click", me.onClick);
 }
@@ -15772,7 +15772,7 @@ function SubWindow(globals, options)
     //              size in pixels after load or to allow its size
     //              to be determined by its contents until resize.
     //  noResize    Disable window resizing.                        bool
-    // initialPosIsAbsolute Whether a with-page window should be given 
+    // initialPosIsAbsolute Whether a with-page window should be given
     //              initial position without consideration of scrollX/scrollY.
     // (x, y)       Initial position of the window.                (int, int)
     // unsnappable  Prohibits a "snapping" behavior from occurring  bool
@@ -15788,38 +15788,38 @@ function SubWindow(globals, options)
 
     options = options || {};
     var parent = globals.parent;
-    
+
     var me = this;
     var styleClassName = options.className || "windowContainerDefault";
-    
+
     // Get a string representing a component's style classes
     //for a given suffix.
     var getStyleClass = (suffix) =>
     {
         let result;
-        
+
         result = styleClassName + suffix + " " + "windowContainer" + suffix;
-        
+
         return result;
     };
-    
+
     this.zIndex = globals.minZIndex;
-    
+
     this.container = document.createElement("div");
     this.container.setAttribute("class", getStyleClass(""));
-    
+
     this.container.style.display = "flex";
     this.container.style.flexDirection = "column";
     this.container.style.position = options.withPage ? "absolute" : "fixed";
-    
+
     this.titleBar = document.createElement("div");
     this.titleBar.setAttribute("class", getStyleClass("TitleBar"));
     this.titleBar.setAttribute("tabIndex", 2);
-    
+
     this.titleBar.style.display = "flex";
     this.titleBar.style.flexDirection = "row";
     this.titleBar.setAttribute("title", "In-page window. Title bar.");
-    
+
     this.titleContent = document.createElement("div");
     this.titleContent.setAttribute("class", getStyleClass("TitleContent"));
     this.titleContent.style.flexGrow = "1";
@@ -15829,9 +15829,9 @@ function SubWindow(globals, options)
     this.unsnappable = options.unsnappable === undefined ? (options.noResize || false) : options.unsnappable;
     this.snapThreshold = options.snapThreshold !== undefined ? options.snapThreshold : 26; // How far to the left/right the user needs to drag the window for it to snap.
     this.snapped = false; // Whether the window is currently snapped.
-    
+
     this.draggable = false;
-    
+
     if (options.titleHTML)
     {
         this.titleContent.innerHTML = options.titleHTML;
@@ -15840,34 +15840,34 @@ function SubWindow(globals, options)
     {
         this.titleContent.textContent = options.title;
     }
-    
+
     this.tabZone = document.createElement("div");
     this.tabZone.setAttribute("class", getStyleClass("TabZone"));
     this.tabZone.style.display = "none";
     var hasTabs = false;
     var tabs = [];
-    
+
     var minWidth = options.minWidth;
     var minHeight = options.minHeight;
     var maxWidth = options.maxWidth;
     var maxHeight = options.maxHeight;
-    
+
     let getMaxWidth = () =>
     {
         return maxWidth || window.innerWidth || parent.clientWidth;
     };
-    
+
     let getMaxHeight = () =>
     {
         return maxHeight || window.innerHeight || parent.clientHeight;
     };
-    
+
     var onCloseListener = undefined;
-    
+
     this.content = document.createElement("div");
     this.content.setAttribute("class", getStyleClass("Content"));
     this.content.style.flexGrow = "1";
-    
+
     if (options.contentHTML)
     {
         this.content.innerHTML = options.contentHTML;
@@ -15876,60 +15876,60 @@ function SubWindow(globals, options)
     {
         this.content.textContent = options.content;
     }
-    
+
     // Given a specific maxWidth or maxHeight? Set it using CSS...
     if (options.maxWidth)
     {
         this.content.style.maxWidth = options.maxWidth + 'px';
     }
-    
+
     if (options.maxHeight)
     {
         this.content.style.maxHeight = options.maxHeight + 'px';
     }
-    
+
     this.titleBar.appendChild(me.titleContent);
     this.container.appendChild(this.titleBar);
     this.container.appendChild(this.tabZone);
     this.container.appendChild(this.content);
-    
+
     me.container.style.filter = "opacity(0%)";
     var transitionInOutFunction = function(progress)
     {
         me.container.style.filter = "opacity(" + Math.floor(progress * 100) + "%)";
     };
-    
+
     this.destroyTransition = new Transition(transitionInOutFunction,
         options.destroyTransitionDuration !== undefined ? options.destoryTransitionDuration : 300,
         function()
         {
             parent.removeChild(me.container);
-            
+
             for (var i = 0; i < tabs.length; i++)
             {
                 tabs[i].destroy();
             }
-            
+
             delete me.container;
             delete me.content;
             delete me.tabZone;
             delete me.titleBar;
             delete me.titleContent;
-            
+
             me.zIndex = -1;
             globals.removeDestroyed();
-            
+
             me.closed = true;
-            
+
             if (onCloseListener)
             {
                 onCloseListener();
             }
 
         });
-        
+
     this.destroyTransition.reverse();
-    
+
     var initialWidth, initialHeight, toWidth, toHeight;
     this.sizeTransition = new Transition(function(progress)
     {
@@ -15943,7 +15943,7 @@ function SubWindow(globals, options)
     {
         initialWidth = me.container.clientWidth;
         initialHeight = me.container.clientHeight;
-        
+
         if (endWidth !== undefined && endHeight !== undefined)
         {
             toWidth = endWidth;
@@ -15955,7 +15955,7 @@ function SubWindow(globals, options)
         {
             toWidth = minWidth;
         }
-        
+
         if (minHeight !== undefined && toHeight < minHeight)
         {
             toHeight = minHeight;
@@ -15971,12 +15971,12 @@ function SubWindow(globals, options)
             toHeight = getMaxHeight();
         }
     });
-    
+
     this.locationTransition = new Transition(function(progress)
     {
         me.container.style.left = (this.transitFromX + (this.transitToX - this.transitFromX) * progress) + "px";
         me.container.style.top = (this.transitFromY + (this.transitToY - this.transitFromY) * progress) + "px";
-        
+
         me.updateResizeCircleLocation(false); // DO NOT re-measure the size of the container.
     }, options.locationTransitDuration !== undefined ? options.locationTransitDuration : 100, function() // On end.
     {
@@ -15984,14 +15984,14 @@ function SubWindow(globals, options)
     }, function(toX, toY) // On before start.
     {
         var bbox = me.container.getBoundingClientRect();
-    
+
         // Note that "this" is the transition.
         this.transitToX = toX;
         this.transitToY = toY;
         this.transitFromX = bbox.left;
         this.transitFromY = bbox.top;
     });
-        
+
     this.createTransition = new Transition(transitionInOutFunction,
         options.createTransitionDuration !== undefined ? options.createTransitionDuration : 300,
         function()
@@ -16002,37 +16002,37 @@ function SubWindow(globals, options)
             {
                 me.createResizeCircle();
             }
-            
+
             me.scaleToParentWindow();
         });
-    
+
     this.addTab = function(tab)
     {
         tab.addToElement(me.tabZone);
         tabs.push(tab);
-        
+
         if (!me.hasTabs)
         {
             me.tabZone.style.display = "block";
-            
+
             me.hasTabs = true;
         }
     };
-    
+
     this.appendChild = function(child)
     {
         me.content.appendChild(child);
     };
-    
+
     this.removeChild = function(child)
     {
         me.content.removeChild(child);
     };
-    
+
     this.enableFlex = function(direction)
     {
         me.content.style.display = "flex";
-        
+
         if (direction)
         {
             me.content.style.flexDirection = direction;
@@ -16042,7 +16042,7 @@ function SubWindow(globals, options)
     this.getXY = function()
     {
         var bbox = me.container.getBoundingClientRect();
-        
+
         var left = bbox.left;
         var top = bbox.top;
 
@@ -16061,7 +16061,7 @@ function SubWindow(globals, options)
     {
         if (me.snapped)
         {
-            me.sizeTransition.start(widthPreSnap || minWidth, 
+            me.sizeTransition.start(widthPreSnap || minWidth,
                         heightPreSnap || minHeight).then(() =>
             {
                 me.snapped = false;
@@ -16119,59 +16119,59 @@ function SubWindow(globals, options)
 
         me.snap(divide, divide)
     };
-    
+
     // Adjust the scale of the sub-window to fit in the browser's window.
     this.scaleToParentWindow = function()
     {
         toWidth = me.container.clientWidth;
         toHeight = me.container.clientHeight;
         var runSizeTransition = false;
-        
+
         if (minWidth === undefined)
         {
             minWidth = me.container.clientWidth / 2;
         }
-        
+
         if (minHeight === undefined)
         {
             minHeight = me.container.clientHeight / 2;
         }
-        
+
         if (me.container.clientHeight < minHeight)
         {
             toHeight = minHeight;
-            
+
             runSizeTransition = true;
         }
-        
+
         if (me.container.clientWidth < minWidth)
         {
             toWidth = minWidth;
-            
+
             runSizeTransition = true;
         }
-        
+
         if (me.container.clientWidth > getMaxWidth())
         {
             toWidth = getMaxWidth();
-            
+
             runSizeTransition = true;
         }
-        
+
         if (me.container.clientHeight > getMaxHeight())
         {
             toHeight = getMaxHeight();
-            
+
             runSizeTransition = true;
         }
-        
+
         if (runSizeTransition)
         {
             me.sizeTransition.start();
         }
-        
+
         var bbox = me.container.getBoundingClientRect();
-        
+
         var left = bbox.left;
         var top = bbox.top;
 
@@ -16186,55 +16186,55 @@ function SubWindow(globals, options)
             moveToLeft = window.scrollX;
             moveToTop = window.scrollY;
         }
-        
+
         var windowWidth = window.innerWidth || globals.dragElement.clientWidth;
         var windowHeight =  window.innerHeight || globals.dragElement.clientHeight;
-        
+
         if (me.container.clientWidth + left > windowWidth)
         {
             me.container.style.left = moveToLeft + "px";
             me.container.style.width = windowWidth + "px";
         }
-        
+
         if (me.container.clientHeight + top > windowHeight)
         {
             me.container.style.top = moveToTop + "px";
             me.container.style.maxHeight = windowHeight + "px";
         }
-        
+
         me.updateResizeCircleLocation(true);
     };
-    
+
     this.createCloseButton = function()
     {
         me.closeButton = document.createElement("div");
         me.closeButton.innerHTML = "X";
-        
+
         me.closeButton.setAttribute("title", "Push button: Close");
         me.closeButton.setAttribute("tabIndex", 2);
-        
+
         me.closeButton.setAttribute("class", getStyleClass("CloseButton"));
-        
+
         me.titleBar.appendChild(me.closeButton);
-        
+
         me.closeButton.addEventListener("click", function(event)
         {
             event.preventDefault();
-            
+
             me.destroy();
         });
     };
-    
+
     this.createMinimizeMaximizeButton = function()
     {
         me.minMaxButton = document.createElement("div");
         me.minMaxButton.setAttribute("class", getStyleClass("MaximizeButton"));
-        
+
         me.minMaxButton.setAttribute("title", "Push button: Minimize or maximize.");
         me.minMaxButton.setAttribute("tabIndex", 2);
-        
+
         me.titleBar.appendChild(me.minMaxButton);
-        
+
         // Original state
         var originalResizeCircleDisplay = "block";
         var originalWidth = minWidth;
@@ -16242,60 +16242,60 @@ function SubWindow(globals, options)
         var originalX = 0;
         var originalY = 0;
         var originalMovable = true;
-        
+
         var storeOriginalState = function()
         {
             var bbox = me.content.getBoundingClientRect();
-                
+
             originalWidth = me.container.clientWidth;
             originalHeight = me.container.clientHeight;
-            
+
             originalWidth = Math.max(originalWidth, minWidth);
             originalHeight = Math.max(originalHeight, minHeight);
-            
+
             originalX = bbox.left;
             originalY = bbox.top;
-            
+
             originalMovable = me.getDraggable();
-            
+
             if (me.resizeZone)
-            {   
+            {
                 originalResizeCircleDisplay = me.resizeZone.style.display;
             }
         };
-        
+
         me.minMaxButton.addEventListener("click", function(event)
         {
             event.preventDefault();
-            
+
             // Set up state for size transition.
             initialWidth = me.container.clientWidth;
             initialHeight = me.container.clientHeight;
-            
+
             if (me.minMaxButton.getAttribute("class").indexOf("MinimizeB") === -1)
             {
                 // Change the button's looks!
                 me.minMaxButton.setAttribute("class", getStyleClass("MinimizeButton"));
-                
+
                 // Allow a return to the state of the window before maximization.
                 storeOriginalState();
-                
+
                 me.locationTransition.start(0, 0);
-                
+
                 me.sizeTransition.start(window.innerWidth || parent.clientWidth, window.innerHeight || parent.clientHeight);
-                
+
                 me.setDraggable(false);
-                
+
                 setDragReplacementAction((dx, dy) =>
                 {
                     if (dy > 0)
                     {
                         clearDragReplacementAction();
-                        
+
                         me.minMaxButton.click();
                     }
                 });
-                
+
                 if (me.resizeZone)
                 {
                     me.resizeZone.style.display = "none";
@@ -16304,16 +16304,16 @@ function SubWindow(globals, options)
             else
             {
                 me.sizeTransition.start(originalWidth, originalHeight);
-                
-                me.locationTransition.start(originalX, originalY).then(() => 
+
+                me.locationTransition.start(originalX, originalY).then(() =>
                 {
                     // Only change state related to minimization/maximization at the end.
                     me.minMaxButton.setAttribute("class", getStyleClass("MaximizeButton"));
                     me.setDraggable(originalMovable);
                 });
-                
+
                 clearDragReplacementAction();
-                
+
                 // Show the resize circle.
                 if (me.resizeZone)
                 {
@@ -16322,21 +16322,21 @@ function SubWindow(globals, options)
             }
         });
     };
-    
+
     this.updateResizeCircleLocation = function(measureSize)
     {
         // Do nothing if the circle is nonexistant.
     };
-    
+
     this.createResizeCircle = function()
     {
         var bbox = me.container.getBoundingClientRect();
-    
+
         me.resizeZone = document.createElement("div");
         me.resizeZone.setAttribute("class", getStyleClass("ResizeZone"));
         me.resizeZone.style.position = "absolute"; // Note: "fixed" has issues in WebKit.
         me.container.appendChild(me.resizeZone);
-        
+
         // If specified, set the width and height of the window
         //to concrete values.
         if (options.fixWindowSize)
@@ -16344,16 +16344,16 @@ function SubWindow(globals, options)
             me.container.style.width = me.container.clientWidth + "px";
             me.container.style.height = me.container.clientHeight + "px";
         }
-        
+
         var left = me.container.clientWidth - 5;
         var top = me.container.clientHeight - 5;
-        
+
         me.resizeZone.style.left = left + "px";
         me.resizeZone.style.top = top + "px";
-        
+
         var width = me.container.clientWidth;
         var height = me.container.clientHeight;
-        
+
         me.updateResizeCircleLocation = function(measureSize)
         {
             if (measureSize)
@@ -16361,45 +16361,45 @@ function SubWindow(globals, options)
                 width = me.container.clientWidth;
                 height = me.container.clientHeight;
             }
-        
+
             me.resizeZone.style.left = (width - me.resizeZone.clientWidth / 2) + "px";
             me.resizeZone.style.top = (height - me.resizeZone.clientHeight / 2) + "px";
         };
-        
+
         var draggableWrapper = new DraggableElement(me.resizeZone, globals.dragElement);
         draggableWrapper.onDrag = function(dx, dy, x, y)
         {
             me.toTheFore();
-        
+
             if ((width + dx > minWidth || dx > 0) && (width + dx < getMaxWidth() || dx < 0))
             {
                 width += dx;
             }
-            
+
             if ((height + dy > minHeight || dy > 0) && (height + dy < getMaxHeight() || dy < 0))
             {
                 height += dy;
             }
-            
+
             me.updateResizeCircleLocation(false);
-            
+
             me.container.style.width = (width) + "px";
             me.container.style.height = (height) + "px";
         };
-        
+
         draggableWrapper.onBeforeDrag = function()
         {
             me.toTheFore();
-            
+
             width = me.container.clientWidth;
             height = me.container.clientHeight;
         };
     };
-    
+
     this.toTheFore = function(calledFromTopToTheFore)
     {
         var maxZIndex = globals.getMaxZIndex(me);
-        
+
         if (maxZIndex >= me.zIndex)
         {
             me.zIndex = maxZIndex + 1;
@@ -16412,54 +16412,54 @@ function SubWindow(globals, options)
             }
         }
     };
-    
+
     this.getDraggable = function()
     {
         return me.draggable;
     };
-    
+
     this.setDraggable = function(draggable)
     {
         me.draggable = draggable;
     };
-    
+
     var dragReplacementAction;
-    
+
     var setDragReplacementAction = function(action)
     {
         dragReplacementAction = action;
     };
-    
+
     var clearDragReplacementAction = function()
     {
         dragReplacementAction = undefined;
     };
-    
+
     this.makeMovable = function()
     {
         var bbox = me.container.getBoundingClientRect();
         var left = bbox.left;
         var top = bbox.top;
-      
+
         // If using absolute positioning, position relative to the document.
         if (me.container.style.position === "absolute")
         {
             left += window.scrollX;
             top += window.scrollY;
         }
-          
+
         me.container.style.left = left + "px";
         me.container.style.top = top + "px";
-        
+
         me.draggable = true;
-        
+
         var draggableWrapper = new DraggableElement(me.titleContent, globals.dragElement,
             undefined, me.container.style.position === "absolute");
 
         draggableWrapper.onDrag = function(dx, dy, x, y)
         {
             me.toTheFore();
-            
+
             if (!me.getDraggable())
             {
                 // Replace the action, if requested.
@@ -16467,13 +16467,13 @@ function SubWindow(globals, options)
                 {
                     dragReplacementAction(dx, dy);
                 }
-            
+
                 return;
             }
-        
+
             left += dx;
             top += dy;
-            
+
             me.container.style.left = left + "px";
             me.container.style.top = top + "px";
 
@@ -16494,11 +16494,11 @@ function SubWindow(globals, options)
                 me.minMaxButton.click();
             }
         };
-        
+
         draggableWrapper.onBeforeDrag = function()
         {
             me.toTheFore();
-        
+
             bbox = me.container.getBoundingClientRect();
             left = bbox.left;
             top = bbox.top;
@@ -16511,7 +16511,7 @@ function SubWindow(globals, options)
             }
         };
     };
-    
+
     this.destroy = async function()
     {
         if (!me.closed)
@@ -16519,65 +16519,65 @@ function SubWindow(globals, options)
             await me.destroyTransition.start();
         }
     };
-    
+
     this.close = this.destroy;
-    
+
     this.setOnCloseListener = function(newOnCloseListener)
     {
         onCloseListener = newOnCloseListener;
     };
-    
+
     this.show = function()
     {
         parent.appendChild(me.container);
-        
+
         me.createTransition.start();
         globals.addWindow(me);
         me.toTheFore();
-        
+
         me.container.style.zIndex = me.zIndex;
-        
+
         globals.dragElement.style.zIndex = me.zIndex * 2;
-        
+
         if (!options.noFullScreenBox && !options.noResize)
         {
             me.createMinimizeMaximizeButton();
         }
-        
+
         if (!options.noCloseButton)
         {
             me.createCloseButton();
         }
-        
+
         if (!options.fixed)
         {
             me.makeMovable();
         }
-        
+
         // Select the container's title.
         if (me.container.style.position !== "absolute")
         {
             me.titleContent.focus();
         }
-        
+
         // Allow the window to scale, then
         //change its dimensions, if necessary.
         requestAnimationFrame(function()
-        { 
+        {
             var initialX = options.x !== undefined ? options.x : Math.max(0, window.innerWidth - me.container.clientWidth) / 2;
             var initialY = options.y !== undefined ? options.y : Math.max(5, window.innerHeight / 4 - me.container.clientHeight) / 2;
-            
+
             if (me.container.style.position === "absolute" && !options.initialPosIsAbsolute)
             {
                 initialX += window.scrollX;
                 initialY += window.scrollY;
             }
-            
+
             me.locationTransition.start(initialX, initialY);
             me.scaleToParentWindow();
         });
     };
-    
+
     this.container.addEventListener("click",
     function()
     {
@@ -16592,28 +16592,29 @@ SubWindowHelper.create = function(options)
     {
         SubWindowHelper.globals = new SubWindowGlobals(document.body, []);
     }
-    
+
     var newWindow = new SubWindow(SubWindowHelper.globals, options);
-    
+
     newWindow.show();
-    
+
     return newWindow;
 };
 
+/// Display an OK/CANCEL dialog. Returns async(true) on OK and async(false) on CANCEL.
 SubWindowHelper.confirm = function(title, message, okLabel, cancelLabel, htmlText, windowOptions)
 {
-    var dialog = SubWindowHelper.create(windowOptions 
-    || { title: title, 
-         content: "", 
-         noCloseButton: true, 
-         noResize: true, 
-         maxWidth: 400, 
-         minWidth: 400, 
-         x: (window.innerWidth / 2 - 200), 
+    var dialog = SubWindowHelper.create(windowOptions
+    || { title: title,
+         content: "",
+         noCloseButton: true,
+         noResize: true,
+         maxWidth: 400,
+         minWidth: 400,
+         x: (window.innerWidth / 2 - 200),
          minHeight: 120 });
-    
+
     var contentDiv = document.createElement("div");
-    
+
     if (!htmlText)
     {
         contentDiv.innerText = message;
@@ -16622,41 +16623,41 @@ SubWindowHelper.confirm = function(title, message, okLabel, cancelLabel, htmlTex
     {
         contentDiv.innerHTML = message;
     }
-    
+
     dialog.enableFlex("column");
     contentDiv.style.flexGrow = 2;
     contentDiv.style.overflowY = "auto";
-    
+
     // Add additional padding.
     contentDiv.style.paddingLeft = "4px";
-    
+
     var submitButtonOk = document.createElement("button");
     var submitButtonCancel = document.createElement("button");
-    
+
     submitButtonOk.innerHTML = okLabel || "Ok";
     submitButtonCancel.innerHTML = cancelLabel || "Cancel";
-    
+
     submitButtonOk.setAttribute("class", "dialogSubmitButton");
     submitButtonCancel.setAttribute("class", "dialogSubmitButton");
-    
+
     dialog.content.appendChild(contentDiv);
     dialog.content.appendChild(submitButtonOk);
     dialog.content.appendChild(submitButtonCancel);
-    
+
     return new Promise((resolve, reject) =>
     {
         const submit = (result) =>
         {
             dialog.close();
-            
+
             resolve(result);
         };
-    
+
         submitButtonOk.addEventListener("click", function()
         {
             submit(true);
         });
-        
+
         submitButtonCancel.addEventListener("click", function()
         {
             submit(false);
@@ -16666,18 +16667,18 @@ SubWindowHelper.confirm = function(title, message, okLabel, cancelLabel, htmlTex
 
 SubWindowHelper.alert = function(title, message, onClose, htmlText, windowOptions)
 {
-    var alertDialog = SubWindowHelper.create(windowOptions 
-    || { title: title, 
-         content: "", 
-         noCloseButton: true, 
-         noResize: true, 
-         maxWidth: 400, 
-         minWidth: 400, 
-         x: (window.innerWidth / 2 - 200), 
+    var alertDialog = SubWindowHelper.create(windowOptions
+    || { title: title,
+         content: "",
+         noCloseButton: true,
+         noResize: true,
+         maxWidth: 400,
+         minWidth: 400,
+         x: (window.innerWidth / 2 - 200),
          minHeight: 120 });
-    
+
     var contentDiv = document.createElement("div");
-    
+
     if (!htmlText)
     {
         contentDiv.innerText = message;
@@ -16686,90 +16687,91 @@ SubWindowHelper.alert = function(title, message, onClose, htmlText, windowOption
     {
         contentDiv.innerHTML = message;
     }
-    
+
     alertDialog.enableFlex("column");
     contentDiv.style.flexGrow = 2;
     contentDiv.style.overflowY = "auto";
-    
+
     // Add additional padding.
     contentDiv.style.paddingLeft = "4px";
-    
+
     var submitButton = document.createElement("button");
     submitButton.innerHTML = "Ok";
     submitButton.setAttribute("class", "alertSubmitButton");
-    
+
     alertDialog.content.appendChild(contentDiv);
     alertDialog.content.appendChild(submitButton);
-    
+
     return new Promise((resolve, reject) =>
     {
         submitButton.addEventListener("click", function()
         {
             alertDialog.close();
-            
+
             if (onClose !== undefined)
             {
                 onClose.call(this);
             }
-            
+
             resolve(this);
         });
     });
 };
 
-// Prompt a user for input.
-//This method takes a map of input placeholders/
-//labels to input types as "inputs". It returns a promise.
-//windowOptions is passed directly to SubWindowHelper.
-//promptOptions is a map with further options related to
-//the prompt. For example, promptOptions.initialContent
-//should map from labels to initial content.
-SubWindowHelper.prompt = function(title, message, inputs, 
+/// Prompt a user for input.
+/// This method takes a map of input placeholders/
+/// labels to input types as "inputs". It returns a promise.
+///
+/// windowOptions is passed directly to SubWindowHelper.
+/// promptOptions is a map with further options related to
+///   the prompt. For example, promptOptions.initialContent
+///   should map from labels to initial content.
+SubWindowHelper.prompt = function(title, message, inputs,
         windowOptions, promptOptions)
 {
     var promptDialog = SubWindowHelper.create
             (windowOptions
-             || { title: title, 
-                  content: "",  
-                  minWidth: 400, 
-                  x: (window.innerWidth / 2 - 200), 
+             || { title: title,
+                  content: "",
+                  minWidth: 400,
+                  x: (window.innerWidth / 2 - 200),
                   minHeight: 120 });
-                  
+
     promptDialog.enableFlex("column");
-    
+
     promptOptions = promptOptions || {};
     promptOptions.initialContent = promptOptions.initialContent || {};
-            
+
     var contentArea = document.createElement("div");
     var messageZone = document.createElement("div");
     var inputZone = document.createElement("div");
-    
+
     contentArea.appendChild(messageZone);
     contentArea.appendChild(inputZone);
-    
+
     promptDialog.appendChild(contentArea);
-    
+
     messageZone.innerText = message;
     messageZone.style.flexGrow = 0.8;
-    
+
     var addedInputs = [];
     var inputMap = {};
     var submit = () => {};
-    
+
     var handleInput = (label) =>
     {
         const inputIndex = addedInputs.length;
-        
+
         let newInputContainer = document.createElement("div");
-        
+
         newInputContainer.style.display = "flex";
         newInputContainer.style.flexDirection = "row";
-        
+
         let labelElement = HTMLHelper.addLabel(label, newInputContainer);
-        
+
         labelElement.style.paddingRight = "6px";
-        
-        let newInput = HTMLHelper.addInput(label, 
+
+        let newInput = HTMLHelper.addInput(label,
                 promptOptions.initialContent[label] || "",
                 inputs[label], newInputContainer, (value) => // On input.
         {
@@ -16777,8 +16779,8 @@ SubWindowHelper.prompt = function(title, message, inputs,
         }, (value) => // On Enter key.
         {
             inputMap[label] = value;
-            
-            if (inputIndex + 1 < addedInputs.length 
+
+            if (inputIndex + 1 < addedInputs.length
                     && inputs[label] !== "textarea")
             {
                 addedInputs[inputIndex + 1].focus();
@@ -16788,37 +16790,37 @@ SubWindowHelper.prompt = function(title, message, inputs,
                 submit();
             }
         });
-        
+
         newInput.style.flexGrow = 1;
-        
+
         inputZone.appendChild(newInputContainer);
-        
+
         return newInput;
     };
-    
+
     // For every given input...
     for (var label in inputs)
     {
         let input = handleInput(label);
-        
+
         inputMap[label] = HTMLHelper.getInputContent(input, inputs[label]);
         addedInputs.push(input);
     }
-    
+
     // Add a submit button.
     const submitButton = HTMLHelper.addButton("Submit", promptDialog, () =>
     {
         submit();
     });
-    
+
     submitButton.style.flexGrow = 0.4;
-    
+
     return new Promise((resolve, reject) =>
     {
         submit = () =>
         {
             promptDialog.close();
-            
+
             resolve(inputMap);
         };
     });
@@ -16830,35 +16832,35 @@ SubWindowHelper.makeProgressDialog = function(title)
 {
     // Default values.
     title = title || "Loading...";
-    
+
     // Make the window.
     let progressDialog = SubWindowHelper.create({ title: title, noCloseButton: true, noResize: true, maxWidth: 400, minWidth: 400, x: window.innerWidth / 2 - 200 });
-    
+
     let statusText = HTMLHelper.addLabel("...", progressDialog, "div");
     let progressBar = HTMLHelper.addProgressBar(0, progressDialog);
-    
+
     let update = function(progress, status)
     {
         progressBar.setProgress(progress);
         statusText.textContent = status;
     };
-    
+
     let close = function()
     {
         progressDialog.close();
     };
-    
+
     // Dictionaries cannot be
     //constructed in return statements.
-    let result =  
+    let result =
     {
         update: update,
-        
+
         close: close,
-        
+
         dialog: progressDialog
     };
-    
+
     return result;
 };
 
@@ -16892,14 +16894,14 @@ SubWindowHelper.setDisplayNavabar = function(displayNavBar)
 /**
  * Note: This probably shouldn't be packaged with LibJS... TODO
  * Consider removing it.
- * 
+ *
  *  A very simple content management system for uwappdev.github.io.
  * Although it is intended to be usable for changes to page content,
  * its primary goal is for management of tools that might be exposed
  * through the website. For example, displaying a survey without a commit
  * to Github.
  */
- 
+
 var PageDataHelper = {};
 var ContentManager = {};
 
@@ -16910,7 +16912,7 @@ ContentManager.PAGE_CHANGE_EVENT = "PAGE_CHANGED_CMS";
 ContentManager.UPDATE_PAGE_NOTIFY = "PAGE_SPECIFIC_CHANGED: ";
 ContentManager.PAGE_NOT_FOUND = `<h2>We couldn't find that page!</h2>
                                 <p>Please, check your spelling and try
-                                   again. If you believe that this 
+                                   again. If you believe that this
                                    message is in error, please
                                    contact a club administrator!</p>`;
 
@@ -16919,64 +16921,64 @@ ContentManager.PAGE_NOT_FOUND = `<h2>We couldn't find that page!</h2>
  * the page will not be added to the window's set of backstacked pages.
  * Use forceReload to reload a page (set to true).
  */
-ContentManager.displayPage = 
+ContentManager.displayPage =
 async function(name, doNotAddToHistory, forceReload)
 {
     // Get elements.
     let contentZone = document.querySelector("#mainData");
-    
+
     // Animate it!
     contentZone.parentElement.classList.add("shrinkGrow");
-    
+
     // Check: Are we already on the page?
     if (ContentManager.currentPage === name && !forceReload)
     {
         return; // No need to load it twice.
     }
-    
+
     await PageDataHelper.awaitLoad(); // Make sure we've loaded the page.
-    
+
     ContentManager.currentPage = name;
-    
+
     // Default values
     name = name || PageDataHelper.defaultPage;
-    
+
     // Set content.
     const pageContent = await PageDataHelper.getPageContent(name);
     contentZone.innerHTML = pageContent || ContentManager.PAGE_NOT_FOUND;
-    
+
     // Did the page request a background?
     JSHelper.Notifier.notify(BACKGROUND_CHANGE_EVENT, PageDataHelper.pageBackgrounds[name]);
-    
+
     // Cleanup animation
     setTimeout(() =>
     {
         contentZone.parentElement.classList.remove("shrinkGrow");
     }, ANIM_SHRINK_GROW_DURATION); // We assume it's safe after a ANIM_SHRINK_GROW_DURATION.
-    
+
     // Push to backstack.
     if (window.history && !doNotAddToHistory)
     {
         const state = { pageName: name },
               title = '',
               url   = ContentManager.URL_PAGE_SPECIFIER_START + name;
-              
+
         window.history.pushState(state, title, url);
     }
-    
+
     // If the pages list was reloaded, reload the page!
     while (true)
     {
-        let result = await JSHelper.Notifier.waitForAny(PageDataHelper.PAGES_RELOAD, 
+        let result = await JSHelper.Notifier.waitForAny(PageDataHelper.PAGES_RELOAD,
                 ContentManager.PAGE_CHANGE_EVENT, ContentManager.UPDATE_PAGE_NOTIFY + name);
-        
-        
+
+
         // Stop if a new page was loaded.
         if (result.event === ContentManager.PAGE_CHANGE_EVENT)
         {
             break;
         }
-        
+
         // Otherwise, reload the current page.
         ContentManager.displayPage(name, true, true); // Don't add it to history again, force reload.
     }
@@ -16988,7 +16990,7 @@ ContentManager.onBackstackTransit =
 function()
 {
     let requestedPage = ContentManager.getURLRequestedPage() || PageDataHelper.defaultPage;
-    
+
     ContentManager.displayPage(requestedPage,
                                true); // Don't push to back stack again.
 };
@@ -16996,75 +16998,75 @@ function()
 /**
  * Create buttons and connect them to actions.
  */
-ContentManager.initializePages = 
+ContentManager.initializePages =
 async function()
 {
     let addedButtons = [];
-    
+
     const createPageButton = (pageName, buttonZones, buttonPrecedence) =>
     {
         for (let i = 0; i < buttonZones.length; i++)
         {
-            let newButton = 
+            let newButton =
             HTMLHelper.addButton(pageName, buttonZones[i], () =>
             {
                 ContentManager.displayPage(pageName);
             });
-            
+
             newButton.style.order = buttonPrecedence || 0;
-            
+
             addedButtons.push(newButton);
         }
     };
-    
+
     // Clear all page buttons that have been created.
     const clearButtons = async () =>
     {
         while (addedButtons.length > 0)
         {
             let lastButton = addedButtons.pop();
-            
+
             // Shrink it.
             lastButton.style.filter = "opacity(100%)";
             lastButton.style.transition = "0.1s ease filter";
-            
+
             await JSHelper.nextAnimationFrame();
             lastButton.style.filter = "opacity(0%)";
-            
+
             await JSHelper.waitFor(100); // Wait 100ms.
             lastButton.remove(); // Delete it.
         }
     };
-    
+
     // Load page shortcuts.
     const loadButtons = () =>
     {
         let buttonAreas = document.querySelectorAll(".navigationButtons");
         let pageName;
-    
+
         // Create a button for every linked page.
         for (let pageName in PageDataHelper.linkedPages)
         {
             createPageButton(pageName, buttonAreas, PageDataHelper.linkedPages[pageName]);
         }
-        
+
         // Refresh buttons on edit.
         (async () =>
         {
             await JSHelper.Notifier.waitFor(PageDataHelper.PAGE_BUTTONS_CHANGED);
-            
+
             await clearButtons();
             loadButtons();
         })();
     };
 
     await PageDataHelper.awaitLoad();
-    
+
     loadButtons();
-    
+
     // Check the URL -- has a specific page been linked to?
     let requestedPage = ContentManager.getURLRequestedPage() || PageDataHelper.defaultPage;
-    
+
     // Display it.
     ContentManager.displayPage(requestedPage);
 };
@@ -17077,7 +17079,7 @@ ContentManager.getURLRequestedPage = () =>
 {
     const specifierIndex = location.href.indexOf(ContentManager.URL_PAGE_SPECIFIER_START);
     let requestedPage = undefined;
-    
+
     // Find the requested page.
     if (location.href && specifierIndex > location.href.lastIndexOf("/"))
     {
@@ -17087,7 +17089,7 @@ ContentManager.getURLRequestedPage = () =>
             specifierIndex + ContentManager.URL_PAGE_SPECIFIER_START.length
         );
     }
-    
+
     return requestedPage;
 };
 
@@ -17097,58 +17099,58 @@ ContentManager.getURLRequestedPage = () =>
 ContentManager.editPages = () =>
 {
     const pageEditWindow = SubWindowHelper.create(
-    { 
+    {
         title: "Manage Pages",
         className: "pageManagementWindow",
         minWidth: 256,
         minHeight: 100,
         fixWindowSize: true
     });
-    
+
     // Enable flex-boxing.
     pageEditWindow.enableFlex("row");
-    
+
     // Create both the left and right panes.
     const leftPane = document.createElement("div");
     const rightPane = document.createElement("div");
-    
+
     // Styling.
     leftPane.classList.add("pageListManage");
     rightPane.classList.add("pageEditManage");
-    
+
     // Add both to the window.
     pageEditWindow.appendChild(leftPane);
     pageEditWindow.appendChild(rightPane);
-    
+
     // Add content to panes.
     let searchInput, pageEditor;
-    
+
     const searchPanel = document.createElement("div");
     searchPanel.classList.add("searchContainer");
-    
+
     // Create the results display.
     const resultsDisplay = document.createElement("div");
     resultsDisplay.style.display = "flex";
     resultsDisplay.style.flexDirection = "column";
-    
+
     let reSearch = () => {};
     let currentPage = undefined;
-    
+
     // Manage search.
     const runSearch = async () =>
     {
         reSearch = async (queryText) =>
         {
             const results = await PageDataHelper.query(queryText);
-            
+
             const createListItem = (pageTitle) =>
             {
                 const listItem = document.createElement("div");
                 listItem.setAttribute("tabIndex", 2);
                 listItem.classList.add("pageListItemManage");
-                
+
                 listItem.innerText = pageTitle;
-                
+
                 listItem.addEventListener("click", () =>
                 {
                     // Select it.
@@ -17156,47 +17158,47 @@ ContentManager.editPages = () =>
                     {
                         currentPage.classList.remove("selected");
                     }
-                    
+
                     currentPage = listItem;
                     currentPage.classList.add("selected");
-                    
+
                     pageEditor.editPage(pageTitle);
                 });
-                
+
                 // If the item IS the currently-selected,
                 //note this.
                 if (pageTitle == pageEditor.getPageName())
                 {
                     listItem.classList.add("selected");
                 }
-                
+
                 // If the item is published, note that, too.
                 if (PageDataHelper.isPublished(pageTitle))
                 {
                     listItem.classList.add("published");
-                    
+
                     listItem.setAttribute("title", "Edit published " + pageTitle);
                 }
                 else
                 {
                     listItem.setAttribute("title", "Edit " + pageTitle);
                 }
-                
+
                 resultsDisplay.appendChild(listItem);
             };
-            
+
             // Clear the results.
             resultsDisplay.innerHTML = "";
-            
+
             for (var i = 0; i < results.length; i++)
             {
                 createListItem(results[i][0]);
             }
         };
-        
+
         await reSearch(searchInput.value);
     };
-    
+
     // Re-run last search on reload of pages.
     (async () =>
     {
@@ -17204,42 +17206,42 @@ ContentManager.editPages = () =>
         {
             // Wait for data refresh.
             await JSHelper.Notifier.waitFor(PageDataHelper.PAGES_RELOAD);
-            
+
             // Re-search.
             reSearch(searchInput.value);
         }
     })();
-    
+
     searchInput = HTMLHelper.addInput("Search Pages...", "", "text", searchPanel, undefined,
                                             runSearch);
     const searchButton = HTMLHelper.addButton(ContentManager.SEARCH_CHAR, searchPanel, runSearch);
     searchButton.setAttribute("title", "Submit search");
-    
+
     searchInput.setAttribute("tabIndex", 2);
-    
+
     // Add elements to panes.
     leftPane.appendChild(searchPanel);
     leftPane.appendChild(resultsDisplay);
-    
+
     // Spacer & commands below it.
     HTMLHelper.addSpacer(leftPane);
-    
+
     // Hide and show left pane buttons.
     let showPane = HTMLHelper.addButton("Show Pane", rightPane, () =>
     {
         leftPane.classList.remove("hidden");
         showPane.classList.add("hidden");
     });
-    
+
     showPane.classList.add("showPane");
     showPane.classList.add("hidden");
-    
+
     HTMLHelper.addButton("Hide Pane", leftPane, () =>
     {
         leftPane.classList.add("hidden");
         showPane.classList.remove("hidden");
     });
-    
+
     // Display a warning if the user isn't an admin.
     (async () =>
      {
@@ -17251,7 +17253,7 @@ ContentManager.editPages = () =>
 
     // Actually create the editor.
     pageEditor = PageEditor.create(rightPane);
-    
+
     pageEditWindow.setOnCloseListener(() =>
     {
         pageEditor.close();
@@ -17262,55 +17264,55 @@ ContentManager.editPages = () =>
  * Add any global content-management controls to the page.
  * For example, a sign-in button and survey management tools.
  */
-ContentManager.addCMSControls = 
+ContentManager.addCMSControls =
 async function(parent)
 {
     AuthHelper.insertAuthCommands(parent);
-    
+
     // Any windows opened by the CMS.
     let CMSWindows = [];
-    
+
     // Wrap all content-management utilities in
     //a div.
     let cmsWrapper = document.createElement("div");
-    
+
     cmsWrapper.style.display = "none";
     cmsWrapper.style.flexDirection = "column";
-    
+
     // Add buttons to the CMS.
     HTMLHelper.addButton("Page Editor", cmsWrapper, () =>
     {
         ContentManager.setBladeClosed(true);
-        
+
         ContentManager.editPages();
     });
-    
+
     // Show the content-management system.
     const showCMS = () =>
     {
         cmsWrapper.style.display = "flex";
     };
-    
+
     // Hide the content-management system.
     const hideCMS = () =>
     {
         cmsWrapper.style.display = "none";
     };
-    
+
     // Add the wrapper.
     parent.appendChild(cmsWrapper);
-    
+
     while (true)
     {
         if (!AuthHelper.isSignedIn())
         {
             await JSHelper.Notifier.waitFor(AuthHelper.SIGN_IN_EVENT);
         }
-        
+
         showCMS();
-        
+
         await JSHelper.Notifier.waitFor(AuthHelper.SIGN_OUT_EVENT);
-        
+
         hideCMS();
     }
 };
@@ -17318,22 +17320,22 @@ async function(parent)
 /**
  * Add a search bar that permits searches through page titles and content.
  */
-ContentManager.addPageSearch = 
+ContentManager.addPageSearch =
 function(parent)
 {
     let searchInput, searchResultsDiv; // Define elements here so they can be accessed in helper
                                     //functions.
-    
+
     const submitSearch = async () =>
     {
         const searchText = searchInput.value;
-        
+
         // Get search results!
         const results = await PageDataHelper.query(searchText);
-        
+
         // Clear the results list.
         searchResultsDiv.innerHTML = "";
-        
+
         const makePageLink = (pageTitle, relevancy) =>
         {
             HTMLHelper.addButton(pageTitle + " (+" + relevancy + ")", searchResultsDiv,
@@ -17341,31 +17343,31 @@ function(parent)
             {
                 ContentManager.toggleBlade();
                 ContentManager.displayPage(pageTitle);
-                
+
                 // Clear the search input.
                 searchInput.value = "";
             });
         };
-        
+
         // Note the number of results.
-        let foundText = HTMLHelper.addTextElement("Found " + results.length + " result" + 
+        let foundText = HTMLHelper.addTextElement("Found " + results.length + " result" +
                                                  (results.length == 1 ? '' : 's') + ".",
                                                   searchResultsDiv);
-        
+
         // Link to each.
         for (let i = 0; i < results.length; i++)
         {
             makePageLink(results[i][0], results[i][1]);
         }
-        
+
         // Focus the results.
         searchResultsDiv.setAttribute("tabindex", 2);
         searchResultsDiv.focus();
-        
+
         foundText.setAttribute("tabIndex", 2);
         foundText.focus();
     };
-    
+
     // Clear results on data refresh.
     (async () =>
     {
@@ -17373,22 +17375,22 @@ function(parent)
         {
             // Wait for data refresh.
             await JSHelper.Notifier.waitFor(PageDataHelper.PAGES_RELOAD);
-            
+
             // Clear results.
             searchResultsDiv.innerHTML = "...";
         }
     })();
 
-    searchResultsDiv = document.createElement("div"); 
+    searchResultsDiv = document.createElement("div");
     const searchDiv     = document.createElement("div");
-    searchInput  = HTMLHelper.addInput("Search Pages", "", "text", 
+    searchInput  = HTMLHelper.addInput("Search Pages", "", "text",
                                             searchDiv, undefined, submitSearch);
     const searchButton = HTMLHelper.addButton(ContentManager.SEARCH_CHAR, searchDiv, submitSearch);
     searchButton.setAttribute("title", "Submit search.");
-    
+
     searchDiv.classList.add("searchContainer");
     searchResultsDiv.classList.add("searchResults");
-    
+
     parent.appendChild(searchResultsDiv);
     parent.appendChild(searchDiv);
 };
@@ -17401,28 +17403,28 @@ ContentManager.setBladeClosed = (closed) => {};
  *  Connects the main menu's UI to actions, among other things, connecting its
  * logo element to a menu.
  */
-ContentManager.initializeMainMenu = 
+ContentManager.initializeMainMenu =
 async function()
 {
     let logoDisplay = document.querySelector(".navabar .logo");
     let menuBlade = document.querySelector("#mainBlade"); // Lets call them "blades" --
                                                           //I think that's what they're called.
-    
+
     const showHideBlade = () =>
     {
         menuBlade.classList.toggle("bladeClosed");
         menuBlade.classList.toggle("bladeOpen");
-        
+
         logoDisplay.classList.toggle("requestRotate");
     };
-    
+
     // Click listeners for showing/hiding.
     logoDisplay.addEventListener("click", showHideBlade);
     logoDisplay.setAttribute("tabindex", 1); // Allow focusing.
-    logoDisplay.setAttribute("title", "Push to access the main menu. Use as a button." + 
+    logoDisplay.setAttribute("title", "Push to access the main menu. Use as a button." +
                                        " After opening, items should be selectable with the " +
                                        " up and down arrow keys. ");
-    
+
     ContentManager.toggleBlade = showHideBlade;
     ContentManager.setBladeClosed = (closed) =>
     {
@@ -17439,12 +17441,12 @@ async function()
             logoDisplay.classList.add("requestRotate");
         }
     };
-    
+
     // Add a sign-in button and a search bar.
     ContentManager.addCMSControls(menuBlade);
     HTMLHelper.addSpacer         (menuBlade);
     ContentManager.addPageSearch (menuBlade);
-    
+
     while (true)
     {
         await JSHelper.Notifier.waitFor(AuthHelper.AUTH_MENU_USED);
@@ -17457,7 +17459,7 @@ async function()
 ContentManager.init = () =>
 {
     const me = ContentManager;
-    
+
     me.initializePages();
     me.initializeMainMenu();
 
@@ -17467,7 +17469,7 @@ ContentManager.init = () =>
 	async () =>
 	{
 			await JSHelper.Notifier.waitFor(JSHelper.GlobalEvents.PAGE_SETUP_COMPLETE, true);
-			
+
 			// Enable backstack navigation.
 			window.addEventListener("popstate", ContentManager.onBackstackTransit);
 	});
@@ -17485,13 +17487,13 @@ SerializationHelper.serializeObject = function(obj)
 {
     let objectType = typeof (obj);
     let result = {};
-    
+
     // No serialization necessary.
     if (obj == undefined || objectType === "string" || objectType === "number" || objectType === "boolean")
     {
         result = { object: obj, type: objectType };
     }
-    
+
     // Serialize using a declared method.
     else if (obj.serialize && (obj.deserialize || obj.unserialize) && obj.constructor)
     {
@@ -17510,20 +17512,20 @@ SerializationHelper.serializeObject = function(obj)
         {
             var result = {};
             var excludeType = "function";
-            
+
             var current;
             for (var key in object)
             {
                 current = object[key];
-                
-                // Don't include these keys (which shouldn't 
+
+                // Don't include these keys (which shouldn't
                 //be included in a for/in loop anyway).
                 if (key === "__proto__" || key === "prototype"
                     || key === "constructor")
                 {
                     continue;
                 }
-            
+
                 if (typeof (current) === "object")
                 {
                     result[key] = extractProperties(current);
@@ -17533,22 +17535,22 @@ SerializationHelper.serializeObject = function(obj)
                     result[key] = current;
                 }
             }
-            
+
             return result;
         };
-        
+
         var serializedVersion = extractProperties(obj);
-        
+
         let constructorName = (obj.constructor ? obj.constructor.name : null);
-        
-        result = 
-        { 
-            object: serializedVersion, 
-            constructorName: constructorName, 
-            type: "EXTRACTED_PROPERTIES" 
+
+        result =
+        {
+            object: serializedVersion,
+            constructorName: constructorName,
+            type: "EXTRACTED_PROPERTIES"
         };
     }
-    
+
     return result;
 };
 
@@ -17560,30 +17562,30 @@ SerializationHelper.serializeObject = function(obj)
 SerializationHelper.inflateObject = function(serializationData)
 {
     const serializationType = serializationData.type;
-        
+
     let result = {};
     let object = serializationData.object;
-    
+
     const constructorName = serializationData.constructorName;
-        
+
     // If the constructor is present...
     if (constructorName && (self || window)[constructorName] && typeof ((self || window)[constructorName]) === "function")
     {
         try
         {
-            result = new (self || window)[constructorName](); 
+            result = new (self || window)[constructorName]();
         }
         catch(e)
         {
             console.warn("Nonfatal. Unable to construct object from constructor " + constructorName + ". Error: " + e);
         }
     }
-    
+
     // If the properties were extracted,
     if (serializationType === "EXTRACTED_PROPERTIES")
     {
         let properties = object;
-        
+
         // Copy the set properties.
         for (var key in properties)
         {
@@ -17594,22 +17596,22 @@ SerializationHelper.inflateObject = function(serializationData)
     {
         console.assert(result.fromString != null); // Ensure the result can be
                                                    //created from a string.
-        
+
         result = result.fromString();
     }
     else if (serializationType === "OWN_SERIALIZED")
     {
         let deserialize = (obj.deserialize || obj.unserialize || obj.inflate);
-        
+
         console.assert(deserialize != null);
-        
+
         result = deserialize(result);
     }
     else
     {
         result = object; // TODO Different handling for different serialized types here.
     }
-    
+
     return result;
 };
 
@@ -17621,17 +17623,17 @@ SerializationHelper.inflateObject = function(serializationData)
 SerializationHelper.stringToSource = function(text)
 {
     let currentChar, result = "\"";
-    
+
     for (let i = 0; i < text.length; i++)
     {
         currentChar = text.charAt(i);
-        
+
         // Does it need escaping.
         if (currentChar == '"' || currentChar == "\'" || currentChar == "\\")
         {
             result += "\\";
         }
-        
+
         // Other characters that need escaping.
         if (currentChar == "\t")
         {
@@ -17650,7 +17652,7 @@ SerializationHelper.stringToSource = function(text)
             result += currentChar;
         }
     }
-    
+
     return result + "\"";
 };
 
@@ -17659,23 +17661,23 @@ SerializationHelper.stringifyFull = function(part, maxDepth, currentDepth)
 {
     var result = "{ ";
     var currentPart = "";
-    
+
     maxDepth = maxDepth || 25;
-    
+
     let depth = currentDepth || 0;
-    
+
     // Don't recurse more than 20 levels deep.
     if (depth > 20)
     {
         return result + "}";
     }
-    
+
     var resultParts = [];
-    
+
     for (var key in part)
     {
         currentPart = key + ": ";
-    
+
         if (typeof (part[key]) == "string")
         {
             currentPart += SerializationHelper.stringToSource(part[key]);
@@ -17692,12 +17694,12 @@ SerializationHelper.stringifyFull = function(part, maxDepth, currentDepth)
         {
             currentPart += part[key] + "";
         }
-        
+
         resultParts.push(currentPart);
     }
-    
+
     result = result + resultParts.join(", ") + " }";
-    
+
     return result;
 };
 
@@ -17735,27 +17737,27 @@ AuthHelper.PHOTO_STORE_LOCATION = "https://firebasestorage.googleapis.com/";
 AuthHelper.PROFILE_PHOTO_SIZE = 150;
 AuthHelper.PHOTO_NAME_PREFIX = "_"; // Prefix all photos with this when stored on the server.
 AuthHelper.PHOTO_DIR = "profile_photos";
-AuthHelper.PASSWORD_REQUIREMENTS = { minLength: 14, 
+AuthHelper.PASSWORD_REQUIREMENTS = { minLength: 14,
                                      specialCharCount: 3,
                                      numberCharCount: 4 };
 
 // Add buttons for managing authentication
 //to the element, parent. Actions are completed
 //in SubWindows.
-AuthHelper.insertAuthCommands = 
+AuthHelper.insertAuthCommands =
 async (parent) =>
 {
     let signedOutDisplay = document.createElement("div");
     let signedInDisplay = document.createElement("div");
-    
+
     let signInButton = HTMLHelper.addButton("Sign In", signedOutDisplay),
         signOutButton = HTMLHelper.addButton("Sign Out", signedInDisplay),
         accountSettings = HTMLHelper.addButton("Account", signedInDisplay),
         createAccount   = HTMLHelper.addButton("Create Account", signedOutDisplay);
-    
+
     signedOutDisplay.classList.add("authCommands");
     signedInDisplay.classList.add("authCommands");
-    
+
     // Shows commands relevant to the user's current sign-in
     //state.
     const showRelevantCommands = () =>
@@ -17771,50 +17773,50 @@ async (parent) =>
             signedOutDisplay.style.display = "none";
         }
     };
-    
+
     // Show only commands relevant to the user's current
     //sign-in state.
     showRelevantCommands();
-    
+
     // Add both displays
     parent.appendChild(signedOutDisplay);
     parent.appendChild(signedInDisplay);
-    
+
     // Handle events.
     signInButton.addEventListener   ("click", AuthHelper.signIn       );
     createAccount.addEventListener  ("click", AuthHelper.createAccount);
     signOutButton.addEventListener  ("click", AuthHelper.signOut      );
     accountSettings.addEventListener("click", AuthHelper.manageAccount);
-    
+
     // Show/hide relevant commands when the user authenticates/deauthenticates.
     while (true)
     {
         await JSHelper.Notifier.waitFor([AuthHelper.SIGN_IN_EVENT]);
         showRelevantCommands();
-        
+
         await JSHelper.Notifier.waitFor([AuthHelper.SIGN_OUT_EVENT]);
         showRelevantCommands();
     }
 };
 
 // Display a UI permitting the user to sign in or re-authenticate.
-AuthHelper.signIn = 
+AuthHelper.signIn =
 async () =>
 {
     JSHelper.Notifier.notify(AuthHelper.AUTH_MENU_USED);
-    
-    let response = 
-    await SubWindowHelper.prompt("Sign In", 
+
+    let response =
+    await SubWindowHelper.prompt("Sign In",
             "Please, enter your email/username and password.",
             { "Email": "text", "Password": "password" });
-    
+
     const email = response.Email;
-    
+
     // Sign the user in.
     try
     {
         const password = response.Password;
-        
+
         // Sign in the user.
         await window.firebase.auth().signInWithEmailAndPassword
                                         (email, password);
@@ -17823,10 +17825,10 @@ async () =>
     {
         const errorCode = error.code;
         const errorMessage = error.message;
-        
+
         // Inform the user of the error.
         const resetPassword = await SubWindowHelper.confirm("Error " + errorCode, errorMessage + " Send a password reset email?", "Yes", "No");
-        
+
         if (resetPassword)
         {
             try
@@ -17838,12 +17840,12 @@ async () =>
                 SubWindowHelper.alert(error.code, error.message);
             }
         }
-        
+
         return;
     }
-    
+
     await SubWindowHelper.alert("Signed in!", "You are signed in!");
-    
+
     return true;
 };
 
@@ -17852,11 +17854,11 @@ AuthHelper.signOut =
 async () =>
 {
     JSHelper.Notifier.notify(AuthHelper.AUTH_MENU_USED);
-    
+
     try
     {
         await firebase.auth().signOut();
-        
+
         if (AuthHelper.isSignedIn())
         {
             throw "You seem to still be signed in. Please contact a site administrator.";
@@ -17865,10 +17867,10 @@ async () =>
     catch(e)
     {
         SubWindowHelper.alert(e.code || "Error", e.message || e + "");
-        
+
         return;
     }
-    
+
     SubWindowHelper.alert("Signed out.", "You are now signed out.");
 };
 
@@ -17878,21 +17880,21 @@ AuthHelper.createAccount =
 async () =>
 {
     JSHelper.Notifier.notify(AuthHelper.AUTH_MENU_USED);
-    
+
     const accountCreateWindow = SubWindowHelper.create(
     {
         title: "Create an Account",
         className: "accountWindow"
     });
-    
+
     let contentWrapper = document.createElement("div");
-    
+
     contentWrapper.style.display = "flex";
     contentWrapper.style.flexDirection = "column";
     contentWrapper.style.padding = "8px";
-    
+
     let emailInput = HTMLHelper.addLabeledInput("Email Address", "", "text", contentWrapper);
-    
+
     let passwordInput = HTMLHelper.addPasswordConcocter(contentWrapper,
                                                        AuthHelper.PASSWORD_REQUIREMENTS);
     let disclaimer = HTMLHelper.addParagraph(`We reserve the
@@ -17901,35 +17903,35 @@ async () =>
                                               any data given to this app <span class = "dash"></span>
                                               including your name and email <span class = "dash"></span>
                                               with anyone.`, contentWrapper);
-    
+
     let submitButton = HTMLHelper.addButton("Sumbit", contentWrapper);
-    
+
     submitButton.style.transition = "0.4s ease all";
     submitButton.style.overflow = "hidden";
     submitButton.style.height = "0em";
-    
+
     passwordInput.onValid(() =>
     {
         submitButton.style.height = "1.5em";
     });
-    
+
     passwordInput.onInvalid(() =>
     {
         submitButton.style.height = "0em";
     });
-    
+
     // Minor styling.
     contentWrapper.style.maxWidth = "500px";
     contentWrapper.style.marginLeft = "auto";
     contentWrapper.style.marginRight = "auto";
-    
+
     // Create the account!
-    submitButton.addEventListener("click", 
+    submitButton.addEventListener("click",
     async () =>
     {
         const email    = emailInput.value;
         const password = passwordInput.get();
-        
+
         try
         {
             await firebase.auth().createUserWithEmailAndPassword(email, password);
@@ -17937,14 +17939,14 @@ async () =>
         catch(error)
         {
             SubWindowHelper.alert("Error: " + error.code, error.message);
-            
+
             return;
         }
-        
+
         accountCreateWindow.close();
-        
+
         let user = firebase.auth().currentUser;
-        
+
         if (user)
         {
             try
@@ -17954,7 +17956,7 @@ async () =>
             catch(e)
             {
                 SubWindowHelper.alert("Error: " + error.code, error.message);
-                
+
                 return;
             }
         }
@@ -17962,29 +17964,29 @@ async () =>
         {
             console.error("User == null.");
         }
-        
+
         await SubWindowHelper.alert("Success!", "Please, sign in and check your email.");
     });
-    
+
     accountCreateWindow.appendChild(contentWrapper);
 };
 
 AuthHelper.photoCtx = document.createElement("canvas").getContext("2d");
 
 // Get the SRC of the current user's profile picture.
-AuthHelper.getProfilePhotoSrc = 
+AuthHelper.getProfilePhotoSrc =
 async (requestedUserId) =>
 {
     let user = firebase.auth().currentUser;
     let userData = user;
-    
+
     if (requestedUserId !== user.id && requestedUserId !== undefined)
     {
         let database = await CloudHelper.awaitComponent(CloudHelper.Service.FIRESTORE);
-    
+
         let doc = database.collection("userData").doc(requestedUserId);
         let docData = await doc.get();
-        
+
         if (docData.exists)
         {
             userData = docData.data();
@@ -17999,52 +18001,52 @@ async (requestedUserId) =>
             };
         }
     }
-    
+
     // If a photoURL...
     if (userData.photoURL && userData.photoURL.startsWith(AuthHelper.PHOTO_STORE_LOCATION)
             && userData.photoURL.indexOf(" ") === -1)
     {
         return userData.photoURL;
     }
-    
+
     // Reset the canvas.
     let ctx = AuthHelper.photoCtx;
     ctx.canvas.width = AuthHelper.PROFILE_PHOTO_SIZE;
     ctx.canvas.height = AuthHelper.PROFILE_PHOTO_SIZE;
-    
+
     // Clear it!
     ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
-    
+
     // Draw a background.
     ctx.fillStyle = "gray";
     ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height);
-    
+
     // Draw text.
     ctx.fillStyle = "white";
     ctx.font = "12pt courier, sans";
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
-    
+
     let displayName = userData.displayName || "?";
     let nameWords = displayName.split(" ");
     let textToUse = "?";
-    
+
     if (nameWords.length > 0 && nameWords[0].length > 1)
     {
         textToUse = nameWords[0].charAt(0);
-        
+
         if (nameWords.length > 1 && nameWords[nameWords.length - 1].length > 0)
         {
             textToUse += nameWords[nameWords.length - 1].charAt(0);
         }
     }
-    
+
     let outputText = textToUse.toUpperCase();
-    
+
     ctx.fillText(outputText, ctx.canvas.width / 2, ctx.canvas.height / 2);
-    
+
     await JSHelper.nextAnimationFrame();
-    
+
     return ctx.canvas.toDataURL("img/png");
 };
 
@@ -18056,9 +18058,9 @@ AuthHelper.isAdmin = async () =>
     if (user)
     {
     	let database = await CloudHelper.awaitComponent(CloudHelper.Service.FIRESTORE);
-    
+
     	let doc = await database.collection("admins").doc(user.uid).get();
-    	
+
     	return doc.exists;
     }
 
@@ -18068,53 +18070,53 @@ AuthHelper.isAdmin = async () =>
 AuthHelper.getUid = async () =>
 {
     let user = firebase.auth().currentUser;
-    
+
     if (user)
     {
         return user.uid;
     }
-    
+
     return undefined;
 };
 
 // Display account-management UI.
 //Pre: The user is signed in.
-AuthHelper.manageAccount = 
+AuthHelper.manageAccount =
 async () =>
 {
     JSHelper.Notifier.notify(AuthHelper.AUTH_MENU_USED);
-    
+
     // Global declaration.
     let user,
         changedProperties = {},
         accountManageWindow,
         profileImg;
-    
+
     // Helper functions.
     // Prompt the user for a photograph to
     //be associated with their profile.
-    const selectPhoto = 
+    const selectPhoto =
     async (buttonElement) =>
     {
         let drawer = new Drawer2D(
         async (img, dataURL) =>
         {
-            
+
             // Upload the photo to FireStore.
             let storage = await CloudHelper.awaitComponent(CloudHelper.Service.FIREBASE_STORAGE);
             let storageRef = storage.ref();
-            
+
             let userImages = storageRef.child(AuthHelper.PHOTO_DIR);
-            
+
             let photoFilename = AuthHelper.PHOTO_NAME_PREFIX + user.uid + ".png";
             let photo = userImages.child(photoFilename);
-            
+
             let photoURL;
-            
+
             try
             {
                 await photo.putString(dataURL, "data_url");
-                
+
                 photoURL = await userImages.child(photoFilename).getDownloadURL();
                 await user.updateProfile({ photoURL: photoURL });
                 await AuthHelper.publishUserData();
@@ -18122,13 +18124,13 @@ async () =>
             catch(e)
             {
                 SubWindowHelper.alert("Error " + e.code, e.message);
-                
+
                 return;
             }
-            
+
             // Set the new photoURL.
             SubWindowHelper.alert("Done!", "Updated photograph!");
-            
+
             // CLose the window.
             accountManageWindow.close();
         },
@@ -18138,7 +18140,7 @@ async () =>
             imageHeight: AuthHelper.PROFILE_PHOTO_SIZE
         });
     };
-    
+
     // Handle a single option (e.g. add an input.
     //See below for usage. Data should be an array
     //of length two. The first element should be the
@@ -18148,7 +18150,7 @@ async () =>
     {
         const userProperty = data[0],
               action       = data[1];
-        
+
         if (typeof (action) === "function")
         {
             // Add a button.
@@ -18160,17 +18162,17 @@ async () =>
         else
         {
             // Add an input.
-            HTMLHelper.addLabeledInput(description, user[userProperty], action, parent, 
+            HTMLHelper.addLabeledInput(description, user[userProperty], action, parent,
             (value) =>
             {
                 changedProperties[userProperty] = value;
             });
         }
     };
-    
+
     // Define state.
     user = firebase.auth().currentUser;
-    
+
     // Request things of the user, if necessary.
     if (!user.emailVerified)
     {
@@ -18181,11 +18183,11 @@ async () =>
         catch(e)
         {
             await SubWindowHelper.alert("Error " + e.code, e.message);
-            
+
             return;
         }
-        
-        SubWindowHelper.alert("Email Verification", 
+
+        SubWindowHelper.alert("Email Verification",
         `
             <p>It looks like you haven't verified your email.
             We've sent you another verification request.
@@ -18196,53 +18198,53 @@ async () =>
             &ldquo;Secured Settings&rdquo;.
         `, undefined, true); // No onclose, but use html.
     }
-    
+
     const singleAuthManaged =
     {
         "Name": ["displayName", "text"],
         "Change Photo": ["photoURL",   selectPhoto]
     };
-    
+
     // Create the window.
     accountManageWindow = SubWindowHelper.create(
     {
         title: "Manage Account",
         className: "accountWindow"
     });
-    
+
     accountManageWindow.enableFlex("column");
-    
-    
+
+
     profileImg = new Image();
     profileImg.crossOrigin = "Anonymous";
     profileImg.setAttribute("title", "Profile Image");
-    
+
     let resetCircle = (waitTime) =>
     {
         // But do it after the display has had time to update.
         setTimeout(() => { accountManageWindow.updateResizeCircleLocation(true); }, waitTime || 200);
     };
-    
+
     // Reset the resize circle's position.
     // TODO Make this better!
     profileImg.addEventListener("load", resetCircle);
-    
+
     // Reset the circle two seconds after load.
     resetCircle(2000);
-    
+
     profileImg.src = await AuthHelper.getProfilePhotoSrc();
     profileImg.classList.add("profilePhoto");
-    
+
     // Add the user's profile photo.
     accountManageWindow.appendChild(profileImg);
-    
+
     for (let description in singleAuthManaged)
     {
         handleOption(description, singleAuthManaged[description], accountManageWindow);
     }
-    
+
     // Add the submit button.
-    HTMLHelper.addButton("Submit", accountManageWindow, 
+    HTMLHelper.addButton("Submit", accountManageWindow,
     async () =>
     {
         try
@@ -18253,13 +18255,13 @@ async () =>
         catch(error)
         {
             SubWindowHelper.alert(error.code, error.message);
-            
+
             return;
         }
-        
+
         accountManageWindow.close();
     });
-    
+
     // Add any double-auth managed state.
     HTMLHelper.addButton("Secured Settings", accountManageWindow,
     async () =>
@@ -18270,7 +18272,7 @@ async () =>
 };
 
 // Publish user-related data.
-AuthHelper.publishUserData = 
+AuthHelper.publishUserData =
 async () =>
 {
     const dataMismatch = (data, user) =>
@@ -18280,49 +18282,49 @@ async () =>
     };
 
     const user = firebase.auth().currentUser;
-    
+
     let database = await CloudHelper.awaitComponent(CloudHelper.Service.FIRESTORE);
-    
+
     let doc = database.collection("userData").doc(user.uid);
     let userDataPublic = await doc.get();
-    
+
     if (!userDataPublic.exists || dataMismatch(userDataPublic.data(), user))
     {
-        let docContent = 
+        let docContent =
         {
             uid: user.uid,
             displayName: user.displayName,
             profileURL: user.photoURL
         };
-        
+
         console.log(docContent);
-        
+
         doc.set(docContent);
     }
 };
 
 // Delete all data associated with a user.
-AuthHelper.deleteUserData = 
+AuthHelper.deleteUserData =
 async () =>
 {
     // Delete files (for now, just the profile photo).
     const user = firebase.auth().currentUser;
-    
+
     let storage = await CloudHelper.awaitComponent(CloudHelper.Service.FIREBASE_STORAGE);
     let storageRef = storage.ref();
-    
+
     let userImages = storageRef.child(AuthHelper.PHOTO_DIR);
-    
+
     let photoFilename = AuthHelper.PHOTO_NAME_PREFIX + user.uid + ".png";
     let photo = userImages.child(photoFilename);
-    
+
     await photo.delete();
-    
+
     // Delete user data.
     let database = await CloudHelper.awaitComponent(CloudHelper.Service.FIRESTORE);
-    
+
     let userContent = await database.collection("userData").doc(user.uid).get();
-    
+
     if (userContent.exists)
     {
         await database.collection("userData").doc(user.uid).delete();
@@ -18331,45 +18333,45 @@ async () =>
 
 // Manage secured settings -- open a GUI for
 //changing password/email/deleting account.
-AuthHelper.manageSecureSettings = 
+AuthHelper.manageSecureSettings =
 async () =>
 {
     // Re-authenticate the user.
     let signInResult = await AuthHelper.signIn();
-    
+
     if (!signInResult)
     {
         return false;
     }
-    
+
     // Create a window with secured settings.
     const accountManageWindow = SubWindowHelper.create(
     {
         title: "Manage Account (Secured Settings)",
         className: "accountWindowSecuredSettings"
     });
-    
+
     // Get the user.
     const user = firebase.auth().currentUser;
-    
+
     // Enable flexible-box
     accountManageWindow.enableFlex("column");
-    
+
     HTMLHelper.addButton("Change Email Address", accountManageWindow,
     async () =>
     {
         accountManageWindow.close();
-        
+
         let emails = {};
-        
+
         do
         {
-            emails = await SubWindowHelper.prompt("New Email Address", 
+            emails = await SubWindowHelper.prompt("New Email Address",
                 "Enter and confirm the new email address.",
                 { "Email": "text", "Confirm Email": "text" });
         }
         while (emails.Email !== emails["Confirm Email"]);
-        
+
         // Update it!
         try
         {
@@ -18381,34 +18383,34 @@ async () =>
             SubWindowHelper.alert(error.code, error.message);
             return;
         }
-        
+
         SubWindowHelper.alert("Email Address Changed", "Your email address has been changed. Please, verify the new address.");
     });
-    
+
     HTMLHelper.addButton("Change Password", accountManageWindow,
     async () =>
     {
         accountManageWindow.close();
-        
+
         let submitButton;
-        
+
         const passwordChangeWindow = SubWindowHelper.create(
         {
             title: "Change Password",
             className: "accountWindow"
         });
-        
-        
+
+
         HTMLHelper.addLabel("Enter a new password: ", passwordChangeWindow);
-        
+
         const passwordCreator = HTMLHelper.addPasswordConcocter(passwordChangeWindow,
                                                        AuthHelper.PASSWORD_REQUIREMENTS);
-        
-        submitButton = HTMLHelper.addButton("Submit", passwordChangeWindow, 
+
+        submitButton = HTMLHelper.addButton("Submit", passwordChangeWindow,
         async () =>
         {
             const password = passwordCreator.get();
-            
+
             try
             {
                 await user.updatePassword(password);
@@ -18416,49 +18418,49 @@ async () =>
             catch(error)
             {
                 SubWindowHelper.alert(error.message, error.code);
-                
+
                 return;
             }
-            
+
             SubWindowHelper.alert("Updated password!", "Your password has been updated.");
-            
+
             passwordChangeWindow.close();
         });
-        
+
         // TODO This looks like duplicated code...
         //      How might this be fixed?
         submitButton.style.height = "0em";
         submitButton.style.transition = "0.4s ease all";
         submitButton.style.overflow = "hidden";
-        
+
         passwordCreator.onValid(() =>
         {
             submitButton.style.height = "1.5em";
         });
-        
+
         passwordCreator.onInvalid(() =>
         {
             submitButton.style.height = "0em";
         });
     });
-    
+
     HTMLHelper.addButton("Delete Account", accountManageWindow,
     async () =>
     {
         const doDelete = await SubWindowHelper.confirm("Confirm Deletion", "Really delete account?", "Yes", "No");
-        
+
         if (!doDelete)
         {
             return;
         }
-        
+
         accountManageWindow.close();
-        
+
         try
         {
             await AuthHelper.deleteUserData();
             await user.delete();
-            
+
             await SubWindowHelper.alert("Deletion", "Account deleted.");
         }
         catch(e)
@@ -18478,7 +18480,7 @@ requestAnimationFrame(
 async () =>
 {
     await JSHelper.Notifier.waitFor([JSHelper.GlobalEvents.PAGE_SETUP_COMPLETE], true);
-    
+
     // Only attempt to manage authentication if firebase is defined.
     if (window.firebase)
     {
@@ -18492,7 +18494,7 @@ async () =>
             {
                 JSHelper.Notifier.notify(AuthHelper.SIGN_OUT_EVENT);
             }
-            
+
             // Store the user.
             AuthHelper.user = user;
         });
@@ -18675,7 +18677,7 @@ JSHelper.vec3ToRGBString = (inputVector,
 };
 
 // Wait delay seconds...
-JSHelper.waitFor = (delay) =>
+JSHelper.waitForSeconds = (delay) =>
 {
     let doResolve = false;
     let resolveFn = () => { doResolve = true; };
@@ -19319,7 +19321,7 @@ ArrayHelper.equals = function(a, b)
     {
         return false;
     }
-    
+
     for (var i = 0; i < a.length; i++)
     {
         if (a[i] !== b[i])
@@ -19327,19 +19329,19 @@ ArrayHelper.equals = function(a, b)
             return false;
         }
     }
-    
+
     return true;
 };
 
 ArrayHelper.softCopy = function(array)
 {
     var result = [];
-    
+
     for (var i = 0; i < array.length; i++)
     {
         result.push(array[i]);
     }
-    
+
     return result;
 };
 
@@ -19367,7 +19369,7 @@ StorageHelper.put = (key, data, expiration) =>
 {
     expiration = expiration || ((new Date()).getTime() + 1000 * 60 * 60 * 24
                                            * StorageHelper.DEFAULT_STORE_DURATION); // Default
-                                                                                    // storage 
+                                                                                    // storage
                                                                                     //duration.
     let nowTime = (new Date()).getTime();
 
@@ -19377,11 +19379,11 @@ StorageHelper.put = (key, data, expiration) =>
         console.warn("Data for " + key + " will expire immediately!");
         return;
     }
-    
+
     let saveData = StorageHelper.STORAGE_PREFIX + nowTime + "/" + expiration + "?" + SerializationHelper.stringSerialize(data);
-    
+
     console.warn(saveData);
-    
+
     if (window.localStorage)
     {
         window.localStorage.setItem(key, saveData);
@@ -19400,7 +19402,7 @@ StorageHelper.get = (key) =>
     if (window.localStorage)
     {
         const itemDetails = StorageHelper.getItemDetails(key);
-        
+
         try
         {
             // Eval is evil, but we know WE set the localStorage cookies.
@@ -19413,16 +19415,16 @@ StorageHelper.get = (key) =>
             console.warn("Content of " + key + " has been stored in");
             console.warn("window.debugStr for debugging purposes.");
             console.warn("The invalid entry will now be deleted.");
-            
+
             window.debugStr = itemDetails.content;
-            
+
             // Delete it.
             StorageHelper.delete(key);
-            
+
             return null;
         }
     }
-    
+
     return undefined;
 };
 
@@ -19435,10 +19437,10 @@ StorageHelper.delete = (key) =>
         && StorageHelper.has(key))
     {
         window.localStorage.removeItem(key);
-        
+
         return true;
     }
-    
+
     return false;
 };
 
@@ -19451,52 +19453,52 @@ StorageHelper.has = (key) =>
     {
         return window.localStorage.getItem(key) !== null;
     }
-    
+
     return false;
 };
 
 // Get the details of an item in the format:
-// { created: time in ms, expires: time in ms, 
+// { created: time in ms, expires: time in ms,
 //   content: text, malformed: boolean }.
 StorageHelper.getItemDetails = (itemKey) =>
 {
     if (window.localStorage)
     {
         const fullData = window.localStorage.getItem(itemKey) || "";
-                
+
         const recordTimeEndIndex = fullData.indexOf("/"),
               expireTimeEndIndex = fullData.indexOf("?");
-        
-        
+
+
         if (!fullData.startsWith(StorageHelper.STORAGE_PREFIX)
             || recordTimeEndIndex == -1 || expireTimeEndIndex < recordTimeEndIndex)
         {
             return { malformed: true };
         }
-        
+
         const createTime = MathHelper.forceParseInt(
                             fullData.substring(StorageHelper.STORAGE_PREFIX.length,
                                               recordTimeEndIndex)),
               expireTime = MathHelper.forceParseInt(
                             fullData.substring(recordTimeEndIndex + 1, expireTimeEndIndex)),
               content    =  fullData.substring(expireTimeEndIndex + 1);
-       
-        
-       
-        const result = 
+
+
+
+        const result =
         {
             created: createTime,
             expires: expireTime,
             content: content,
             malformed: false
         };
-        
+
         return result;
     }
     else
     {
         const result = {};
-        
+
         return result;
     }
 };
@@ -19511,22 +19513,22 @@ StorageHelper.removeExpired = () =>
         const getExpTime = (itemKey) =>
         {
             const expTime = StorageHelper.getItemDetails(itemKey).expires;
-                                
+
             if (expTime !== NaN && expTime !== undefined)
             {
-                console.log(itemKey + " expires in " + Math.floor((expTime - (new Date()).getTime()) / 60 / 60 / 24 / 1000) 
+                console.log(itemKey + " expires in " + Math.floor((expTime - (new Date()).getTime()) / 60 / 60 / 24 / 1000)
                         + " day(s).");
             }
-                    
-            return expTime;                                      
+
+            return expTime;
         };
-    
+
         let expTime;
-    
+
         for (let key in window.localStorage)
         {
             expTime = getExpTime(key);
-            
+
             if (expTime !== undefined && expTime !== NaN && expTime < nowTime)
             {
                 window.localStorage.removeItem(key);
@@ -20456,7 +20458,7 @@ const styleSheets = `
     box-shadow: 2px 1px 24px rgba(100, 100, 100, 0.6);
     position: fixed;
     background-color: rgba(240, 240, 240, 0.9);
-    
+
     border-top-left-radius: 7px;
 }
 
@@ -20470,19 +20472,19 @@ const styleSheets = `
 {
     background-image: radial-gradient(rgba(255, 255, 255, 0.8), rgba(200, 200, 200, 0.9));
     background-size: 4px 3px;
-    
+
     font: 12pt Sans;
     text-shadow: 0px 0px 3px rgba(0, 0, 0, 1);
     color: black;
-    
+
     padding: 4px;
     border-bottom-left-radius: 0px;
     border-top-left-radius: 7px;
-    
+
     user-select: none !important;
-    
+
     cursor: initial;
-    
+
     box-shadow: 0px 2px 3px rgba(0, 0, 0, 0.1);
 }
 
@@ -20490,7 +20492,7 @@ const styleSheets = `
 {
     background-color: #aaaaaa;
     font: 12pt Sans;
-    
+
     box-shadow: 0px 2px 1px rgba(0, 0, 0, 0.4);
 }
 
@@ -20511,19 +20513,19 @@ const styleSheets = `
 {
     background-color: #aaaaaa;
     box-shadow: 0px 4px 4px rgba(0, 0, 0, 0.4);
-    
+
     animation: fadeIn 0.2s ease;
 }
 
 .windowContainerCloseButton
 {
     transition: 0.3s ease all;
-    
+
     text-shadow: 0px 0px 3px rgba(255, 0, 0, 0.95);
     color: #bbbbbb;
-    
+
     filter: blur(1px);
-    
+
     animation: fadeIn 0.5s ease;
 }
 
@@ -20538,16 +20540,16 @@ const styleSheets = `
     padding-left: 7px;
     margin-right: 6px;
     margin-left: 4px;
-    
+
     border-color: #dddddd;
     border-style: ridge;
-    
+
     cursor: pointer;
-    
+
     filter: blur(1px);
-    
+
     transform: rotate(0deg);
-    
+
     transition: 1s ease all;
 }
 
@@ -20581,14 +20583,14 @@ const styleSheets = `
 .windowContainerResizeZone
 {
     animation: fadeIn 0.5s ease;
-    
+
     position: fixed;
     border: 1px solid gray;
-    
+
     box-shadow: 0px 0px 3px rgba(0, 0, 0, 0.4);
-    
+
     padding: 7px;
-    
+
     border-radius: 100%;
 }
 
@@ -20597,16 +20599,16 @@ const styleSheets = `
 {
     padding: 0px;
     display: block;
-    
+
     border-radius: 4px;
     box-shadow: inset 2px -2px 3px rgba(0, 0, 0, 0.9);
-    
+
     background-color: rgba(100, 100, 100, 0.4);
     background-image: radial-gradient(rgba(100, 100, 100, 0.3), rgba(150, 10, 150, 0.4), rgba(150, 10, 150, 0.6));
     background-size: 3px 3px;
-    
+
     overflow-y: hidden;
-    
+
     height: 25px;
 }
 
@@ -20614,13 +20616,13 @@ const styleSheets = `
 {
     margin: 0px;
     padding: 0px;
-    
+
     height: 25px;
     width: 0px;
-    
+
     background-color: rgba(255, 255, 0, 0.8);
     background-image: linear-gradient(10deg, rgba(100, 255, 255, 0.8), rgba(0, 255, 200, 0.5), rgba(100, 255, 255, 0.8));
-    
+
     transition: 0.5s ease width;
 }
 
@@ -20628,7 +20630,7 @@ const styleSheets = `
 {
     border: 1px solid gray;
     border-top-left-radius: 5px;
-    
+
     padding: 6px;
     margin: 3px;
 }
@@ -20662,29 +20664,29 @@ const styleSheets = `
     border-top: 1px solid white;
     border-left: 1px solid white;
     border-right: 1px solid white;
-    
+
     box-shadow: 1px 2px 2px rgba(0, 255, 0, 0.7);
-    
+
     padding: 4px;
-    
+
     margin-right: 5px;
-    
+
     border-top-left-radius: 4px;
-    
+
     color: white;
-    
+
     background-color: rgba(0, 0, 0, 0.6);
-    
+
     font: 12pt Calibri, Monospace, Sans;
-    
+
     flex-grow: 1;
-    
+
     transition: 0.5s ease all;
-    
+
     cursor: pointer;
-    
+
     transform: rotate(0deg);
-    
+
     transition: 0.5s ease all;
 }
 
@@ -20702,13 +20704,13 @@ const styleSheets = `
 .tabContentShown
 {
     animation: 0.5s ease fadeIn;
-    
+
     flex-grow: 1;
 }
 
 /* TODO This is UGLY. Fix it. */
 span.tabContentShown
-{   
+{
     display: flex;
 }
 
@@ -20727,7 +20729,7 @@ span.tabContentShown > input, span.tabContentShown > button
 {
     animation: 0.5s ease transitTabLabelUnselect;
     background-color: rgba(0, 0, 0, 0.6);
-    
+
     font-size: 9pt;
 }
 
@@ -20735,11 +20737,11 @@ span.tabContentShown > input, span.tabContentShown > button
 {
     animation: 0.5s ease transitTabLabelSelect;
     background-color: rgba(100, 20, 200, 0.8);
-    
+
     box-shadow: 1px 2px 3px rgba(255, 255, 255, 0.9);
-    
+
     font-size: 12pt;
-    
+
     cursor: cross;
 }
 
@@ -20802,27 +20804,27 @@ input, button
 {
     background-color: rgba(180, 200, 200, 0.6);
     background-image: linear-gradient(16deg, rgba(180, 200, 205, 0.7), rgba(255, 255, 255, 0.4), rgba(200, 200, 255, 0.7));
-    
+
     border: 1px solid #667766;
     border-radius: 6px;
-    
+
     box-shadow: 1px 2px 3px rgba(0, 0, 0, 0.4);
-    
+
     min-width: 1px;
-    
+
     font: 12pt Serif;
     color: black;
     text-shadow: 0px 0px 2px rgba(0, 0, 0, 0.7);
-    
+
     transform: matrix(1, 0, 0, 1, 0, 0);
-    
+
     transition: 0.5s ease all;
 }
 
 input:hover, button:hover, input:active, button:active
 {
     transform: matrix(1.0, 0, 0.05, 0.9, 0, 0);
-    
+
     background-color: rgba(155, 100, 200, 0.7);
 }
 
@@ -20853,7 +20855,7 @@ requestAnimationFrame(function()
     styleSheetElement.outerHTML = "<style>" + styleSheets + "</style>";
 });
 
-const ABOUT_PROGRAM = 
+const ABOUT_PROGRAM =
 `
     This program is licensed to tou under version two
     of the Mozilla Public License. A copy of this license
@@ -20863,7 +20865,7 @@ const ABOUT_PROGRAM =
 const DISCLAIMER =
 `
     ~~~THIS PROGRAM HAS SLOPPY CODE~~~
-        While viewing this page's 
+        While viewing this page's
     JavaScript, please note that much
     of it was written using an older
     version of the keyboard included in
@@ -20877,7 +20879,7 @@ const DISCLAIMER =
     source of websites/web-apps take
     you far.
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    
+
     ~~~~~THIS PROGRAM IS STILL~~~~~~
     ~~~~~UNDER DEVELOPMENT    ~~~~~~
         There will be bugs! Work may
@@ -20886,7 +20888,7 @@ const DISCLAIMER =
     of this program for ANYTHING
     important until it has reached
     a stable state.
-    
+
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 `;
 
@@ -20898,7 +20900,7 @@ WebAssembly.Module; // Might fix a bug in Safari.
 
 /// @export DEFAULT_SPELLCHECK_WORDS
 
-// Citation: Wikipedia contributors, "Quicksort," Wikipedia, The Free Encyclopedia, https://en.wikipedia.org/w/index.php?title=Quicksort&oldid=969250830 (accessed July 24, 2020). 
+// Citation: Wikipedia contributors, "Quicksort," Wikipedia, The Free Encyclopedia, https://en.wikipedia.org/w/index.php?title=Quicksort&oldid=969250830 (accessed July 24, 2020).
 // Additional words may have been added. Others may have been removed.
 var DEFAULT_SPELLCHECK_WORDS = // Words taken from https://en.wikipedia.org/wiki/Quicksort
 `a
@@ -22466,7 +22468,7 @@ zurich`;
     listener is placed that shows the dragElement, and calls
     onDrag(delta x, delta y, client x, client y) while the
     content is dragged.
-    The trackWindowScroll parameter is a boolean. If true, 
+    The trackWindowScroll parameter is a boolean. If true,
     dx includes changes in window.scrollX and dy includes
     changes in window.scrollY.
 */
@@ -22476,16 +22478,16 @@ function DraggableElement(content, dragElement, onDrag, trackWindowScroll)
     var lastX, lastY, lastClientX, lastClientY;
     this.onDrag = onDrag;
     this.onBeforeDrag = function() {};
-    
+
     var me = this;
 
     var eventToPosition = (event) =>
     {
         let x, y;
-        
+
         // If we don't have clientX, clientY (we don't know
         // the type of the given event), re-use the previous.
-        // It might be that the mouse has not moved but the 
+        // It might be that the mouse has not moved but the
         // viewport has.
         if (event.clientX !== undefined && event.clientY !== undefined)
         {
@@ -22509,11 +22511,11 @@ function DraggableElement(content, dragElement, onDrag, trackWindowScroll)
 
         return { x: x, y: y };
     };
-    
+
     var eventStart = function(event)
     {
         event.preventDefault();
-    
+
         pointerDown = true;
         dragElement.style.display = "block";
 
@@ -22521,34 +22523,34 @@ function DraggableElement(content, dragElement, onDrag, trackWindowScroll)
 
         lastX = position.x;
         lastY = position.y;
-        
+
         me.onBeforeDrag(lastX, lastY);
     };
-    
+
     var eventMove = function(event)
     {
         if (pointerDown)
         {
             event.preventDefault();
-            
+
             const position = eventToPosition(event);
             var x = position.x;
             var y = position.y;
-        
+
             var dx = x - lastX;
             var dy = y - lastY;
-            
+
             me.onDrag(dx, dy, x, y);
-            
+
             lastX = x;
             lastY = y;
         }
     };
-    
+
     var eventEnd = function(event)
     {
         event.preventDefault();
-    
+
         pointerDown = false;
         dragElement.style.display = "none";
     };
@@ -22560,35 +22562,35 @@ function DraggableElement(content, dragElement, onDrag, trackWindowScroll)
     JSHelper.Events.registerPointerEvent("down", content, function(e)
     {
         eventStart(e);
-        
+
         return true;
     });
-    
+
     JSHelper.Events.registerPointerEvent("move", dragElement, function(e)
     {
         eventMove(e);
-        
+
         return true;
     });
-    
+
     JSHelper.Events.registerPointerEvent("stop", dragElement, function(e)
     {
         eventEnd(e);
-        
+
         return true;
     });
 
     JSHelper.Events.registerPointerEvent("move", content, function(e)
     {
         eventMove(e);
-        
+
         return true;
     });
-    
+
     JSHelper.Events.registerPointerEvent("up", content, function(e)
     {
         eventEnd(e);
-        
+
         return true;
     });
 
