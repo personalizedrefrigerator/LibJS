@@ -1,5 +1,5 @@
 # LibJS
-A collection of JavaScript libraries. See (this set of demos)[https://github.com/personalizedrefrigerator/project] for an example of its capabilities (demo uses an old version of the library set).
+A collection of JavaScript libraries. See [this set of demos](https://github.com/personalizedrefrigerator/project) for an example of its capabilities (demo uses an old version of the library set).
 
 # Conversion into a single-file script.
 ```bash
