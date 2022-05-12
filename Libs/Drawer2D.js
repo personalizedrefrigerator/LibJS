@@ -7,11 +7,12 @@
 // A simple 2D drawing program, created with the goal of
 //allowing users to create and edit textures.
 
+
 function Drawer2D(onSubmit, options)
 {
     //options:
     //  initialHeight,
-    //  initialWidth -- The initial size of the window and image, 
+    //  initialWidth -- The initial size of the window and image,
     //                  if imageWidth,imageHeight/image not given
     //  initialImage -- An initial entity with width and ehight properties
     //                  that can be drawn onto a Context2D via context.drawImage.
@@ -20,62 +21,64 @@ function Drawer2D(onSubmit, options)
     //                  as the dimensions of the new, blank image should no initialImage
     //                  be given.
     //  windowOptions -- Additional options to be given to the SubWindowHelper on window creation.
+    //  useUndoRedoWindow -- true if the undo/redo stack visualizations should be shown.
     //  background   -- CSS background property value for the drawing view. E.g. radial-gradient(red, white).
-    options = options || {};    
-    
+    options = options || {};
+
     var me = this;
-    
+
     let undoStack = [];
     let redoStack = [];
-    
+
     const INITIAL_WIDTH = options.initialWidth || 500;
     const INITIAL_HEIGHT = options.initialHeight || 500;
     const MAX_UNDO = 30;
-    
+
     const INITIAL_VIEW_X = 0;
     const INITIAL_VIEW_Y = 0;
-    
+
     // To add something to the undo stack,
     //at least two changes should have occurred
     //and five seconds passed.
     const UNDO_TIME_DELTA = 2000;
     const UNDO_MIN_ACTIONS = 2;
-    
+
     let lastUndoTime = (new Date()).getTime();
     let actionsSinceUndo = 0;
 
     // Join any provided window options with a set of defaults.
-    const windowOptions = JSHelper.mapUnite(options.windowOptions || {}, 
+    const windowOptions = JSHelper.mapUnite(options.windowOptions || {},
     {
         title: "Drawer 2D", content: "",
-        minWidth: INITIAL_WIDTH, 
-        minHeight: INITIAL_HEIGHT 
+        minWidth: INITIAL_WIDTH,
+        minHeight: INITIAL_HEIGHT,
+        unsnappable: true,
     });
-    
+
     this.mainSubWindow = SubWindowHelper.create(windowOptions);
     this.mainSubWindow.enableFlex(); // Stretches elements vertically, especially the canvas.
-    
+
     const canvas = document.createElement("canvas");
     const ctx = canvas.getContext("2d");
-    
+
     // The canvas should fill the window.
     canvas.style.width = "calc(100% - 5px)"; // Subtract 5px to prevent the creation
                                              // of scrollbars.
     canvas.style.height = "auto";
-    
+
     // Give the canvas a background, to permit visualization of the alpha channel.
-    canvas.style.background = options.background 
+    canvas.style.background = options.background
             || "radial-gradient(rgba(255, 255, 255, 0.8), rgba(200, 200, 200, 0.6))";
     canvas.style.backgroundSize = "5px 5px";
-    
+
     const imageCanvas = document.createElement("canvas");
     const imageCtx = imageCanvas.getContext("2d");
-    
+
     if (options.initialImage)
     {
         imageCtx.canvas.width = options.imageWidth || options.initialImage.width;
         imageCtx.canvas.height = options.imageHeight || options.initialImage.height;
-        
+
         try
         {
             imageCtx.drawImage(options.initialImage, 0, 0, imageCtx.canvas.width, imageCtx.canvas.height);
@@ -90,10 +93,64 @@ function Drawer2D(onSubmit, options)
         imageCtx.canvas.width = options.imageWidth || INITIAL_WIDTH;
         imageCtx.canvas.height = options.imageHeight || INITIAL_HEIGHT;
     }
-    
+
+    let undoStackVisualContainer, redoStackVisualContainer;
+    let undoStackWindow, redoStackWindow;
+    if (options.useUndoRedoWindow)
+    {
+        undoStackWindow = SubWindowHelper.create({ title: "Undo Stack", maxHeight: INITIAL_HEIGHT });
+        redoStackWindow = SubWindowHelper.create({ title: "Redo Stack", maxHeight: INITIAL_HEIGHT });
+
+        undoStackVisualContainer = document.createElement("div");
+        redoStackVisualContainer = document.createElement("div");
+        undoStackVisualContainer.innerHTML = "Waiting for an action to be taken...";
+        redoStackVisualContainer.innerHTML = "Waiting for an action to be undone...";
+
+        undoStackWindow.appendChild(undoStackVisualContainer);
+        redoStackWindow.appendChild(redoStackVisualContainer);
+    }
+
+    let updateStackVisual = (stack, container, containerWindow) =>
+    {
+        if (!container || !containerWindow)
+        {
+            return;
+        }
+
+        // Clear container
+        container.replaceChildren();
+
+        if (stack.length == 0)
+        {
+            container.innerHTML = "Empty!";
+        }
+
+        for (let i = 0; i < stack.length; i++)
+        {
+            // Start with the last image.
+            const img = stack[stack.length - i - 1];
+
+            let canvas = document.createElement("canvas");
+            let ctx = canvas.getContext('2d');
+            canvas.width = img.width;
+            canvas.height = img.height;
+
+            canvas.style.display = "block";
+            canvas.style.width = "90%";
+            canvas.style.marginLeft = "auto";
+            canvas.style.marginRight = "auto";
+            canvas.style.border = "1px solid black";
+
+            ctx.drawImage(img, 0, 0);
+            container.appendChild(canvas);
+        }
+
+        containerWindow.updateResizeCircleLocation(true);
+    };
+
     // Get an initial transform matrix.
     let transformMatrix = Mat33Helper.getTranslateMatrix(INITIAL_VIEW_X, INITIAL_VIEW_Y);
-    
+
     me.tools = { "Base Pen": new Drawer2DHelper.BasePen(),
                  "Custom Pen 1": new Drawer2DHelper.CustomizablePen(),
                  "Custom Pen 2": new Drawer2DHelper.CustomizablePen(),
@@ -101,23 +158,23 @@ function Drawer2D(onSubmit, options)
                  "View Panner": new Drawer2DHelper.ViewPanner(transformMatrix),
                  "View Zoomer": new Drawer2DHelper.ViewZoomer(transformMatrix) };
     me.currentTool = me.tools["Base Pen"];
-    
+
     // Keep track of the number of context-saves.
     let contextViewSaves = 0;
-    
+
     let saveContextView = () =>
     {
         transformMatrix.save();
-        
+
         contextViewSaves++;
     };
-    
+
     let restoreContextView = () =>
     {
         if (contextSaves > 0)
         {
             transformMatrix.restore();
-        
+
             contextViewSaves--;
         }
         else
@@ -125,7 +182,7 @@ function Drawer2D(onSubmit, options)
             throw "Danger! The number of cached context states is at zero (Drawer2D).";
         }
     };
-    
+
     let resetView = () =>
     {
         // Restore until at the initial state,
@@ -133,15 +190,15 @@ function Drawer2D(onSubmit, options)
         {
             restoreContextView();
         }
-        
+
         // Then save so we can restore it again.
         saveContextView();
     };
-    
+
     //  Allow snapshots of the canvas to be stored and traversed
     // -- an implementation of undo and redo.
-    
-    // Filters the undo stack, removing 
+
+    // Filters the undo stack, removing
     let filterUndoStack = () =>
     {
         if (undoStack.length > MAX_UNDO)
@@ -149,26 +206,26 @@ function Drawer2D(onSubmit, options)
             // If the undo stack is longer than expected,
             //trim it.
             let newStack = [];
-            
+
             for (let i = undoStack.length - MAX_UNDO; i < undoStack.length; i++)
             {
                 newStack.push(undoStack[i]);
             }
-            
+
             // Swap the stacks.
             undoStack = newStack;
         }
     };
-    
+
     // Cache a snapshot. Note that with the current implementation,
     //no compression is done and tainted canvases cannot be cached.
     let cacheState = (pushToRedoStack) =>
     {
         let imageToCache = new Image();
-        
+
         let loaded = false;
         let onLoad = () => {};
-        
+
         // Add the image to the undo stack after
         //it has loaded.
         imageToCache.addEventListener("load", () =>
@@ -181,121 +238,124 @@ function Drawer2D(onSubmit, options)
             {
                 undoStack.push(imageToCache);
             }
-            
+
             // Filter the undo stack.
             filterUndoStack();
-            
+            updateStackVisual(undoStack, undoStackVisualContainer, undoStackWindow);
+            updateStackVisual(redoStack, redoStackVisualContainer, redoStackWindow);
+
             // Note that the image has loaded.
             loaded = true;
-            
+
             // Notify any listeners.
             onLoad(imageToCache);
         });
-        
+
         // Set its source.
         imageToCache.src = imageCanvas.toDataURL("img/png");
-        
+
         // Note the last cache time.
         lastUndoTime = (new Date()).getTime();
-        
+
         let result = new Promise((resolve, reject) =>
         {
             onLoad = (imageToCache) => resolve({ image: imageToCache, dataURL: imageToCache.src });
-            
+
             if (loaded)
             {
                 onLoad(imageToCache);
             }
         });
-        
+
         return result;
     };
-    
+
     let performUndo = () =>
     {
         // Can we actually undo?
         if (undoStack.length == 0)
         {
             undoTab.hide();
-        
+
             return;
         }
-        
+
         // Take a state from the stack.
         let currentState = undoStack.pop();
-        
+
         // Push it onto the redo stack.
         cacheState(true);
-        
+
         // Show the redo tab.
         redoTab.show();
-        
+
         clearCanvas(imageCtx);
-        
+
         // Draw it onto the canvas.
         imageCtx.drawImage(currentState, 0, 0);
-        
+
         render();
     };
-    
+
     let performRedo = () =>
     {
         if (redoStack.length == 0)
         {
             redoTab.hide();
-            
+
             return;
         }
-        
+
         let newState = redoStack.pop();
-        
-        undoStack.push(newState);
+
+        // Push current state onto the undo stack.
+        cacheState(false);
         undoTab.show();
-        
+
         clearCanvas(imageCtx);
         imageCtx.drawImage(newState, 0, 0);
-        
+
         render();
     };
-    
+
     // Push state to the undo stack, if necessary.
     let cacheStateIfNecessary = () =>
     {
         let nowTime = (new Date()).getTime();
-        
+
         if (nowTime - lastUndoTime >= UNDO_TIME_DELTA && actionsSinceUndo >= UNDO_MIN_ACTIONS)
         {
-            cacheState().then(() =>
+            cacheState(false).then(() =>
             {
                 redoStack = []; // Reset the redo stack.
-                
+
                 // Hide the redo menu.
                 redoTab.hide();
                 undoTab.show(); // And show the undo tab.
             });
-            
+
             // Reset the number of actions since the last undo.
             actionsSinceUndo = 0;
         }
     };
-    
+
     // Permit view-resetting by taking an initial snapshot of
     //the state of the context.
     saveContextView();
     cacheState();
-    
+
     var clearCanvas = (currentCtx) =>
     {
         currentCtx = currentCtx || ctx;
-        
+
         currentCtx.save();
-        
+
         currentCtx.setTransform(1, 0, 0, 1, 0, 0);
         currentCtx.clearRect(0, 0, currentCtx.canvas.width, currentCtx.canvas.height);
-        
+
         currentCtx.restore();
     };
-    
+
     var resizePixBuffer = () =>
     {
         if (canvas.width !== canvas.clientWidth || canvas.height !== canvas.clientHeight)
@@ -304,26 +364,26 @@ function Drawer2D(onSubmit, options)
             canvas.height = canvas.clientHeight;
         }
     };
-    
+
     var render = () =>
     {
         resizePixBuffer();
-        
+
         clearCanvas();
-        
-        ctx.setTransform(transformMatrix.getAt(0, 0), transformMatrix.getAt(0, 1), 
+
+        ctx.setTransform(transformMatrix.getAt(0, 0), transformMatrix.getAt(0, 1),
                          transformMatrix.getAt(1, 0), transformMatrix.getAt(1, 1),
                          transformMatrix.getAt(2, 0), transformMatrix.getAt(2, 1));
-        
+
         ctx.strokeRect(-1, -1, imageCanvas.width + 1, imageCanvas.height + 1);
         ctx.drawImage(imageCanvas, 0, 0);
     };
-    
+
     // Create context menus.
     let fileMenu = new SubWindowTab("File");
     let editMenu = new SubWindowTab("Edit");
     let toolMenu = new SubWindowTab("Tools");
-    
+
     // Add the commands.
     if (onSubmit)
     {
@@ -332,32 +392,32 @@ function Drawer2D(onSubmit, options)
             cacheState().then((data) =>
             {
                 const { image, dataURL } = data;
-                
+
                 onSubmit.call(me, image, dataURL);
                 me.mainSubWindow.close();
             });
         });
     }
-    
+
     fileMenu.addCommand("Exit", () =>
     {
         me.mainSubWindow.close();
     });
-    
+
     // Edit menu.
     var undoTab = editMenu.addCommand("Undo", () =>
     {
         performUndo();
     });
-    
+
     var redoTab = editMenu.addCommand("Redo", () =>
     {
         performRedo();
     });
-    
+
     // Hide the redo tab initially.
     redoTab.hide();
-    
+
     let selectTool = function(tool)
     {
         if (me.currentTool &&
@@ -365,44 +425,44 @@ function Drawer2D(onSubmit, options)
         {
             me.currentTool.onDeInit();
         }
-        
+
         me.currentTool = tool;
-        
+
         if (tool.onInit)
         {
             tool.onInit();
         }
     };
-    
+
     // View Menu.
     let showControlTab, controlsWindow;
     showControlTab = toolMenu.addCommand("Show Controls Window", () =>
     {
         showControlTab.hide();
-        
+
         controlsWindow = SubWindowHelper.create({ title: "Tools", noResize: true, alwaysOnTop: true });
-        
+
         let handleToolButton = (toolName, tool) =>
         {
             let newButton = HTMLHelper.addButton(toolName, controlsWindow, () =>
             {
                 selectTool(tool);
             });
-            
+
             newButton.style.display = "block";
         };
-        
+
         for (let label in me.tools)
         {
             handleToolButton(label, me.tools[label]);
         }
-        
+
         controlsWindow.setOnCloseListener(() =>
         {
             showControlTab.show();
         });
     });
-    
+
     // Tool menu.
     let handleToolCommand = (toolName, tool) =>
     {
@@ -411,12 +471,12 @@ function Drawer2D(onSubmit, options)
             selectTool(tool);
         });
     };
-    
+
     for (let label in me.tools)
     {
         handleToolCommand(label, me.tools[label]);
     }
-    
+
     // Tools might want to de-init/free themselves.
     //Set an onClose listener.
     me.mainSubWindow.setOnCloseListener(() =>
@@ -426,30 +486,34 @@ function Drawer2D(onSubmit, options)
             // Notify the current tool.
             me.currentTool.onDeInit();
         }
-        
+
         // If the controls window is open, close it.
         if (controlsWindow)
         {
             controlsWindow.close();
         }
+
+        // Similarly, close undo/redo windows.
+        undoStackWindow?.close();
+        redoStackWindow?.close();
     });
-    
+
     // Add context menus!
     me.mainSubWindow.addTab(fileMenu);
     me.mainSubWindow.addTab(editMenu);
     me.mainSubWindow.addTab(toolMenu);
-    
+
     // Add the canvas.
     me.mainSubWindow.appendChild(canvas);
-    
+
     let pointerDown = false, lastX, lastY;
     let previousTool = undefined;
 
     // Allow focusing the canvas.
     canvas.setAttribute("tabindex", 0);
-    
+
     // Configure events.
-    
+
     let pointerStartX, pointerStartY, inverseTransform, changesMade;
     JSHelper.Events.registerPointerEvent("down", canvas, function(event)
     {
@@ -462,67 +526,67 @@ function Drawer2D(onSubmit, options)
             previousTool = me.currentTool; // If so, be prepared to change back at the end of the event.
             me.currentTool = me.tools["View Panner"];
         }
-    
+
         let bbox = canvas.getBoundingClientRect();
-        
+
         pointerStartX = event.clientX - bbox.left;
         pointerStartY = event.clientY - bbox.top;
-        
+
         let currentPositionArray = [pointerStartX, pointerStartY, 1];
         inverseTransform = transformMatrix.getInverse();
         MatHelper.transformPoint(currentPositionArray, inverseTransform);
-        
+
         me.currentTool.handlePointerDown(ctx, imageCtx, currentPositionArray[0], currentPositionArray[1], 0, 0);
-    
+
         render();
         pointerDown = true;
-        
+
         changesMade = false;
-        
+
         lastX = pointerStartX;
         lastY = pointerStartY;
     }, false);
-    
+
     JSHelper.Events.registerPointerEvent("move", canvas, function(event)
     {
         if (pointerDown)
         {
             event.preventDefault();
-        
+
             let bbox = canvas.getBoundingClientRect();
             let x = event.clientX - bbox.left;
             let y = event.clientY - bbox.top;
-            
-                
+
+
             let currentPositionArray = [x, y, 1];
             inverseTransform = transformMatrix.getInverse();
             MatHelper.transformPoint(currentPositionArray, inverseTransform);
-            
+
             changesMade = me.currentTool.handlePointerMove(ctx, imageCtx, currentPositionArray[0], currentPositionArray[1], x - lastX, y - lastY, (event.pressure || 0) + 0.1) || changesMade;
-            
+
             render();
-            
+
             lastX = x;
             lastY = y;
         }
     }, false);
-    
+
     JSHelper.Events.registerPointerEvent("stop", canvas, function(event)
     {
         pointerDown = false;
-        
+
         event.preventDefault();
-    
+
         let bbox = canvas.getBoundingClientRect();
         let x = event.clientX - bbox.left;
         let y = event.clientY - bbox.top;
-        
+
         me.currentTool.handlePointerUp(ctx, imageCtx, x, y, x - pointerStartX, y - pointerStartY);
 
         if (changesMade)
         {
             actionsSinceUndo++;
-            
+
             cacheStateIfNecessary();
         }
 
@@ -555,7 +619,7 @@ function Drawer2D(onSubmit, options)
 
     canvas.addEventListener("keypress", async (event) =>
     {
-        if (event.key == "w" 
+        if (event.key == "w"
                 || event.key == "a" || event.key == "d" || event.key == "s")
         {
             let dx = 0, dy = 0;
@@ -589,35 +653,40 @@ function Drawer2D(onSubmit, options)
     canvas.addEventListener("wheel", async (event) =>
     {
         let dy = event.deltaY;
+        let dx = event.deltaX;
 
         if (event.deltaMode == WHEEL_LINE_MODE)
         {
             dy *= 25;
+            dx *= 25;
         }
         else if (event.deltaMode == WHEEL_PAGE_MODE)
         {
             dy *= 500;
+            dx *= 500;
         }
 
-        if (!event.shiftKey)
+        if (event.shiftKey || event.ctrlKey)
         {
-            me.tools["View Zoomer"].performZoom(imageCtx, 0, -dy);
+            me.tools["View Zoomer"].performZoom(imageCtx, 0, -dy / 10.0);
         }
         else
         {
-            transformMatrix.translate([0, dy, 1]);
+            transformMatrix.translate([dx / 2.0, dy / 2.0, 1]);
         }
 
         render();
+        event.preventDefault();
+        return true;
     });
-    
+
     // Any async setup.
     (async () =>
     {
         // Wait for the window to resize.
         //TODO Remove magic variable.
         await JSHelper.waitFor(500);
-        
+
         render();
     })();
 }
